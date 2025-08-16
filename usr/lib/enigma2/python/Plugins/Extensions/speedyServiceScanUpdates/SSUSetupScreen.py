@@ -32,7 +32,7 @@ from enigma import getDesktop
 from . import _  # Übersetzungsfunktion aus __init__.py laden
 
 # --- Version ---
-version = "3.3"
+version = "3.2"
 sz_w = getDesktop(0).size().width()
 
 

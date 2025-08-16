@@ -18,7 +18,7 @@ class SSULameDBParser:
 
     def load(self):
         try:
-            print("[ServiceScanUpdates] Reading file: " + self.filename)
+            print("[speedyServiceScanUpdates] Reading file: " + self.filename)
             import codecs
             with codecs.open(self.filename, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
@@ -27,11 +27,11 @@ class SSULameDBParser:
             elif lines and "/4/" in lines[0]:
                 self.version = 4
             else:
-                print("[ServiceScanUpdates] Unsupported lamedb version")
+                print("[speedyServiceScanUpdates] Unsupported lamedb version")
                 lines = None
             return lines
         except Exception as e:
-            print("[ServiceScanUpdates] Exception reading lamedb: " + str(e))
+            print("[speedyServiceScanUpdates] Exception reading lamedb: " + str(e))
             return None
 
     def parse(self, lines):
@@ -44,7 +44,7 @@ class SSULameDBParser:
         self.transponders.clear()
         self.services.clear()
 
-        print("[ServiceScanUpdates] Parsing content of file: " + self.filename)
+        print("[speedyServiceScanUpdates] Parsing content of file: " + self.filename)
         for line in lines:
             line = line.rstrip('\n')
             if PY2:
