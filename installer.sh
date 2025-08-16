@@ -2,8 +2,8 @@
 ##setup command=wget -q "--no-check-certificate" https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/installer.sh -O - | /bin/sh
 
 ######### Only This 2 lines to edit with new version ######
-version='1.5'
-changelog='\nFix little bugs\nUpdated Picons List'
+version='3.5'
+changelog='\nFix little bugs\nfix py2 and py3 code'
 ##############################################################
 
 TMPPATH=/tmp/ServiceScanUpdates
