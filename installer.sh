@@ -1,20 +1,20 @@
 #!/bin/bash
-##setup command=wget -q "--no-check-certificate" https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/installer.sh -O - | /bin/sh
-
 ######### Only This 2 lines to edit with new version ######
-version='3.5'
-changelog='\nFix little bugs\nfix py2 and py3 code'
+# Version und changelog aus der version.txt-Datei herunterladen
+version=$(curl -s https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt)
+changelog=$(curl -s https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/changelog.txt)
 ##############################################################
 
 TMPPATH=/tmp/ServiceScanUpdates
 
+# Bestimmen des Installationspfads basierend auf dem Systemtyp
 if [ ! -d /usr/lib64 ]; then
 	PLUGINPATH=/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates
 else
 	PLUGINPATH=/usr/lib64/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates
 fi
 
-# check depends packges
+# Überprüfung des OS-Typs (DreamOs oder Dream)
 if [ -f /var/lib/dpkg/status ]; then
    STATUS=/var/lib/dpkg/status
    OSTYPE=DreamOs
@@ -34,19 +34,15 @@ else
 	Packagerequests=python-requests
 fi
 
+# Überprüfung und Installation der benötigten Pakete
 if [ $PYTHON = "PY3" ]; then
-	if grep -qs "Package: $Packagesix" cat $STATUS ; then
-		echo ""
-	else
+	if ! grep -qs "Package: $Packagesix" $STATUS; then
 		opkg update && opkg install python3-six
 	fi
 fi
 echo ""
-if grep -qs "Package: $Packagerequests" cat $STATUS ; then
-	echo ""
-else
+if ! grep -qs "Package: $Packagerequests" $STATUS; then
 	echo "Need to install $Packagerequests"
-	echo ""
 	if [ $OSTYPE = "DreamOs" ]; then
 		apt-get update && apt-get install python-requests -y
 	elif [ $PYTHON = "PY3" ]; then
@@ -57,42 +53,40 @@ else
 fi
 echo ""
 
-## Remove tmp directory
+# Temporäres Verzeichnis und alte Plugin-Verzeichnisse entfernen
 [ -r $TMPPATH ] && rm -f $TMPPATH > /dev/null 2>&1
-
-## Remove old plugin directory
 [ -r $PLUGINPATH ] && rm -rf $PLUGINPATH
 
-# Download and install plugin
-# check depends packges
+# Erstellen des temporären Verzeichnisses und Herunterladen des Plugins
 mkdir -p $TMPPATH
 cd $TMPPATH
 set -e
+
 if [ -f /var/lib/dpkg/status ]; then
    echo "# Your image is OE2.5/2.6 #"
-   echo ""
-   echo ""
 else
    echo "# Your image is OE2.0 #"
-   echo ""
-   echo ""
 fi
-   wget https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.tar.gz || { echo "Download failed"; exit 1; }
-   tar -xzf main.tar.gz
-   cp -r 'speedyServiceScanUpdates-main/usr' '/'
+
+# Plugin herunterladen
+wget https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.tar.gz || { echo "Download failed"; exit 1; }
+tar -xzf main.tar.gz
+cp -r 'speedyServiceScanUpdates-main/usr' '/'
+
 set +e
 cd
 sleep 2
 
-### Check if plugin installed correctly
+# Überprüfen, ob das Plugin korrekt installiert wurde
 if [ ! -d $PLUGINPATH ]; then
-	echo "Some thing wrong .. Plugin not installed"
+	echo "Something went wrong .. Plugin not installed"
 	exit 1
 fi
 
 rm -rf $TMPPATH > /dev/null 2>&1
 sync
-echo ""
+
+# Ausgabe der Installationsmeldung
 echo ""
 echo "#########################################################"
 echo "#           INSTALLED SUCCESSFULLY      #"
@@ -101,7 +95,7 @@ echo "#                   Big thanks speedy005                    #"
 echo "#                  .::speedyServiceScanUpdates::.                  #"
 echo "#                  https://Sat-Club.EU                  #"
 echo "#########################################################"
-echo "#           your Device will RESTART Now                #"
+echo "#           Your Device will RESTART Now                #"
 echo "#########################################################"
 sleep 5
 killall -9 enigma2
