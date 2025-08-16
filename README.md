@@ -51,7 +51,9 @@ Installation:
 "Service Scan Updates" is installed directly as a system plugin on your Dreambox and is immediately available in the menu, where the channel scan option is located.
 
 
-Install per telnet:
+Install per telnet
+
+
 wget -qO /tmp/installer.sh "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/installer.sh" && chmod 777 /tmp/installer.sh && /tmp/installer.sh
 
 
