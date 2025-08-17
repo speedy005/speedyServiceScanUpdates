@@ -32,7 +32,7 @@ import urllib.request
 from Tools.Directories import fileExists
 
 # --- Version ---
-version = "3.5"
+version = "3.6"
 
 # GitHub URL für das ZIP-Archiv
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
