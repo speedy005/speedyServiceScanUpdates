@@ -37,7 +37,7 @@ from Tools.Directories import fileExists
 from Screens.Standby import TryQuitMainloop
 
 # --- Version ---
-version = "3.6"
+version = "3.5"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das ZIP-Archiv
@@ -77,41 +77,36 @@ class SSUUpdateScreen(Screen):
          </screen>"""
 
     def __init__(self, session):
-        Screen.__init__(self, session)
-        self.session = session
-        self['status'] = Label(_("Checking for updates..."))
-        self['progress'] = ProgressBar()
-        self['progresstext'] = Label()
+    Screen.__init__(self, session)
+    self.session = session
+    self['status'] = Label(_("Checking for updates..."))
+    self['progress'] = ProgressBar()
+    self['progresstext'] = Label()
 
-        # Tastenbelegung
-        self["key_red"] = Button(_("Cancel"))
-        self["key_green"] = Button(_("Start"))
-        self["key_yellow"] = Button(_("Check for Updates"))
-        self["key_blue"] = Button(_("Exit"))
+    # Tastenbelegung
+    self["key_red"] = Button(_("Cancel"))
+    self["key_green"] = Button(_("Start"))
+    self["key_yellow"] = Button(_("Check for Updates"))
+    self["key_blue"] = Button(_("Exit"))
 
-        self["actions"] = ActionMap(
-            ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
-            {
-                "red": self.keyCancel,
-                "green": self.startUpdate,
-                "yellow": self.checkForUpdates,
-                "blue": self.keyExit,
-                "cancel": self.keyCancel,
-                "ok": self.startUpdate,
-            },
-            -2
-        )
+    self["actions"] = ActionMap(
+        ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
+        {
+            "red": self.keyCancel,
+            "green": self.startUpdate,
+            "yellow": self.checkForUpdates,
+            "blue": self.keyExit,
+            "cancel": self.keyCancel,
+            "ok": self.startUpdate,
+        },
+        -2
+    )
 
-    def startUpdate(self):
-        """Startet den Update-Prozess."""
-        self.checkForUpdates()
+def startUpdate(self):
+    """Startet den Update-Prozess."""
+    self.checkForUpdates()
 
-    def checkForUpdates(self):
-        """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
-        self['status'].setText(_('Checking for updates...'))
-        self.downloadUpdate()
-
-    def checkForUpdates(self):
+def checkForUpdates(self):
     """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
     self['status'].setText(_('Checking for updates...'))
     self['progresstext'].setText(_('Please wait...'))
@@ -175,14 +170,14 @@ def copyUpdateFiles(self, extracted_dir):
         self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
         self['progresstext'].setText(_('File copy failed.'))
 
+def keyCancel(self):
+    """Beenden des Updates."""
+    self.close()
 
-    def keyCancel(self):
-        """Beenden des Updates."""
-        self.close()
+def keyExit(self):
+    """Verlässt den Bildschirm."""
+    self.close()
 
-    def keyExit(self):
-        """Verlässt den Bildschirm."""
-        self.close()
 
 
 
