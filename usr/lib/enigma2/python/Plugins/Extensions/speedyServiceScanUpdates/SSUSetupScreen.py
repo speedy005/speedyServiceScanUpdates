@@ -42,11 +42,11 @@ from Screens.Standby import TryQuitMainloop
 from . import _  # Übersetzungsfunktion aus __init__.py laden
 
 # --- Version ---
-version = "3.5"
+version = "3.6"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das .tar.gz Archiv
-GITHUB_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.tar.gz"
+GITHUB_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main.zip"
 download_path = '/tmp/updatefile.tar.gz'
 
 # Klasse für das Update-Screen
@@ -82,22 +82,12 @@ class SSUUpdateScreen(Screen):
         <widget name="key_blue" position="798,5" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
          </screen>"""
 
-    def __init__(self, session, updateurl=GITHUB_URL):
+    def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-        self.updateurl = updateurl
         self['status'] = Label(_("Checking for updates..."))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label()
-
-        self.downloading = False
-        self.last_recvbytes = 0
-        self.dlfile = download_path
-        self.update_dir = "/var/volatile/tmp/speedyServiceScanUpdates-main"
-        self.dest_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
-        
-        # Flag to determine if update was found
-        self.update_found = False
 
         # Tastenbelegung
         self["key_red"] = Button(_("Cancel"))
@@ -109,53 +99,72 @@ class SSUUpdateScreen(Screen):
             ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
             {
                 "red": self.keyCancel,
-                "green": self.startUpdate,  # Grün: Update starten
-                "yellow": self.checkForUpdates,  # Gelb: Update prüfen
-                "blue": self.keyExit,        # Blau: GUI verlassen
-                "cancel": self.keyCancel,    # Exit beim Abbrechen
-                "ok": self.startUpdate,      # Bestätigung für das Update
+                "green": self.startUpdate,
+                "yellow": self.checkForUpdates,
+                "blue": self.keyExit,
+                "cancel": self.keyCancel,
+                "ok": self.startUpdate,
             },
             -2
         )
 
     def checkForUpdates(self):
         """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
-        update_src_dir = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+        self['status'].setText(_('Checking for updates...'))
+        self.downloadUpdate()
 
-        print(f"Checking for updates in: {update_src_dir}")  # Debug-Ausgabe
-
-        if os.path.exists(update_src_dir):
-            self.update_found = True
-            self['status'].setText(_('Update found! Press green to install.'))
-        else:
-            self.update_found = False
-            self['status'].setText(_('No update found.'))
-
-    def copyUpdateFiles(self):
-        """Kopiert die neuen Dateien von /var/volatile/tmp/speedyServiceScanUpdates-main nach /usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates."""
-        src = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
-        dest = self.dest_dir
-
-        print(f"Trying to copy files from {src} to {dest}")  # Debug-Ausgabe
+    def downloadUpdate(self):
+        """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
+        download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
 
         try:
-            if os.path.exists(dest):
-                print(f"Removing existing directory {dest}")  # Debug-Ausgabe
-                shutil.rmtree(dest)  # Entfernt das Zielverzeichnis, wenn es bereits existiert
+            # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
+            urllib.request.urlretrieve(self.updateurl, download_path)
 
-            print(f"Copying files from {src} to {dest}")  # Debug-Ausgabe
-            shutil.copytree(src, dest)  # Kopiert das gesamte Verzeichnis
-            self['status'].setText(_('Files copied successfully.'))
+            # Überprüfen, ob die Datei heruntergeladen wurde
+            if os.path.exists(download_path):
+                self['status'].setText(_('Update downloaded successfully.'))
+                self.extractUpdate(download_path)
+            else:
+                self['status'].setText(_('Failed to download update.'))
+
         except Exception as e:
-            print(f"Error during copy: {e}")  # Debug-Ausgabe
-            self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
+            self['status'].setText(_('Download failed: {}'.format(str(e))))
 
-    def startUpdate(self):
-        """Startet das Update, wenn ein Update vorhanden ist."""
-        if self.update_found:
-            self.copyUpdateFiles()
-        else:
-            self['status'].setText(_('No update available.'))
+    def extractUpdate(self, downloaded_file):
+        """Entpackt die heruntergeladene ZIP-Datei."""
+        extract_dir = "/tmp/speedyServiceScanUpdates"  # Zielordner für das entpackte Repository
+
+        try:
+            # Entpacken der ZIP-Datei
+            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
+
+            # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
+            self.copyUpdateFiles(extract_dir)
+
+        except Exception as e:
+            self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
+
+    def copyUpdateFiles(self, extracted_dir):
+        """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
+        # Quelle der entpackten Dateien (Temporäres Verzeichnis)
+        source_dir = os.path.join(extracted_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+        
+        # Zielverzeichnis
+        dest_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
+        
+        try:
+            # Prüfen, ob das Zielverzeichnis existiert, und es ggf. löschen
+            if os.path.exists(dest_dir):
+                shutil.rmtree(dest_dir)
+
+            # Kopieren der entpackten Dateien in das Zielverzeichnis
+            shutil.copytree(source_dir, dest_dir)
+
+            self['status'].setText(_('Update installed successfully.'))
+        except Exception as e:
+            self['status'].setText(_('Failed to copy update files: {}'.format(str(e))))
 
     def keyCancel(self):
         """Beenden des Updates."""
@@ -163,7 +172,7 @@ class SSUUpdateScreen(Screen):
 
     def keyExit(self):
         """Verlässt den Bildschirm."""
-        self.close()
+        self.close())
 
 
 
