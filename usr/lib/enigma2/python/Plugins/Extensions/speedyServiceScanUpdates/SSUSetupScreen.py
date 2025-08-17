@@ -39,7 +39,7 @@ from Screens.Standby import TryQuitMainloop
 from . import _  # Übersetzungsfunktion aus __init__.py laden
 
 # --- Version ---
-version = "3.5"
+version = "3.6"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das .tar.gz Archiv
@@ -280,4 +280,5 @@ class SSUSetupScreen(ConfigListScreen, Screen):
 
     def keySave(self):
         self.close()
+
 
