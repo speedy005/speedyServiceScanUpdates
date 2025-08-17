@@ -5,6 +5,8 @@ import os
 import sys
 import urllib.request
 import tarfile
+import shutil
+import os
 
 # --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
 plugin_path = None
@@ -58,10 +60,10 @@ class SSUUpdateScreen(Screen):
         <widget name="progress" position="10,100" size="1180,50" />
         <widget name="status" position="10,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
         <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
-        <widget name="key_yellow" position="604,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-        <widget name="key_green" position="305,3" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-        <widget name="key_red" position="3,4" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-        <widget name="key_blue" position="916,6" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
+        <widget name="key_yellow" position="604,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_green" position="305,3" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_red" position="3,4" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_blue" position="916,6" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
          </screen>"""
     else:
         skin = """
@@ -73,29 +75,30 @@ class SSUUpdateScreen(Screen):
         <widget name="progress" position="10,100" size="1050,50" />
         <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
         <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
-        <widget name="key_yellow" position="538,4" zPosition="1" size="250,70" font="Regular;30" halign="center" foregroundColor="white" valign="center" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-        <widget name="key_green" position="277,3" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="white" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-        <widget name="key_red" position="13,2" zPosition="1" size="250,70" font="Regular;30" foregroundColor="white" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-        <widget name="key_blue" position="798,5" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_yellow" position="538,4" zPosition="1" size="250,70" font="Regular;30" halign="center" foregroundColor="white" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
+        <widget name="key_green" position="277,3" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="white" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
+        <widget name="key_red" position="13,2" zPosition="1" size="250,70" font="Regular;30" foregroundColor="white" halign="center" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
+        <widget name="key_blue" position="798,5" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
          </screen>"""
 
     def __init__(self, session, updateurl=GITHUB_URL):
         Screen.__init__(self, session)
         self.session = session
         self.updateurl = updateurl
-        self['status'] = Label(_("Downloading update..."))
+        self['status'] = Label(_("Checking for updates..."))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label()
 
         self.downloading = False
         self.last_recvbytes = 0
         self.dlfile = download_path
-        self.startUpdate()
+        self.update_dir = "/var/volatile/tmp/speedyServiceScanUpdates-main"
+        self.dest_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
 
         # Tastenbelegung
         self["key_red"] = Button(_("Cancel"))
         self["key_green"] = Button(_("Start"))
-        self["key_yellow"] = Button(_("Pause"))
+        self["key_yellow"] = Button(_("Check for Updates"))
         self["key_blue"] = Button(_("Exit"))
 
         self["actions"] = ActionMap(
@@ -103,7 +106,7 @@ class SSUUpdateScreen(Screen):
             {
                 "red": self.keyCancel,
                 "green": self.startUpdate,  # Grün: Update starten
-                "yellow": self.pauseUpdate,  # Gelb: Update pausieren (falls gewünscht)
+                "yellow": self.checkForUpdates,  # Gelb: Update prüfen
                 "blue": self.keyExit,        # Blau: GUI verlassen
                 "cancel": self.keyCancel,    # Exit beim Abbrechen
                 "ok": self.startUpdate,      # Bestätigung für das Update
@@ -111,83 +114,44 @@ class SSUUpdateScreen(Screen):
             -2
         )
 
-    def startUpdate(self):
-        """Start the update process."""
-        self['status'].setText(_('Starting update download...'))
-        self.downloadFile(self.updateurl, self.dlfile)
+    def checkForUpdates(self):
+        """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
+        # Überprüfen, ob das Update-Verzeichnis existiert
+        update_src_dir = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
 
-    def pauseUpdate(self):
-        """Funktion zum Pausieren des Downloads (optional, wenn gewünscht)"""
-        self['status'].setText(_('Download paused.'))
+        if os.path.exists(update_src_dir):
+            # Update verfügbar, Nutzer informieren
+            self['status'].setText(_('Update found! Preparing to install...'))
+            # Warten auf Bestätigung der Gelben Taste (Starten des Kopierens)
+        else:
+            # Kein Update gefunden
+            self['status'].setText(_('No update found.'))
+
+    def copyUpdateFiles(self):
+        """Kopiert die neuen Dateien von /var/volatile/tmp/speedyServiceScanUpdates-main nach /usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates."""
+        src = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+        dest = self.dest_dir
+
+        try:
+            if os.path.exists(dest):
+                shutil.rmtree(dest)  # Entfernt das Zielverzeichnis, wenn es bereits existiert
+
+            shutil.copytree(src, dest)  # Kopiert das gesamte Verzeichnis
+            self['status'].setText(_('Files copied successfully.'))
+        except Exception as e:
+            self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
 
     def keyCancel(self):
-        """Beenden des Updates oder Abbrechen"""
+        """Beenden des Updates."""
         self.close()
 
     def keyExit(self):
-        """Beenden der GUI"""
+        """Verlässt den Bildschirm."""
         self.close()
 
-    def downloadFile(self, url, filename):
-        """Downloads a file and adds progress callback using urllib."""
-        try:
-            with urllib.request.urlopen(url) as response:
-                total_size = response.length
-                bytes_received = 0
-
-                with open(filename, 'wb') as out_file:
-                    while True:
-                        data = response.read(8192)  # 8KB chunks
-                        if not data:
-                            break
-                        
-                        out_file.write(data)
-                        bytes_received += len(data)
-                        self.downloadProgress(bytes_received, total_size)
-
-                # Download finished, proceed to installation
-                self.downloadFinished()
-
-        except Exception as e:
-            self.downloadFailed(error_message=str(e))
-
-    def downloadFinished(self):
-        """Called when download is finished."""
-        self['status'].setText(_('Installing updates... Please wait!'))
-
-        # Entpacke das TAR.GZ-Archiv
-        extraction_path = '/tmp/speedyServiceScanUpdates/'
-        if not os.path.exists(extraction_path):
-            os.makedirs(extraction_path)
-
-        try:
-            with tarfile.open(download_path, "r:gz") as tar:
-                tar.extractall(path=extraction_path)
-            self['status'].setText(_('Update installed successfully.'))
-            self['progresstext'].setText(_('You can now restart the plugin.'))
-        except Exception as e:
-            self.downloadFailed(error_message=str(e))
-
-    def downloadFailed(self, error_message):
-        """Handles download failure."""
-        self['status'].setText(_('Download failed!'))
-        self['progresstext'].setText(_('Error: ' + error_message))
-
-    def downloadProgress(self, bytes_received, total_size):
-        """Update the progress bar with download progress."""
-        if total_size is not None and total_size > 0:
-            percent = int((bytes_received / total_size) * 100)
-            self['progress'].setValue(percent)
-            self['progresstext'].setText(f"{percent}% downloaded")
-        elif total_size is None:  # Fall, wenn total_size nicht verfügbar ist
-            self['progresstext'].setText(f"Downloading... {bytes_received} bytes received")
-
-    def restartGUI(self, answer):
-        """Callback to restart the GUI if the user confirms."""
-        if answer is True:
-            self.session.open(TryQuitMainloop, 3)
-        else:
-            self.close()
+    def startUpdate(self):
+        """Startet das Update bei Drücken der grünen Taste oder der gelben Taste (bestätigt das Update)."""
+        self.copyUpdateFiles()
 
 
 
