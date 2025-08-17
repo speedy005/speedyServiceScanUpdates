@@ -3,8 +3,9 @@
 # --- Standardbibliothek ---
 import os
 import sys
+import re
 import zipfile
-import requests  # Anstelle von urllib
+import requests
 import shutil
 from enigma import getDesktop
 from Screens.Screen import Screen
@@ -22,46 +23,18 @@ from Components.ConfigList import getConfigListEntry
 version = "3.6"
 
 # GitHub URL für das ZIP-Archiv (direkter Download-Link)
-update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
+update_url = "https://github.com/speedy005/speedyServiceScanUpdates.git"  # ZIP-Download-URL
 
 # Speicherorte
 download_path = "/tmp/ServiceScanUpdates-main.zip"  # Speicherort für die heruntergeladene ZIP-Datei
 extract_dir = "/tmp/ServiceScanUpdates"  # Temporärer Ordner zum Entpacken
 target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
 
-# --- Update Screen Klasse ---
-class SSUUpdateScreen(Screen):
-    sz_w = getDesktop(0).size().width()  # Bildschirmbreite ermitteln
-    if sz_w == 1920:
-        skin = """
-        <screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
-        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
-        <ePixmap pixmap="skin_default/buttons/green.png" position="305,5" size="5,70" scale="stretch" alphatest="on" />
-        <ePixmap pixmap="skin_default/buttons/yellow.png" position="610,5" size="5,70" scale="stretch" alphatest="on" />
-        <ePixmap pixmap="skin_default/buttons/blue.png" position="915,5" size="5,70" scale="stretch" alphatest="on" />
-        <widget name="progress" position="10,100" size="1180,50" />
-        <widget name="status" position="10,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
-        <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
-        <widget name="key_yellow" position="604,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
-        <widget name="key_green" position="305,3" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
-        <widget name="key_red" position="3,4" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
-        <widget name="key_blue" position="916,6" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
-         </screen>"""
-    else:
-        skin = """
-        <screen name="SIUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
-        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
-        <ePixmap pixmap="skin_default/buttons/green.png" position="275,5" size="5,70" scale="stretch" alphatest="on" />
-        <ePixmap pixmap="skin_default/buttons/yellow.png" position="537,5" size="5,70" scale="stretch" alphatest="on" />
-        <ePixmap pixmap="skin_default/buttons/blue.png" position="795,6" size="5,70" scale="stretch" alphatest="on" />
-        <widget name="progress" position="10,100" size="1050,50" />
-        <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
-        <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
-        <widget name="key_yellow" position="538,4" zPosition="1" size="250,70" font="Regular;30" halign="center" foregroundColor="white" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
-        <widget name="key_green" position="277,3" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="white" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
-        <widget name="key_red" position="13,2" zPosition="1" size="250,70" font="Regular;30" foregroundColor="white" halign="center" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
-        <widget name="key_blue" position="798,5" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
-         </screen>"""
+def clean_version(version):
+    """Bereinigt die Versionsnummer, um nur Zahlen und Punkte zu behalten."""
+    return ''.join(re.findall(r'\d+\.*\d*', version))
+
+
 
     def __init__(self, session):
         Screen.__init__(self, session)
@@ -102,41 +75,45 @@ class SSUUpdateScreen(Screen):
         self.getLatestVersion()
 
     def getLatestVersion(self):
-    """Prüft die neueste Version vom GitHub-Repo und vergleicht sie mit der aktuellen Version."""
-    try:
-        print("Checking for new version...")  # Debugging
-        response = requests.get("https://api.github.com/repos/speedy005/speedyServiceScanUpdates/releases/latest")
-        print(f"Response status code: {response.status_code}")  # Debugging
+        """Prüft die neueste Version vom GitHub-Repo und vergleicht sie mit der aktuellen Version."""
+        try:
+            print("Checking for new version...")  # Debugging
+            response = requests.get("https://api.github.com/repos/speedy005/speedyServiceScanUpdates/releases/latest")
+            print(f"Response status code: {response.status_code}")  # Debugging
 
-        if response.status_code == 200:
-            data = response.json()  # Antwort als JSON verarbeiten
-            print(f"GitHub API Response: {data}")  # Debugging
+            if response.status_code == 200:
+                data = response.json()  # Antwort als JSON verarbeiten
+                print(f"GitHub API Response: {data}")  # Debugging
 
-            # Extrahiere den tag_name
-            latest_version = data.get('tag_name', 'Unknown')  # Standardwert für den Fall, dass 'tag_name' nicht existiert
-            print(f"Latest version found: {latest_version}")  # Debugging
+                # Extrahiere den tag_name
+                latest_version = data.get('tag_name', 'Unknown')  # Standardwert für den Fall, dass 'tag_name' nicht existiert
+                print(f"Latest version found: {latest_version}")  # Debugging
 
-            # Konvertiere die Version immer zu einem String
-            latest_version = str(latest_version)
+                # Bereinige die Versionsnummer, um nur Zahlen und Punkte zu behalten
+                latest_version = clean_version(str(latest_version))
 
-            # Vergleiche die Versionsnummern
-            if latest_version != version:
-                self['status'].setText(_('New update available: {}').format(latest_version))
-                self['progresstext'].setText(_('Update available!'))
-                print(f"Update available: {latest_version}")  # Debugging
+                # Vergleiche die Versionsnummern
+                if latest_version != version:
+                    self['status'].setText(_('New update available: {}').format(latest_version))
+                    self['progresstext'].setText(_('Update available!'))
+                    print(f"Update available: {latest_version}")  # Debugging
+
+                    # Download und Update durchführen
+                    if self.downloadChangelog():
+                        self.extractUpdate(download_path)
+                else:
+                    self['status'].setText(_('No update available.'))
+                    self['progresstext'].setText(_('You have the latest version.'))
+                    print("No update available.")  # Debugging
             else:
-                self['status'].setText(_('No update available.'))
-                self['progresstext'].setText(_('You have the latest version.'))
-                print("No update available.")  # Debugging
-        else:
-            self['status'].setText(_('Failed to check for updates.'))
-            self['progresstext'].setText(_('Error: Unable to fetch the update information.'))
-            print(f"Failed to fetch update information. Status code: {response.status_code}")  # Debugging
+                self['status'].setText(_('Failed to check for updates.'))
+                self['progresstext'].setText(_('Error: Unable to fetch the update information.'))
+                print(f"Failed to fetch update information. Status code: {response.status_code}")  # Debugging
 
-    except Exception as e:
-        self['status'].setText(_('Failed to check for updates.'))
-        self['progresstext'].setText(f'Error: {str(e)}')
-        print(f"Error while checking for updates: {e}")  # Debugging
+        except Exception as e:
+            self['status'].setText(_('Failed to check for updates.'))
+            self['progresstext'].setText(f'Error: {str(e)}')
+            print(f"Error while checking for updates: {e}")  # Debugging
 
     def downloadChangelog(self):
         """Lädt das ZIP-Archiv herunter und zeigt den Fortschritt an."""
@@ -205,6 +182,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Beenden des Update-Screens."""
         self.close()
+
 
 
 
