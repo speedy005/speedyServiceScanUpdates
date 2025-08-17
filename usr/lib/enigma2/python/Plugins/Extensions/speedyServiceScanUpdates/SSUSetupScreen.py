@@ -104,26 +104,26 @@ class SSUUpdateScreen(Screen):
     def downloadChangelog(self):
         """Lädt das ZIP-Archiv herunter und zeigt den Fortschritt an."""
         try:
-            self['status'].setText(_('Downloading update...'))
             print("Starting download...")  # Debugging
-
+            
             # Versuche, die Datei herunterzuladen
             urllib.request.urlretrieve(update_url, download_path)
-
+            
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
-                self['status'].setText(_('Update downloaded successfully.'))
                 print("Download completed.")  # Debugging
-                self.extractUpdate(download_path)
+                self['status'].setText(_('Download completed.'))
+                self['progresstext'].setText(f'File saved to: {download_path}')
+                return True  # Erfolgreich heruntergeladen
             else:
                 self['status'].setText(_('Failed to download update.'))
                 self['progresstext'].setText(_('Download failed.'))
-                print("Fehler: Die ZIP-Datei wurde nicht heruntergeladen.")  # Debugging
-
+                return False  # Download fehlgeschlagen
         except Exception as e:
-            self['status'].setText(_('Download failed: {}'.format(str(e))))
-            self['progresstext'].setText(_('Download error.'))
-            print("Fehler beim Download: ", e)  # Debugging
+            self['status'].setText(_('Download failed.'))
+            self['progresstext'].setText(f'Error: {str(e)}')
+            print(f"Fehler beim Download: {e}")  # Debugging
+            return False  # Fehler beim Download
 
     def extractUpdate(self, downloaded_file):
         """Entpackt das ZIP-Archiv."""
@@ -138,9 +138,11 @@ class SSUUpdateScreen(Screen):
             if os.path.exists(extract_dir):
                 shutil.copytree(extract_dir, target_dir, dirs_exist_ok=True)
                 self['status'].setText(_('Update installed successfully.'))
+                self['progresstext'].setText(_('Update installed.'))
                 print("Update erfolgreich installiert.")  # Debugging
             else:
                 self['status'].setText(_('Failed to extract update.'))
+                self['progresstext'].setText(_('Extraction failed.'))
                 print("Fehler: Entpacken fehlgeschlagen.")  # Debugging
 
         except Exception as e:
@@ -155,6 +157,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Beenden des Update-Screens."""
         self.close()
+
 
 
 
