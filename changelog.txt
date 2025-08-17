@@ -1,7 +1,8 @@
-3.5 (2025-08-15):
+3.6 (2025-08-17):
 - Fix little bugs
 - Fix compatibility with Python 3 and Python 2
 
 3.4 (2025-08-12):
 - Improved error handling during service scan
 - Added support for additional bouquet formats
+
