@@ -28,7 +28,6 @@ from Components.Button import Button
 from Components.Label import Label
 from Components.ProgressBar import ProgressBar
 from Screens.MessageBox import MessageBox
-import urllib.request
 from Tools.Directories import fileExists
 
 # --- Version ---
@@ -36,6 +35,11 @@ version = "3.6"
 
 # GitHub URL für das ZIP-Archiv
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
+
+# Speicherorte
+download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
+extract_dir = "/tmp/speedyServiceScanUpdates"  # Temporärer Ordner zum Entpacken
+target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
 
 # Klasse für das Update-Screen
 class SSUUpdateScreen(Screen):
@@ -110,16 +114,17 @@ class SSUUpdateScreen(Screen):
 
     def downloadChangelog(self):
         """Lädt die changelog.txt herunter und zeigt sie an."""
-        download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
-
         try:
-            # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
             self['status'].setText(_('Downloading update...'))
+            print("Starting download...")  # Debugging
+
+            # Versuche, die Datei herunterzuladen
             urllib.request.urlretrieve(update_url, download_path)
 
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
                 self['status'].setText(_('Update downloaded successfully.'))
+                print("Download completed.")  # Debugging
                 self.extractUpdate(download_path)
             else:
                 self['status'].setText(_('Failed to download update.'))
@@ -132,80 +137,63 @@ class SSUUpdateScreen(Screen):
             print("Fehler beim Download: ", e)  # Debugging
 
     def extractUpdate(self, downloaded_file):
-    """Entpackt die heruntergeladene ZIP-Datei direkt aus dem 'speedyServiceScanUpdates-main/speedyServiceScanUpdates' Ordner in das Zielverzeichnis."""
-    extract_dir = "/tmp/speedyServiceScanUpdates"  # Temporärer Ordner zum Entpacken
-    target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
-
-    try:
-        # Entpacken der ZIP-Datei in den temporären Ordner
-        self['status'].setText(_('Extracting update...'))
-        with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
-            zip_ref.extractall(extract_dir)
-
-        # Pfad zu den entpackten Dateien im Ordner 'speedyServiceScanUpdates-main/speedyServiceScanUpdates'
-        source_dir = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
-        
-        # Überprüfen, ob der Ordner existiert und Dateien direkt ins Ziel kopieren
-        if os.path.exists(source_dir):
-            # Zielordner löschen, wenn er existiert
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)
-
-            # Dateien aus dem entpackten Ordner 'speedyServiceScanUpdates' direkt ins Ziel kopieren
-            shutil.copytree(source_dir, target_dir)
-            self['status'].setText(_('Update completed successfully!'))
-            self['progresstext'].setText(_('Update installed successfully.'))
-
-            # Zeige das Changelog nach der Installation an
-            self.showChangelog(extract_dir)
-        else:
-            self['status'].setText(_('Failed to extract update. "speedyServiceScanUpdates" not found.'))
-
-    except Exception as e:
-        self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
-        self['progresstext'].setText(_('Extraction failed.'))
-
-def showChangelog(self, extracted_dir):
-    """Lädt die changelog.txt und zeigt sie in einem Popup an."""
-    changelog_path = os.path.join(extracted_dir, "speedyServiceScanUpdates-main", "changelog.txt")
-
-    if os.path.exists(changelog_path):
-        with open(changelog_path, "r") as changelog_file:
-            changelog_content = changelog_file.read()
-
-        # Zeige das Changelog als Popup
-        self.session.open(MessageBox, changelog_content, MessageBox.TYPE_INFO, timeout=10)
-
-        # Benutzer fragen, ob er das Update installieren möchte
-        self.session.openWithCallback(self.askForUpdateConfirmation, MessageBox, _("Do you want to install the update?"), MessageBox.TYPE_YESNO)
-    else:
-        self['status'].setText(_('Changelog not found.'))
-        self['progresstext'].setText(_('Changelog file missing.'))
-
-
-    def askForUpdateConfirmation(self, answer):
-        """Fragt den Benutzer, ob er das Update installieren möchte."""
-        if answer:
-            self['status'].setText(_('Proceeding with update...'))
-            self.downloadUpdate()  # Update herunterladen
-        else:
-            self['status'].setText(_('Update cancelled.'))
-            self['progresstext'].setText(_('Update not installed.'))
-
-    def downloadUpdate(self):
-        """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
+        """Entpackt die heruntergeladene ZIP-Datei direkt aus dem 'speedyServiceScanUpdates-main/speedyServiceScanUpdates' Ordner in das Zielverzeichnis."""
         try:
-            # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
-            self['status'].setText(_('Downloading update...'))
-            urllib.request.urlretrieve(update_url, "/tmp/speedyServiceScanUpdates.zip")
+            # Überprüfen, ob die Datei existiert
+            if not os.path.exists(downloaded_file):
+                self['status'].setText(_('Downloaded file not found.'))
+                self['progresstext'].setText(_('Download failed.'))
+                print(f"Fehler: Die Datei '{downloaded_file}' existiert nicht.")  # Debugging
+                return
 
-            # Überprüfen, ob die Datei heruntergeladen wurde
-            self['status'].setText(_('Update downloaded successfully.'))
+            # Entpacken der ZIP-Datei in den temporären Ordner
+            self['status'].setText(_('Extracting update...'))
+            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
+
+            # Pfad zu den entpackten Dateien im Ordner 'speedyServiceScanUpdates-main/speedyServiceScanUpdates'
+            source_dir = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
+            
+            # Überprüfen, ob der Ordner existiert
+            if os.path.exists(source_dir):
+                print(f"Found source directory: {source_dir}")  # Debugging
+
+                # Zielordner löschen, wenn er existiert
+                if os.path.exists(target_dir):
+                    print(f"Removing existing target directory: {target_dir}")  # Debugging
+                    shutil.rmtree(target_dir)
+
+                # Dateien aus dem entpackten Ordner 'speedyServiceScanUpdates' direkt ins Ziel kopieren
+                shutil.copytree(source_dir, target_dir)
+                self['status'].setText(_('Update completed successfully!'))
+                self['progresstext'].setText(_('Update installed successfully.'))
+                
+                # Zeige das Changelog nach der Installation an
+                self.showChangelog(extract_dir)
+            else:
+                self['status'].setText(_('Failed to extract update. "speedyServiceScanUpdates" not found.'))
+                print("Fehler: Ordner 'speedyServiceScanUpdates' nicht gefunden.")  # Debugging
 
         except Exception as e:
-            self['status'].setText(_('Download failed: {}'.format(str(e))))
-            self['progresstext'].setText(_('Download error.'))
-            print("Fehler beim Herunterladen des Updates: ", e)  # Debugging
+            self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
+            self['progresstext'].setText(_('Extraction failed.'))
+            print("Fehler beim Entpacken: ", e)  # Debugging
+
+    def showChangelog(self, extract_dir):
+        """Zeigt das Changelog nach dem Update an."""
+        changelog_path = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "changelog.txt")
+        try:
+            if os.path.exists(changelog_path):
+                with open(changelog_path, 'r') as changelog_file:
+                    changelog = changelog_file.read()
+                    self['changelogtext'].setText(changelog)
+                    print("Changelog angezeigt.")  # Debugging
+            else:
+                print("Changelog-Datei nicht gefunden.")  # Debugging
+                self['changelogtext'].setText(_('Changelog not found.'))
+        except Exception as e:
+            print("Fehler beim Laden des Changelogs: ", e)  # Debugging
+            self['changelogtext'].setText(_('Error loading changelog.'))
 
     def keyCancel(self):
         """Beenden des Updates."""
@@ -214,6 +202,7 @@ def showChangelog(self, extracted_dir):
     def keyExit(self):
         """Verlässt den Bildschirm."""
         self.close()
+
 
 # SetupScreen Klasse anpassen, um den Update-Button hinzuzufügen
 class SSUSetupScreen(ConfigListScreen, Screen):
