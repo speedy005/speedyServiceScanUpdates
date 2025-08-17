@@ -34,7 +34,7 @@ from Tools.Directories import fileExists
 version = "3.6"
 
 # GitHub URL für das ZIP-Archiv
-update_url = "https://github.com/speedy005/speedyServiceScanUpdates.git"  # ZIP-Download-URL
+update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
 
 # Speicherorte
 download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
