@@ -4,7 +4,7 @@
 import os
 import sys
 import zipfile
-import urllib.request
+import requests  # Anstelle von urllib
 import shutil
 from enigma import getDesktop
 from Screens.Screen import Screen
@@ -104,26 +104,37 @@ class SSUUpdateScreen(Screen):
     def downloadChangelog(self):
         """Lädt das ZIP-Archiv herunter und zeigt den Fortschritt an."""
         try:
-            print("Starting download...")  # Debugging
+            self['status'].setText(_('Downloading...'))
+            self['progresstext'].setText(_('Downloading update...'))
+
+            # Download mit requests
+            response = requests.get(update_url, stream=True)
+            total_size = int(response.headers.get('content-length', 0))
             
-            # Versuche, die Datei herunterzuladen
-            urllib.request.urlretrieve(update_url, download_path)
-            
-            # Überprüfen, ob die Datei heruntergeladen wurde
-            if os.path.exists(download_path):
-                print("Download completed.")  # Debugging
-                self['status'].setText(_('Download completed.'))
-                self['progresstext'].setText(f'File saved to: {download_path}')
-                return True  # Erfolgreich heruntergeladen
+            # Sicherstellen, dass die URL gültig ist
+            if response.status_code == 200:
+                with open(download_path, 'wb') as f:
+                    for data in response.iter_content(chunk_size=1024):
+                        f.write(data)
+
+                # Überprüfen, ob die Datei heruntergeladen wurde
+                if os.path.exists(download_path):
+                    self['status'].setText(_('Download completed.'))
+                    self['progresstext'].setText(f'File saved to: {download_path}')
+                    return True
+                else:
+                    self['status'].setText(_('Download failed.'))
+                    self['progresstext'].setText(_('Download failed.'))
+                    return False
             else:
-                self['status'].setText(_('Failed to download update.'))
-                self['progresstext'].setText(_('Download failed.'))
-                return False  # Download fehlgeschlagen
+                self['status'].setText(_('Download failed.'))
+                self['progresstext'].setText(_('Error: Unable to fetch the file.'))
+                return False
         except Exception as e:
             self['status'].setText(_('Download failed.'))
             self['progresstext'].setText(f'Error: {str(e)}')
             print(f"Fehler beim Download: {e}")  # Debugging
-            return False  # Fehler beim Download
+            return False
 
     def extractUpdate(self, downloaded_file):
         """Entpackt das ZIP-Archiv."""
@@ -157,6 +168,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Beenden des Update-Screens."""
         self.close()
+
 
 
 
