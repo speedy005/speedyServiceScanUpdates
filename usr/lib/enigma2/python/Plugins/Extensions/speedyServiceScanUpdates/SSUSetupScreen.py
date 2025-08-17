@@ -49,6 +49,10 @@ sz_w = getDesktop(0).size().width()
 GITHUB_URL = "https://github.com/speedy005/speedyServiceScanUpdates.git"
 download_path = '/tmp/updatefile.tar.gz'
 
+# GitHub Repository URL
+self.updateurl = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
+
+
 # Klasse für das Update-Screen
 class SSUUpdateScreen(Screen):
     if sz_w == 1920:
