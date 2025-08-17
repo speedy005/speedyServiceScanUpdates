@@ -94,6 +94,9 @@ class SSUUpdateScreen(Screen):
         self.dlfile = download_path
         self.update_dir = "/var/volatile/tmp/speedyServiceScanUpdates-main"
         self.dest_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
+        
+        # Flag to determine if update was found
+        self.update_found = False
 
         # Tastenbelegung
         self["key_red"] = Button(_("Cancel"))
@@ -120,11 +123,10 @@ class SSUUpdateScreen(Screen):
         update_src_dir = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
 
         if os.path.exists(update_src_dir):
-            # Update verfügbar, Nutzer informieren
-            self['status'].setText(_('Update found! Preparing to install...'))
-            # Warten auf Bestätigung der Gelben Taste (Starten des Kopierens)
+            self.update_found = True
+            self['status'].setText(_('Update found! Press green to install.'))
         else:
-            # Kein Update gefunden
+            self.update_found = False
             self['status'].setText(_('No update found.'))
 
     def copyUpdateFiles(self):
@@ -141,6 +143,13 @@ class SSUUpdateScreen(Screen):
         except Exception as e:
             self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
 
+    def startUpdate(self):
+        """Startet das Update, wenn ein Update vorhanden ist."""
+        if self.update_found:
+            self.copyUpdateFiles()
+        else:
+            self['status'].setText(_('No update available.'))
+
     def keyCancel(self):
         """Beenden des Updates."""
         self.close()
@@ -148,10 +157,6 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Verlässt den Bildschirm."""
         self.close()
-
-    def startUpdate(self):
-        """Startet das Update bei Drücken der grünen Taste oder der gelben Taste (bestätigt das Update)."""
-        self.copyUpdateFiles()
 
 
 
