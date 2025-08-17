@@ -37,7 +37,7 @@ from Tools.Directories import fileExists
 from Screens.Standby import TryQuitMainloop
 
 # --- Version ---
-version = "3.5"
+version = "3.6"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das ZIP-Archiv
@@ -77,106 +77,107 @@ class SSUUpdateScreen(Screen):
          </screen>"""
 
     def __init__(self, session):
-    Screen.__init__(self, session)
-    self.session = session
-    self['status'] = Label(_("Checking for updates..."))
-    self['progress'] = ProgressBar()
-    self['progresstext'] = Label()
+        Screen.__init__(self, session)
+        self.session = session
+        self['status'] = Label(_("Checking for updates..."))
+        self['progress'] = ProgressBar()
+        self['progresstext'] = Label()
 
-    # Tastenbelegung
-    self["key_red"] = Button(_("Cancel"))
-    self["key_green"] = Button(_("Start"))
-    self["key_yellow"] = Button(_("Check for Updates"))
-    self["key_blue"] = Button(_("Exit"))
+        # Tastenbelegung
+        self["key_red"] = Button(_("Cancel"))
+        self["key_green"] = Button(_("Start"))
+        self["key_yellow"] = Button(_("Check for Updates"))
+        self["key_blue"] = Button(_("Exit"))
 
-    self["actions"] = ActionMap(
-        ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
-        {
-            "red": self.keyCancel,
-            "green": self.startUpdate,
-            "yellow": self.checkForUpdates,
-            "blue": self.keyExit,
-            "cancel": self.keyCancel,
-            "ok": self.startUpdate,
-        },
-        -2
-    )
+        self["actions"] = ActionMap(
+            ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
+            {
+                "red": self.keyCancel,
+                "green": self.startUpdate,
+                "yellow": self.checkForUpdates,
+                "blue": self.keyExit,
+                "cancel": self.keyCancel,
+                "ok": self.startUpdate,
+            },
+            -2
+        )
 
-def startUpdate(self):
-    """Startet den Update-Prozess."""
-    self.checkForUpdates()
+    def startUpdate(self):
+        """Startet den Update-Prozess."""
+        self.checkForUpdates()
 
-def checkForUpdates(self):
-    """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
-    self['status'].setText(_('Checking for updates...'))
-    self['progresstext'].setText(_('Please wait...'))
+    def checkForUpdates(self):
+        """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
+        self['status'].setText(_('Checking for updates...'))
+        self['progresstext'].setText(_('Please wait...'))
 
-    # Aufruf der Methode zum Herunterladen des Updates
-    self.downloadUpdate()
+        # Aufruf der Methode zum Herunterladen des Updates
+        self.downloadUpdate()
 
-def downloadUpdate(self):
-    """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
-    download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
+    def downloadUpdate(self):
+        """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
+        download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
 
-    try:
-        # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
-        self['status'].setText(_('Downloading update...'))
-        urllib.request.urlretrieve(self.updateurl, download_path)
+        try:
+            # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
+            self['status'].setText(_('Downloading update...'))
+            urllib.request.urlretrieve(update_url, download_path)
 
-        # Überprüfen, ob die Datei heruntergeladen wurde
-        if os.path.exists(download_path):
-            self['status'].setText(_('Update downloaded successfully.'))
-            self.extractUpdate(download_path)
-        else:
-            self['status'].setText(_('Failed to download update.'))
+            # Überprüfen, ob die Datei heruntergeladen wurde
+            if os.path.exists(download_path):
+                self['status'].setText(_('Update downloaded successfully.'))
+                self.extractUpdate(download_path)
+            else:
+                self['status'].setText(_('Failed to download update.'))
 
-    except Exception as e:
-        self['status'].setText(_('Download failed: {}'.format(str(e))))
-        self['progresstext'].setText(_('Failed to download update.'))
+        except Exception as e:
+            self['status'].setText(_('Download failed: {}'.format(str(e))))
+            self['progresstext'].setText(_('Failed to download update.'))
 
-def extractUpdate(self, downloaded_file):
-    """Entpackt die heruntergeladene ZIP-Datei."""
-    extract_dir = "/tmp/speedyServiceScanUpdates"  # Zielordner für das entpackte Repository
+    def extractUpdate(self, downloaded_file):
+        """Entpackt die heruntergeladene ZIP-Datei."""
+        extract_dir = "/tmp/speedyServiceScanUpdates"  # Zielordner für das entpackte Repository
 
-    try:
-        # Entpacken der ZIP-Datei
-        self['status'].setText(_('Extracting update...'))
-        with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
-            zip_ref.extractall(extract_dir)
+        try:
+            # Entpacken der ZIP-Datei
+            self['status'].setText(_('Extracting update...'))
+            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
 
-        # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
-        self.copyUpdateFiles(extract_dir)
+            # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
+            self.copyUpdateFiles(extract_dir)
 
-    except Exception as e:
-        self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
-        self['progresstext'].setText(_('Extraction failed.'))
+        except Exception as e:
+            self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
+            self['progresstext'].setText(_('Extraction failed.'))
 
-def copyUpdateFiles(self, extracted_dir):
-    """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
-    source_dir = os.path.join(extracted_dir, "speedyServiceScanUpdates-main", "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
-    target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
+    def copyUpdateFiles(self, extracted_dir):
+        """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
+        source_dir = os.path.join(extracted_dir, "speedyServiceScanUpdates-main", "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+        target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
 
-    try:
-        # Zielverzeichnis löschen, wenn es existiert
-        if os.path.exists(target_dir):
-            shutil.rmtree(target_dir)
+        try:
+            # Zielverzeichnis löschen, wenn es existiert
+            if os.path.exists(target_dir):
+                shutil.rmtree(target_dir)
 
-        # Dateien kopieren
-        shutil.copytree(source_dir, target_dir)
-        self['status'].setText(_('Update completed successfully!'))
-        self['progresstext'].setText(_('Update installed successfully.'))
+            # Dateien kopieren
+            shutil.copytree(source_dir, target_dir)
+            self['status'].setText(_('Update completed successfully!'))
+            self['progresstext'].setText(_('Update installed successfully.'))
 
-    except Exception as e:
-        self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
-        self['progresstext'].setText(_('File copy failed.'))
+        except Exception as e:
+            self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
+            self['progresstext'].setText(_('File copy failed.'))
 
-def keyCancel(self):
-    """Beenden des Updates."""
-    self.close()
+    def keyCancel(self):
+        """Beenden des Updates."""
+        self.close()
 
-def keyExit(self):
-    """Verlässt den Bildschirm."""
-    self.close()
+    def keyExit(self):
+        """Verlässt den Bildschirm."""
+        self.close()
+
 
 
 
