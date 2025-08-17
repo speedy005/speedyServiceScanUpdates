@@ -140,57 +140,43 @@ class SSUUpdateScreen(Screen):
         """Entpackt das ZIP-Archiv."""
         try:
             self['status'].setText(_('Extracting update...'))
-            print("Extracting update...")  # Debugging
-
-            # Sicherstellen, dass das Zielverzeichnis existiert
-            if os.path.exists(extract_dir):
-                shutil.rmtree(extract_dir)  # Vorherigen Inhalt löschen
-
-            os.makedirs(extract_dir, exist_ok=True)
-
-            # Entpacken der ZIP-Datei
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
 
-            self['status'].setText(_('Update extracted.'))
-            print("Extraction completed.")  # Debugging
-
-            # Prüfen, ob die changelog.txt existiert
-            changelog_path = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "changelog.txt")
-            if os.path.exists(changelog_path):
-                with open(changelog_path, 'r') as file:
-                    changelog_content = file.read()
-                    self['progresstext'].setText(changelog_content)  # Changelog anzeigen
-                    print("Changelog loaded.")  # Debugging
+            # Verschieben der extrahierten Dateien an den Zielort
+            if os.path.isdir(extract_dir):
+                for filename in os.listdir(extract_dir):
+                    file_path = os.path.join(extract_dir, filename)
+                    if os.path.isdir(file_path):
+                        shutil.copytree(file_path, target_dir)
+                    else:
+                        shutil.copy(file_path, target_dir)
+                self['status'].setText(_('Update applied successfully.'))
+                self['progresstext'].setText(_('Update completed.'))
+                print("Update completed successfully.")  # Debugging
             else:
-                self['progresstext'].setText(_('No changelog found.'))
+                self['status'].setText(_('Extraction failed.'))
+                self['progresstext'].setText(_('Failed to extract update.'))
+                print("Fehler: Entpacken fehlgeschlagen.")  # Debugging
 
-            # Kopieren des entpackten Updates in das Zielverzeichnis
-            target = os.path.join(extract_dir, "speedyServiceScanUpdates-main")
-            if os.path.isdir(target):
-                shutil.copytree(target, target_dir, dirs_exist_ok=True)
-                self['status'].setText(_('Update installed successfully.'))
-                self['progresstext'].setText(_('Update was successfully installed.'))
-                print("Update installed.")  # Debugging
-            else:
-                self['status'].setText(_('Failed to install update.'))
-                print("Fehler beim Installieren des Updates.")  # Debugging
+            # Bereinigen der temporären Dateien
+            if os.path.exists(downloaded_file):
+                os.remove(downloaded_file)
+            if os.path.exists(extract_dir):
+                shutil.rmtree(extract_dir)
 
         except Exception as e:
             self['status'].setText(_('Extraction failed: {}'.format(str(e))))
-            self['progresstext'].setText(_('Error during extraction.'))
+            self['progresstext'].setText(_('Extraction error.'))
             print("Fehler beim Entpacken: ", e)  # Debugging
 
     def keyCancel(self):
-        """Abbrechen"""
+        """Beenden des Screens."""
         self.close()
 
     def keyExit(self):
-        """Beenden"""
+        """Beenden des Screens."""
         self.close()
-
-
-
 
 # SetupScreen Klasse anpassen, um den Update-Button hinzuzufügen
 class SSUSetupScreen(ConfigListScreen, Screen):
