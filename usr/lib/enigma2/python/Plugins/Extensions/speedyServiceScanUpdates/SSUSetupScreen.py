@@ -55,6 +55,7 @@ class SSUUpdateScreen(Screen):
         <widget name="progress" position="10,100" size="1180,50" />
         <widget name="status" position="10,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
         <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
+        <widget name="changelog" position="10,280" size="1180,200" font="Regular;20" valign="top" halign="left" />
         <widget name="key_yellow" position="604,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
         <widget name="key_green" position="305,3" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
         <widget name="key_red" position="3,4" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
@@ -70,6 +71,7 @@ class SSUUpdateScreen(Screen):
         <widget name="progress" position="10,100" size="1050,50" />
         <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
         <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
+        <widget name="changelog" position="10,280" size="1050,200" font="Regular;20" valign="top" halign="left" />
         <widget name="key_yellow" position="538,4" zPosition="1" size="250,70" font="Regular;30" halign="center" foregroundColor="white" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
         <widget name="key_green" position="277,3" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="white" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
         <widget name="key_red" position="13,2" zPosition="1" size="250,70" font="Regular;30" foregroundColor="white" halign="center" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
@@ -82,6 +84,7 @@ class SSUUpdateScreen(Screen):
         self['status'] = Label(_("Checking for updates..."))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label()
+        self['changelog'] = Label(_("Loading changelog..."))
 
         # Tastenbelegung
         self["key_red"] = Button(_("Cancel"))
@@ -121,11 +124,8 @@ class SSUUpdateScreen(Screen):
         try:
             # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
             self['status'].setText(_('Downloading update...'))
-            response = urllib.request.urlretrieve(self.update_url, download_path)
+            urllib.request.urlretrieve(self.update_url, download_path)
             self['status'].setText(_('Download complete.'))
-
-            # Protokolliere die Antwort des Downloads
-            print("Download response:", response)
 
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
@@ -148,12 +148,26 @@ class SSUUpdateScreen(Screen):
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
 
+            # Zeige den Inhalt der changelog.txt an
+            self.showChangelog(extract_dir)
+
             # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
             self.copyUpdateFiles(extract_dir)
 
         except Exception as e:
             self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
             self['progresstext'].setText(_('Extraction failed.'))
+
+    def showChangelog(self, extracted_dir):
+        """Lädt die changelog.txt und zeigt sie im Screen an."""
+        changelog_path = os.path.join(extracted_dir, "speedyServiceScanUpdates-main", "changelog.txt")
+        
+        if os.path.exists(changelog_path):
+            with open(changelog_path, "r") as f:
+                changelog_content = f.read()
+            self['changelog'].setText(changelog_content)
+        else:
+            self['changelog'].setText(_('No changelog found.'))
 
     def copyUpdateFiles(self, extracted_dir):
         """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
@@ -181,6 +195,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Verlässt den Bildschirm."""
         self.close()
+
 
 
 
