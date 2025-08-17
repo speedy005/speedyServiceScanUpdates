@@ -249,8 +249,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self.onLayoutFinish.append(self.layoutFinished)
         self["config"].onSelectionChanged.append(self.updateHelp)
 
-    def layoutFinished(self):
-        self.populateList()
+   
 
     def populateList(self):
         self.list = [
