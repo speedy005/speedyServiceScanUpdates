@@ -145,19 +145,20 @@ class SSUUpdateScreen(Screen):
             self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
 
     def copyUpdateFiles(self, extracted_dir):
-        """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
-        source_dir = os.path.join(extracted_dir, "speedyServiceScan")
-        target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
+    """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
+    source_dir = os.path.join(extracted_dir, "speedyServiceScanUpdates-main", "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+    target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
 
-        try:
-            # Dateien kopieren
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)  # Zielverzeichnis löschen, wenn es existiert
+    try:
+        # Zielverzeichnis löschen, wenn es existiert
+        if os.path.exists(target_dir):
+            shutil.rmtree(target_dir)
 
-            shutil.copytree(source_dir, target_dir)
-            self['status'].setText(_('Update completed successfully!'))
-        except Exception as e:
-            self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
+        # Dateien kopieren
+        shutil.copytree(source_dir, target_dir)
+        self['status'].setText(_('Update completed successfully!'))
+    except Exception as e:
+        self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
 
     def keyCancel(self):
         """Beenden des Updates."""
