@@ -124,10 +124,12 @@ class SSUUpdateScreen(Screen):
             else:
                 self['status'].setText(_('Failed to download update.'))
                 self['progresstext'].setText(_('Download failed.'))
+                print("Fehler: Die ZIP-Datei wurde nicht heruntergeladen.")  # Debugging
 
         except Exception as e:
             self['status'].setText(_('Download failed: {}'.format(str(e))))
             self['progresstext'].setText(_('Download error.'))
+            print("Fehler beim Download: ", e)  # Debugging
 
     def extractUpdate(self, downloaded_file):
         """Entpackt die heruntergeladene ZIP-Datei."""
@@ -139,12 +141,13 @@ class SSUUpdateScreen(Screen):
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
 
-            # Changelog anzeigen
+            # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
             self.showChangelog(extract_dir)
 
         except Exception as e:
             self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
             self['progresstext'].setText(_('Extraction failed.'))
+            print("Fehler beim Entpacken: ", e)  # Debugging
 
     def showChangelog(self, extracted_dir):
         """Lädt die changelog.txt und zeigt sie in einem Popup an."""
@@ -177,19 +180,15 @@ class SSUUpdateScreen(Screen):
         try:
             # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
             self['status'].setText(_('Downloading update...'))
-            urllib.request.urlretrieve(update_url, download_path)
+            urllib.request.urlretrieve(update_url, "/tmp/speedyServiceScanUpdates.zip")
 
             # Überprüfen, ob die Datei heruntergeladen wurde
-            if os.path.exists(download_path):
-                self['status'].setText(_('Update downloaded successfully.'))
-                self.extractUpdate(download_path)
-            else:
-                self['status'].setText(_('Failed to download update.'))
-                self['progresstext'].setText(_('Download failed.'))
+            self['status'].setText(_('Update downloaded successfully.'))
 
         except Exception as e:
             self['status'].setText(_('Download failed: {}'.format(str(e))))
             self['progresstext'].setText(_('Download error.'))
+            print("Fehler beim Herunterladen des Updates: ", e)  # Debugging
 
     def keyCancel(self):
         """Beenden des Updates."""
@@ -198,15 +197,6 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Verlässt den Bildschirm."""
         self.close()
-
-
-
-
-
-
-
-
-
 
 # SetupScreen Klasse anpassen, um den Update-Button hinzuzufügen
 class SSUSetupScreen(ConfigListScreen, Screen):
