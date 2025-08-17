@@ -36,6 +36,7 @@ version = "3.6"
 # GitHub URL für das TAR.GZ-Archiv
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.tar.gz"  # TAR.GZ-Download-URL
 
+
 # Speicherorte
 download_path = "/tmp/speedyServiceScanUpdates.tar.gz"  # Speicherort für die heruntergeladene TAR.GZ-Datei
 extract_dir = "/tmp/speedyServiceScanUpdates"  # Temporärer Ordner zum Entpacken
