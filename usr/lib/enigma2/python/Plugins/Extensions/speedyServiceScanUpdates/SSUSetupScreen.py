@@ -4,18 +4,16 @@
 import os
 import sys
 import urllib.request
-import tarfile
 import shutil
 import zipfile
 
-
-# --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
+# --- Plugin-Pfad dynamisch ermitteln ---
 plugin_path = None
 for base in (
     "/usr/lib/enigma2/python/Plugins/Extensions",
     "/usr/lib/enigma2/python/Plugins/SystemPlugins"
 ):
-    possible = os.path.join(base, "speedy ServiceScanUpdates")
+    possible = os.path.join(base, "speedyServiceScanUpdates")
     if os.path.isdir(possible):
         plugin_path = possible
         break
@@ -38,20 +36,12 @@ from Screens.MessageBox import MessageBox
 from Tools.Directories import fileExists
 from Screens.Standby import TryQuitMainloop
 
-# --- Lokale Imports ---
-from . import _  # Übersetzungsfunktion aus __init__.py laden
-
 # --- Version ---
 version = "3.6"
 sz_w = getDesktop(0).size().width()
 
-# GitHub URL für das .tar.gz Archiv
-GITHUB_URL = "https://github.com/speedy005/speedyServiceScanUpdates.git"
-download_path = '/tmp/updatefile.tar.gz'
-
-# GitHub Repository URL
-self.updateurl = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
-
+# GitHub URL für das ZIP-Archiv
+update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
 
 # Klasse für das Update-Screen
 class SSUUpdateScreen(Screen):
@@ -103,7 +93,7 @@ class SSUUpdateScreen(Screen):
             ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
             {
                 "red": self.keyCancel,
-                "green": self.startUpdate,  # <-- Hier wird startUpdate aufgerufen
+                "green": self.startUpdate,
                 "yellow": self.checkForUpdates,
                 "blue": self.keyExit,
                 "cancel": self.keyCancel,
@@ -123,11 +113,11 @@ class SSUUpdateScreen(Screen):
 
     def downloadUpdate(self):
         """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
-        download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
+        download_path = "/tmp/speedyServiceScanUpdates.zip"
 
         try:
             # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
-            urllib.request.urlretrieve(self.updateurl, download_path)
+            urllib.request.urlretrieve(update_url, download_path)
 
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
@@ -141,7 +131,7 @@ class SSUUpdateScreen(Screen):
 
     def extractUpdate(self, downloaded_file):
         """Entpackt die heruntergeladene ZIP-Datei."""
-        extract_dir = "/tmp/speedyServiceScanUpdates"  # Zielordner für das entpackte Repository
+        extract_dir = "/tmp/speedyServiceScanUpdates"
 
         try:
             # Entpacken der ZIP-Datei
@@ -156,14 +146,14 @@ class SSUUpdateScreen(Screen):
 
     def copyUpdateFiles(self, extracted_dir):
         """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
-        # Quelle der entpackten Dateien (Temporäres Verzeichnis)
         source_dir = os.path.join(extracted_dir, "speedyServiceScan")
-
-        # Zielverzeichnis, in das die Dateien kopiert werden
         target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
 
         try:
             # Dateien kopieren
+            if os.path.exists(target_dir):
+                shutil.rmtree(target_dir)  # Zielverzeichnis löschen, wenn es existiert
+
             shutil.copytree(source_dir, target_dir)
             self['status'].setText(_('Update completed successfully!'))
         except Exception as e:
@@ -176,6 +166,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Verlässt den Bildschirm."""
         self.close()
+
 
 
 
