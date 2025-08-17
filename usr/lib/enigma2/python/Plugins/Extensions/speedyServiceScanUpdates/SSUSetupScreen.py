@@ -6,7 +6,7 @@ import sys
 import urllib.request
 import tarfile
 import shutil
-import os
+import zipfile
 
 
 # --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
@@ -119,7 +119,7 @@ class SSUUpdateScreen(Screen):
 
         try:
             # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
-            urllib.request.urlretrieve(self.updateurl, download_path)
+            urllib.request.urlretrieve(GITHUB_URL, download_path)
 
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
@@ -172,7 +172,7 @@ class SSUUpdateScreen(Screen):
 
     def keyExit(self):
         """Verlässt den Bildschirm."""
-        self.close())
+        self.close()
 
 
 
