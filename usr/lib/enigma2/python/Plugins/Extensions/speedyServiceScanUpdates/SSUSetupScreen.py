@@ -46,7 +46,7 @@ version = "3.6"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das .tar.gz Archiv
-GITHUB_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main.zip"
+GITHUB_URL = "https://github.com/speedy005/speedyServiceScanUpdates.git"
 download_path = '/tmp/updatefile.tar.gz'
 
 # Klasse für das Update-Screen
