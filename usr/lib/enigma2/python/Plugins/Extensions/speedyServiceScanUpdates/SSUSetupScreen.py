@@ -121,7 +121,11 @@ class SSUUpdateScreen(Screen):
         try:
             # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
             self['status'].setText(_('Downloading update...'))
-            urllib.request.urlretrieve(update_url, download_path)
+            response = urllib.request.urlretrieve(self.update_url, download_path)
+            self['status'].setText(_('Download complete.'))
+
+            # Protokolliere die Antwort des Downloads
+            print("Download response:", response)
 
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
@@ -177,6 +181,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Verlässt den Bildschirm."""
         self.close()
+
 
 
 
