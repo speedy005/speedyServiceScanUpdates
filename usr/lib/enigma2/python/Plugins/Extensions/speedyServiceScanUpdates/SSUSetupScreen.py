@@ -37,8 +37,8 @@ version = "3.6"
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
 
 # Speicherorte
-download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
-extract_dir = "/tmp/speedyServiceScanUpdates"  # Temporärer Ordner zum Entpacken
+download_path = "/tmp/ServiceScanUpdates-main.zip"  # Speicherort für die heruntergeladene ZIP-Datei
+extract_dir = "/tmp/ServiceScanUpdates"  # Temporärer Ordner zum Entpacken
 target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
 
 # Klasse für das Update-Screen
@@ -140,43 +140,54 @@ class SSUUpdateScreen(Screen):
         """Entpackt das ZIP-Archiv."""
         try:
             self['status'].setText(_('Extracting update...'))
+
+            # Entpacken der ZIP-Datei
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
 
-            # Verschieben der extrahierten Dateien an den Zielort
-            if os.path.isdir(extract_dir):
-                for filename in os.listdir(extract_dir):
-                    file_path = os.path.join(extract_dir, filename)
-                    if os.path.isdir(file_path):
-                        shutil.copytree(file_path, target_dir)
-                    else:
-                        shutil.copy(file_path, target_dir)
-                self['status'].setText(_('Update applied successfully.'))
-                self['progresstext'].setText(_('Update completed.'))
-                print("Update completed successfully.")  # Debugging
-            else:
-                self['status'].setText(_('Extraction failed.'))
-                self['progresstext'].setText(_('Failed to extract update.'))
-                print("Fehler: Entpacken fehlgeschlagen.")  # Debugging
+            print("Extraktion abgeschlossen.")  # Debugging
 
-            # Bereinigen der temporären Dateien
-            if os.path.exists(downloaded_file):
-                os.remove(downloaded_file)
-            if os.path.exists(extract_dir):
-                shutil.rmtree(extract_dir)
+            # Verschiebe entpackte Dateien in den Zielordner
+            if os.path.isdir(extract_dir):
+                for item in os.listdir(extract_dir):
+                    s = os.path.join(extract_dir, item)
+                    d = os.path.join(target_dir, item)
+
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(s, d)
+
+                self['status'].setText(_('Update applied successfully.'))
+                self['progresstext'].setText(_('Restarting plugin...'))
+                print("Update angewendet.")  # Debugging
+
+                # Bereinigen
+                self.cleanup()
+            else:
+                self['status'].setText(_('Failed to extract the update.'))
+                self['progresstext'].setText(_('Extraction failed.'))
 
         except Exception as e:
             self['status'].setText(_('Extraction failed: {}'.format(str(e))))
             self['progresstext'].setText(_('Extraction error.'))
             print("Fehler beim Entpacken: ", e)  # Debugging
 
+    def cleanup(self):
+        """Bereinige temporäre Dateien nach dem Update."""
+        if os.path.exists(download_path):
+            os.remove(download_path)
+        if os.path.exists(extract_dir):
+            shutil.rmtree(extract_dir)
+
     def keyCancel(self):
-        """Beenden des Screens."""
+        """Beende den Vorgang."""
         self.close()
 
     def keyExit(self):
-        """Beenden des Screens."""
+        """Beende den Vorgang."""
         self.close()
+
 
 # SetupScreen Klasse anpassen, um den Update-Button hinzuzufügen
 class SSUSetupScreen(ConfigListScreen, Screen):
