@@ -37,7 +37,7 @@ from Tools.Directories import fileExists
 from Screens.Standby import TryQuitMainloop
 
 # --- Version ---
-version = "3.5"
+version = "3.6"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das ZIP-Archiv
@@ -116,6 +116,7 @@ class SSUUpdateScreen(Screen):
     self['status'].setText(_('Checking for updates...'))
     self['progresstext'].setText(_('Please wait...'))
 
+    # Aufruf der Methode zum Herunterladen des Updates
     self.downloadUpdate()
 
 def downloadUpdate(self):
