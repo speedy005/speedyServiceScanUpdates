@@ -99,7 +99,7 @@ class SSUUpdateScreen(Screen):
             ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
             {
                 "red": self.keyCancel,
-                "green": self.startUpdate,
+                "green": self.startUpdate,  # <-- Hier wird startUpdate aufgerufen
                 "yellow": self.checkForUpdates,
                 "blue": self.keyExit,
                 "cancel": self.keyCancel,
@@ -107,6 +107,10 @@ class SSUUpdateScreen(Screen):
             },
             -2
         )
+
+    def startUpdate(self):
+        """Startet den Update-Prozess."""
+        self.checkForUpdates()
 
     def checkForUpdates(self):
         """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
@@ -119,7 +123,7 @@ class SSUUpdateScreen(Screen):
 
         try:
             # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
-            urllib.request.urlretrieve(GITHUB_URL, download_path)
+            urllib.request.urlretrieve(self.updateurl, download_path)
 
             # Überprüfen, ob die Datei heruntergeladen wurde
             if os.path.exists(download_path):
@@ -149,22 +153,17 @@ class SSUUpdateScreen(Screen):
     def copyUpdateFiles(self, extracted_dir):
         """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
         # Quelle der entpackten Dateien (Temporäres Verzeichnis)
-        source_dir = os.path.join(extracted_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
-        
-        # Zielverzeichnis
-        dest_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
-        
+        source_dir = os.path.join(extracted_dir, "speedyServiceScan")
+
+        # Zielverzeichnis, in das die Dateien kopiert werden
+        target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
+
         try:
-            # Prüfen, ob das Zielverzeichnis existiert, und es ggf. löschen
-            if os.path.exists(dest_dir):
-                shutil.rmtree(dest_dir)
-
-            # Kopieren der entpackten Dateien in das Zielverzeichnis
-            shutil.copytree(source_dir, dest_dir)
-
-            self['status'].setText(_('Update installed successfully.'))
+            # Dateien kopieren
+            shutil.copytree(source_dir, target_dir)
+            self['status'].setText(_('Update completed successfully!'))
         except Exception as e:
-            self['status'].setText(_('Failed to copy update files: {}'.format(str(e))))
+            self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
 
     def keyCancel(self):
         """Beenden des Updates."""
