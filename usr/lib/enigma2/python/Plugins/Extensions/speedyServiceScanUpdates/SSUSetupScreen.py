@@ -37,7 +37,7 @@ from Tools.Directories import fileExists
 from Screens.Standby import TryQuitMainloop
 
 # --- Version ---
-version = "3.6"
+version = "3.5"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das ZIP-Archiv
@@ -111,40 +111,51 @@ class SSUUpdateScreen(Screen):
         self['status'].setText(_('Checking for updates...'))
         self.downloadUpdate()
 
-    def downloadUpdate(self):
-        """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
-        download_path = "/tmp/speedyServiceScanUpdates.zip"
+    def checkForUpdates(self):
+    """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
+    self['status'].setText(_('Checking for updates...'))
+    self['progresstext'].setText(_('Please wait...'))
 
-        try:
-            # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
-            urllib.request.urlretrieve(update_url, download_path)
+    self.downloadUpdate()
 
-            # Überprüfen, ob die Datei heruntergeladen wurde
-            if os.path.exists(download_path):
-                self['status'].setText(_('Update downloaded successfully.'))
-                self.extractUpdate(download_path)
-            else:
-                self['status'].setText(_('Failed to download update.'))
+def downloadUpdate(self):
+    """Lädt das Update-Repository als ZIP-Datei herunter und speichert es lokal."""
+    download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
 
-        except Exception as e:
-            self['status'].setText(_('Download failed: {}'.format(str(e))))
+    try:
+        # Herunterladen der ZIP-Datei des Repositories von GitHub (RAW-Link)
+        self['status'].setText(_('Downloading update...'))
+        urllib.request.urlretrieve(self.updateurl, download_path)
 
-    def extractUpdate(self, downloaded_file):
-        """Entpackt die heruntergeladene ZIP-Datei."""
-        extract_dir = "/tmp/speedyServiceScanUpdates"
+        # Überprüfen, ob die Datei heruntergeladen wurde
+        if os.path.exists(download_path):
+            self['status'].setText(_('Update downloaded successfully.'))
+            self.extractUpdate(download_path)
+        else:
+            self['status'].setText(_('Failed to download update.'))
 
-        try:
-            # Entpacken der ZIP-Datei
-            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
-                zip_ref.extractall(extract_dir)
+    except Exception as e:
+        self['status'].setText(_('Download failed: {}'.format(str(e))))
+        self['progresstext'].setText(_('Failed to download update.'))
 
-            # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
-            self.copyUpdateFiles(extract_dir)
+def extractUpdate(self, downloaded_file):
+    """Entpackt die heruntergeladene ZIP-Datei."""
+    extract_dir = "/tmp/speedyServiceScanUpdates"  # Zielordner für das entpackte Repository
 
-        except Exception as e:
-            self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
+    try:
+        # Entpacken der ZIP-Datei
+        self['status'].setText(_('Extracting update...'))
+        with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
 
-    def copyUpdateFiles(self, extracted_dir):
+        # Nach dem Entpacken die Dateien ins Zielverzeichnis kopieren
+        self.copyUpdateFiles(extract_dir)
+
+    except Exception as e:
+        self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
+        self['progresstext'].setText(_('Extraction failed.'))
+
+def copyUpdateFiles(self, extracted_dir):
     """Kopiert die entpackten Dateien aus dem temporären Ordner ins Zielverzeichnis."""
     source_dir = os.path.join(extracted_dir, "speedyServiceScanUpdates-main", "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
     target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScan"
@@ -157,8 +168,12 @@ class SSUUpdateScreen(Screen):
         # Dateien kopieren
         shutil.copytree(source_dir, target_dir)
         self['status'].setText(_('Update completed successfully!'))
+        self['progresstext'].setText(_('Update installed successfully.'))
+
     except Exception as e:
         self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
+        self['progresstext'].setText(_('File copy failed.'))
+
 
     def keyCancel(self):
         """Beenden des Updates."""
