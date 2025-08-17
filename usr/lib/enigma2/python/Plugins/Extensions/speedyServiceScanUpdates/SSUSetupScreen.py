@@ -3,7 +3,7 @@
 # --- Standardbibliothek ---
 import os
 import sys
-import tarfile
+import zipfile
 import urllib.request
 import shutil
 
@@ -33,12 +33,11 @@ from Tools.Directories import fileExists
 # --- Version ---
 version = "3.6"
 
-# GitHub URL für das TAR.GZ-Archiv
-update_url = "https://github.com/speedy005/speedyServiceScanUpdates.git"  # TAR.GZ-Download-URL
-
+# GitHub URL für das ZIP-Archiv (direkter Download-Link)
+update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"  # ZIP-Download-URL
 
 # Speicherorte
-download_path = "/tmp/speedyServiceScanUpdates.tar.gz"  # Speicherort für die heruntergeladene TAR.GZ-Datei
+download_path = "/tmp/speedyServiceScanUpdates.zip"  # Speicherort für die heruntergeladene ZIP-Datei
 extract_dir = "/tmp/speedyServiceScanUpdates"  # Temporärer Ordner zum Entpacken
 target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
 
@@ -114,7 +113,7 @@ class SSUUpdateScreen(Screen):
         self.downloadChangelog()
 
     def downloadChangelog(self):
-        """Lädt das TAR.GZ-Archiv herunter und zeigt den Fortschritt an."""
+        """Lädt das ZIP-Archiv herunter und zeigt den Fortschritt an."""
         try:
             self['status'].setText(_('Downloading update...'))
             print("Starting download...")  # Debugging
@@ -130,7 +129,7 @@ class SSUUpdateScreen(Screen):
             else:
                 self['status'].setText(_('Failed to download update.'))
                 self['progresstext'].setText(_('Download failed.'))
-                print("Fehler: Die TAR.GZ-Datei wurde nicht heruntergeladen.")  # Debugging
+                print("Fehler: Die ZIP-Datei wurde nicht heruntergeladen.")  # Debugging
 
         except Exception as e:
             self['status'].setText(_('Download failed: {}'.format(str(e))))
@@ -138,7 +137,7 @@ class SSUUpdateScreen(Screen):
             print("Fehler beim Download: ", e)  # Debugging
 
     def extractUpdate(self, downloaded_file):
-        """Entpackt das TAR.GZ-Archiv."""
+        """Entpackt das ZIP-Archiv."""
         try:
             self['status'].setText(_('Extracting update...'))
             print("Extracting update...")  # Debugging
@@ -149,9 +148,9 @@ class SSUUpdateScreen(Screen):
 
             os.makedirs(extract_dir, exist_ok=True)
 
-            # Entpacken der TAR.GZ-Datei
-            with tarfile.open(downloaded_file, "r:gz") as tar:
-                tar.extractall(path=extract_dir)
+            # Entpacken der ZIP-Datei
+            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
 
             self['status'].setText(_('Update extracted.'))
             print("Extraction completed.")  # Debugging
@@ -189,6 +188,7 @@ class SSUUpdateScreen(Screen):
     def keyExit(self):
         """Beenden"""
         self.close()
+
 
 
 
