@@ -8,6 +8,7 @@ import tarfile
 import shutil
 import os
 
+
 # --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
 plugin_path = None
 for base in (
@@ -41,7 +42,7 @@ from Screens.Standby import TryQuitMainloop
 from . import _  # Übersetzungsfunktion aus __init__.py laden
 
 # --- Version ---
-version = "3.6"
+version = "3.5"
 sz_w = getDesktop(0).size().width()
 
 # GitHub URL für das .tar.gz Archiv
@@ -119,8 +120,9 @@ class SSUUpdateScreen(Screen):
 
     def checkForUpdates(self):
         """Überprüft, ob ein Update vorhanden ist und zeigt einen Hinweis an."""
-        # Überprüfen, ob das Update-Verzeichnis existiert
         update_src_dir = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+
+        print(f"Checking for updates in: {update_src_dir}")  # Debug-Ausgabe
 
         if os.path.exists(update_src_dir):
             self.update_found = True
@@ -134,13 +136,18 @@ class SSUUpdateScreen(Screen):
         src = os.path.join(self.update_dir, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
         dest = self.dest_dir
 
+        print(f"Trying to copy files from {src} to {dest}")  # Debug-Ausgabe
+
         try:
             if os.path.exists(dest):
+                print(f"Removing existing directory {dest}")  # Debug-Ausgabe
                 shutil.rmtree(dest)  # Entfernt das Zielverzeichnis, wenn es bereits existiert
 
+            print(f"Copying files from {src} to {dest}")  # Debug-Ausgabe
             shutil.copytree(src, dest)  # Kopiert das gesamte Verzeichnis
             self['status'].setText(_('Files copied successfully.'))
         except Exception as e:
+            print(f"Error during copy: {e}")  # Debug-Ausgabe
             self['status'].setText(_('Failed to copy files: {}'.format(str(e))))
 
     def startUpdate(self):
