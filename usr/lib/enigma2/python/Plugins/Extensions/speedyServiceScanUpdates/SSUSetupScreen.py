@@ -6,22 +6,7 @@ import sys
 import zipfile
 import urllib.request
 import shutil
-
-# --- Plugin-Pfad dynamisch ermitteln ---
-plugin_path = None
-for base in (
-    "/usr/lib/enigma2/python/Plugins/Extensions",
-    "/usr/lib/enigma2/python/Plugins/SystemPlugins"
-):
-    possible = os.path.join(base, "speedyServiceScanUpdates")
-    if os.path.isdir(possible):
-        plugin_path = possible
-        break
-
-if plugin_path and plugin_path not in sys.path:
-    sys.path.insert(0, plugin_path)
-
-# --- Enigma2-Imports ---
+from enigma import getDesktop
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Button import Button
@@ -29,6 +14,9 @@ from Components.Label import Label
 from Components.ProgressBar import ProgressBar
 from Screens.MessageBox import MessageBox
 from Tools.Directories import fileExists
+from Components.config import config
+from Screens.Config import ConfigListScreen
+from Components.ConfigList import getConfigListEntry
 
 # --- Version ---
 version = "3.6"
@@ -41,9 +29,10 @@ download_path = "/tmp/ServiceScanUpdates-main.zip"  # Speicherort für die herun
 extract_dir = "/tmp/ServiceScanUpdates"  # Temporärer Ordner zum Entpacken
 target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
 
-# Klasse für das Update-Screen
+# --- Update Screen Klasse ---
 class SSUUpdateScreen(Screen):
-    if getDesktop(0).size().width() == 1920:
+    sz_w = getDesktop(0).size().width()  # Bildschirmbreite ermitteln
+    if sz_w == 1920:
         skin = """
         <screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
         <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
@@ -145,48 +134,28 @@ class SSUUpdateScreen(Screen):
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
 
-            print("Extraktion abgeschlossen.")  # Debugging
-
-            # Verschiebe entpackte Dateien in den Zielordner
-            if os.path.isdir(extract_dir):
-                for item in os.listdir(extract_dir):
-                    s = os.path.join(extract_dir, item)
-                    d = os.path.join(target_dir, item)
-
-                    if os.path.isdir(s):
-                        shutil.copytree(s, d, dirs_exist_ok=True)
-                    else:
-                        shutil.copy2(s, d)
-
-                self['status'].setText(_('Update applied successfully.'))
-                self['progresstext'].setText(_('Restarting plugin...'))
-                print("Update angewendet.")  # Debugging
-
-                # Bereinigen
-                self.cleanup()
+            # Überprüfen, ob das Zielverzeichnis existiert und kopieren
+            if os.path.exists(extract_dir):
+                shutil.copytree(extract_dir, target_dir, dirs_exist_ok=True)
+                self['status'].setText(_('Update installed successfully.'))
+                print("Update erfolgreich installiert.")  # Debugging
             else:
-                self['status'].setText(_('Failed to extract the update.'))
-                self['progresstext'].setText(_('Extraction failed.'))
+                self['status'].setText(_('Failed to extract update.'))
+                print("Fehler: Entpacken fehlgeschlagen.")  # Debugging
 
         except Exception as e:
-            self['status'].setText(_('Extraction failed: {}'.format(str(e))))
+            self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
             self['progresstext'].setText(_('Extraction error.'))
             print("Fehler beim Entpacken: ", e)  # Debugging
 
-    def cleanup(self):
-        """Bereinige temporäre Dateien nach dem Update."""
-        if os.path.exists(download_path):
-            os.remove(download_path)
-        if os.path.exists(extract_dir):
-            shutil.rmtree(extract_dir)
-
     def keyCancel(self):
-        """Beende den Vorgang."""
+        """Abbrechen der Aktualisierung."""
         self.close()
 
     def keyExit(self):
-        """Beende den Vorgang."""
+        """Beenden des Update-Screens."""
         self.close()
+
 
 
 # SetupScreen Klasse anpassen, um den Update-Button hinzuzufügen
