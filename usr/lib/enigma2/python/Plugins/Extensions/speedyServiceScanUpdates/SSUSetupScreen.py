@@ -7,6 +7,7 @@ import re
 import zipfile
 import requests
 import shutil
+from . import _  # Übersetzungsfunktion aus __init__.py laden
 from enigma import getDesktop
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
@@ -20,7 +21,7 @@ from Screens.Config import ConfigListScreen
 from Components.ConfigList import getConfigListEntry
 
 # --- Version ---
-version = "3.6"
+version = "3.5"
 
 # GitHub URL für das ZIP-Archiv (direkter Download-Link)
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates.git"  # ZIP-Download-URL
@@ -30,12 +31,40 @@ download_path = "/tmp/ServiceScanUpdates-main.zip"  # Speicherort für die herun
 extract_dir = "/tmp/ServiceScanUpdates"  # Temporärer Ordner zum Entpacken
 target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"  # Zielordner
 
-def clean_version(version):
-    """Bereinigt die Versionsnummer, um nur Zahlen und Punkte zu behalten."""
-    return ''.join(re.findall(r'\d+\.*\d*', version))
+# Bildschirmgröße und Skin-Auswahl
+sz_w = getDesktop(0).size().width()  # Bildschirmbreite ermitteln
+if sz_w == 1920:
+    skin = """
+    <screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
+        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/green.png" position="305,5" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/yellow.png" position="610,5" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/blue.png" position="915,5" size="5,70" scale="stretch" alphatest="on" />
+        <widget name="progress" position="10,100" size="1180,50" />
+        <widget name="status" position="10,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
+        <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
+        <widget name="key_yellow" position="604,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_green" position="305,3" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_red" position="3,4" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+        <widget name="key_blue" position="916,6" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+    </screen>"""
+else:
+    skin = """
+    <screen name="SIUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
+        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/green.png" position="275,5" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/yellow.png" position="537,5" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/blue.png" position="795,6" size="5,70" scale="stretch" alphatest="on" />
+        <widget name="progress" position="10,100" size="1050,50" />
+        <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
+        <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
+        <widget name="key_yellow" position="538,4" zPosition="1" size="250,70" font="Regular;30" halign="center" foregroundColor="white" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
+        <widget name="key_green" position="277,3" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="white" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
+        <widget name="key_red" position="13,2" zPosition="1" size="250,70" font="Regular;30" foregroundColor="white" halign="center" valign="center" backgroundColor="black" transparent="1" foregroundColor="white" shadowColor="green" shadowOffset="-2,-2" />
+        <widget name="key_blue" position="798,5" zPosition="1" size="250,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="green" foregroundColor="white" shadowOffset="-2,-2" />
+    </screen>"""
 
-
-
+class SSUUpdateScreen(Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
@@ -77,17 +106,13 @@ def clean_version(version):
     def getLatestVersion(self):
         """Prüft die neueste Version vom GitHub-Repo und vergleicht sie mit der aktuellen Version."""
         try:
-            print("Checking for new version...")  # Debugging
             response = requests.get("https://api.github.com/repos/speedy005/speedyServiceScanUpdates/releases/latest")
-            print(f"Response status code: {response.status_code}")  # Debugging
 
             if response.status_code == 200:
                 data = response.json()  # Antwort als JSON verarbeiten
-                print(f"GitHub API Response: {data}")  # Debugging
 
                 # Extrahiere den tag_name
-                latest_version = data.get('tag_name', 'Unknown')  # Standardwert für den Fall, dass 'tag_name' nicht existiert
-                print(f"Latest version found: {latest_version}")  # Debugging
+                latest_version = data.get('tag_name', 'Unknown')
 
                 # Bereinige die Versionsnummer, um nur Zahlen und Punkte zu behalten
                 latest_version = clean_version(str(latest_version))
@@ -96,7 +121,6 @@ def clean_version(version):
                 if latest_version != version:
                     self['status'].setText(_('New update available: {}').format(latest_version))
                     self['progresstext'].setText(_('Update available!'))
-                    print(f"Update available: {latest_version}")  # Debugging
 
                     # Download und Update durchführen
                     if self.downloadChangelog():
@@ -104,34 +128,24 @@ def clean_version(version):
                 else:
                     self['status'].setText(_('No update available.'))
                     self['progresstext'].setText(_('You have the latest version.'))
-                    print("No update available.")  # Debugging
             else:
                 self['status'].setText(_('Failed to check for updates.'))
                 self['progresstext'].setText(_('Error: Unable to fetch the update information.'))
-                print(f"Failed to fetch update information. Status code: {response.status_code}")  # Debugging
-
         except Exception as e:
             self['status'].setText(_('Failed to check for updates.'))
             self['progresstext'].setText(f'Error: {str(e)}')
-            print(f"Error while checking for updates: {e}")  # Debugging
 
     def downloadChangelog(self):
         """Lädt das ZIP-Archiv herunter und zeigt den Fortschritt an."""
         try:
-            self['status'].setText(_('Downloading...'))
-            self['progresstext'].setText(_('Downloading update...'))
-
-            # Download mit requests
             response = requests.get(update_url, stream=True)
             total_size = int(response.headers.get('content-length', 0))
-            
-            # Sicherstellen, dass die URL gültig ist
+
             if response.status_code == 200:
                 with open(download_path, 'wb') as f:
                     for data in response.iter_content(chunk_size=1024):
                         f.write(data)
 
-                # Überprüfen, ob die Datei heruntergeladen wurde
                 if os.path.exists(download_path):
                     self['status'].setText(_('Download completed.'))
                     self['progresstext'].setText(f'File saved to: {download_path}')
@@ -147,33 +161,24 @@ def clean_version(version):
         except Exception as e:
             self['status'].setText(_('Download failed.'))
             self['progresstext'].setText(f'Error: {str(e)}')
-            print(f"Fehler beim Download: {e}")  # Debugging
             return False
 
     def extractUpdate(self, downloaded_file):
         """Entpackt das ZIP-Archiv."""
         try:
-            self['status'].setText(_('Extracting update...'))
-
-            # Entpacken der ZIP-Datei
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
 
-            # Überprüfen, ob das Zielverzeichnis existiert und kopieren
             if os.path.exists(extract_dir):
                 shutil.copytree(extract_dir, target_dir, dirs_exist_ok=True)
                 self['status'].setText(_('Update installed successfully.'))
                 self['progresstext'].setText(_('Update installed.'))
-                print("Update erfolgreich installiert.")  # Debugging
             else:
                 self['status'].setText(_('Failed to extract update.'))
                 self['progresstext'].setText(_('Extraction failed.'))
-                print("Fehler: Entpacken fehlgeschlagen.")  # Debugging
-
         except Exception as e:
             self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
             self['progresstext'].setText(_('Extraction error.'))
-            print("Fehler beim Entpacken: ", e)  # Debugging
 
     def keyCancel(self):
         """Abbrechen der Aktualisierung."""
@@ -182,13 +187,6 @@ def clean_version(version):
     def keyExit(self):
         """Beenden des Update-Screens."""
         self.close()
-
-
-
-
-
-
-
 
 # SetupScreen Klasse anpassen, um den Update-Button hinzuzufügen
 class SSUSetupScreen(ConfigListScreen, Screen):
@@ -280,4 +278,12 @@ class SSUSetupScreen(ConfigListScreen, Screen):
     def keySave(self):
         self.close()
 
+    def layoutFinished(self):
+        help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
+        help_txt += _("All new services found during the scan are inserted there together with a marker.\n")
+        help_txt += _("This allows you to quickly and clearly see which new services were found,\n")
+        help_txt += _("and you can add individual services to your own Favorites bouquets as usual.\n\n")
+        help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
+        help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
+        self["help"].setText(help_txt)
 
