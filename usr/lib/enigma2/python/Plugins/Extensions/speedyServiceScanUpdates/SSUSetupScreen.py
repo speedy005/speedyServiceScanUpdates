@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals  # Sicherstellen, dass Strings Unicode sind und print funktioniert in Python 2 und 3
 
 # --- Standardbibliothek ---
 import os
@@ -141,7 +142,7 @@ class SSUUpdateScreen(Screen):
                             dl += len(data)
                             percent = int(dl * 100 / total_length)
                             self['progress'].setValue(percent)
-                            self['progresstext'].setText(f"{percent}%")
+                            self['progresstext'].setText("{}%".format(percent))  # Python 2/3-kompatible String-Interpolation
                 self.extract_update()
             else:
                 self['status'].setText(_("Download failed: %s") % r.status_code)
