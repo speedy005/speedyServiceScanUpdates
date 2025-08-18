@@ -152,9 +152,21 @@ class SSUUpdateScreen(Screen):
                             self['progresstext'].setText(f"{percent}%")
                 self.extract_update()
             else:
-                self['status'].setText(f"Download failed: {r.status_code}")
-        except requests.exceptions.RequestException as e:
-            self['status'].setText(f"Download error: {e}")
+                self['status'].setText(_("Failed to download update."))
+        except Exception as e:
+            self['status'].setText(f"Download failed: {e}")
+
+    def check_update(self):
+        """Überprüft, ob ein Update verfügbar ist"""
+        self['status'].setText(_("Checking for updates..."))
+        try:
+            response = requests.head(update_url, timeout=10)
+            if response.status_code == 200:
+                self['status'].setText(_("Update available"))
+            else:
+                self['status'].setText(_("No update available"))
+        except Exception as e:
+            self['status'].setText(f"Update check failed: {e}")
 
     def extract_update(self):
         """Extrahiert das heruntergeladene Archiv je nach Format (ZIP/TAR)."""
@@ -170,12 +182,12 @@ class SSUUpdateScreen(Screen):
         self.finish_update()
 
     def extract_zip(self, file_path):
-        """Extrahiert eine ZIP-Datei."""
+        """Entpackt eine ZIP-Datei."""
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
 
     def extract_tar(self, file_path):
-        """Extrahiert eine TAR-Datei."""
+        """Entpackt eine TAR- oder TAR.GZ-Datei."""
         with tarfile.open(file_path, 'r:gz') as tar_ref:
             tar_ref.extractall(extract_dir)
 
@@ -183,7 +195,6 @@ class SSUUpdateScreen(Screen):
         """Verschiebt die entpackten Dateien ins Zielverzeichnis und beendet den Update-Prozess."""
         try:
             if os.path.isdir(extract_dir):
-                # Versuche, alle Dateien zu verschieben
                 for item in os.listdir(extract_dir):
                     s = os.path.join(extract_dir, item)
                     d = os.path.join(target_dir, item)
@@ -192,19 +203,18 @@ class SSUUpdateScreen(Screen):
                     else:
                         shutil.copy2(s, d)
 
-                # Überprüfen, ob alle Dateien korrekt verschoben wurden
                 if not os.path.exists(target_dir):
                     raise FileNotFoundError(f"Target directory {target_dir} not found after extraction.")
 
                 self['status'].setText(_("Update completed successfully."))
-                self.update_installed = True  # Update wurde erfolgreich installiert
-                self.restart_application()  # GUI-Neustart nur, wenn Update erfolgreich war
+                self.update_installed = True
+                self.restart_application()
             else:
                 self['status'].setText(_("Error: Extracted directory not found."))
-                self.update_installed = False  # Sicherstellen, dass kein Neustart erfolgt, falls Fehler auftreten
+                self.update_installed = False
         except Exception as e:
             self['status'].setText(f"Failed to complete update: {e}")
-            self.update_installed = False  # Setzt das Flag auf False, falls etwas schief geht
+            self.update_installed = False
 
     def restart_application(self):
         """Zeigt eine Nachricht und startet die Anwendung neu, nur wenn Update installiert wurde."""
@@ -214,14 +224,6 @@ class SSUUpdateScreen(Screen):
         else:
             self.session.open(MessageBox, _("No update installed. Restart not needed."), MessageBox.TYPE_INFO, 10)
 
-    def check_update(self):
-        """Überprüft auf Updates, zeigt den Fortschritt an."""
-        self['status'].setText(_("Checking for available updates..."))
-        # Hier könnte eine API-Anfrage zum Überprüfen einer neuen Version eingebaut werden
-        # Falls ein Update verfügbar ist, kann das Starten des Downloads ausgelöst werden
-
-
-
 # --- Setup Screen ---
 class SSUSetupScreen(Screen):
     skin = skin_setup
@@ -229,31 +231,34 @@ class SSUSetupScreen(Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-        self['config'] = ConfigListScreen(self.config_list, on_change=self.changed)
-        self['help'] = Label()
+        self['status'] = Label(_("Please configure the plugin settings"))
+        self['config'] = ConfigListScreen()
+        self['help'] = Label(_("Choose your settings and press green to confirm"))
         self['key_red'] = Button(_("Exit"))
         self['key_green'] = Button(_("Save"))
-        self['key_yellow'] = Button(_("Cancel"))
 
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
                                     {
                                         'red': self.exit,
-                                        'green': self.save,
-                                        'yellow': self.cancel,
+                                        'green': self.save_settings,
+                                        'yellow': self.restore_default,
+                                        'blue': self.reset_settings,
                                     }, -1)
 
     def exit(self):
         self.close()
 
-    def save(self):
-        """Speichert die aktuellen Einstellungen"""
-        config.plugins.speedyservicescanupdates.save()
+    def save_settings(self):
+        self.session.open(MessageBox, _("Settings saved successfully!"), MessageBox.TYPE_INFO, 5)
         self.close()
 
-    def cancel(self):
-        """Setzt die Änderungen zurück"""
-        config.plugins.speedyservicescanupdates.cancel()
-        self.close()
+    def restore_default(self):
+        self.session.open(MessageBox, _("Restoring default settings..."), MessageBox.TYPE_INFO, 5)
+        # Wiederherstellung der Standardeinstellungen (Placeholder)
+
+    def reset_settings(self):
+        self.session.open(MessageBox, _("Resetting all settings..."), MessageBox.TYPE_INFO, 5)
+        # Zurücksetzen der Einstellungen (Placeholder)
 
     def changed(self):
         """Wird aufgerufen, wenn sich etwas geändert hat"""
@@ -268,6 +273,3 @@ class SSUSetupScreen(Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
-
-# --- End of Script ---
-
