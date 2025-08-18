@@ -26,6 +26,8 @@ Kompatibilität
 
 Funktioniert mit einer Vielzahl von Satelliten- und Kabelkonfigurationen, die von Enigma2-Boxen unterstützt werden.
 
+Plugin update Funktion eingebaut
+
 
 SpeedyServiceScanUpdates Plugin for Enigma2 – Detailed Overview
 
@@ -48,6 +50,7 @@ Scheduling & Automation
 Users may be able to schedule regular scans or updates, ensuring the service list remains current without manual intervention.
 
 Backup & Restore
+Update function integrated in the plugin
 
 Some implementations include options to back up current service lists before updates, providing a safety net in case of errors.
 
