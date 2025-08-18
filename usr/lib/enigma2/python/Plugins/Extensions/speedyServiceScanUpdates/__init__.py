@@ -27,16 +27,14 @@ def isDreamOS():
 def localeInit():
     lang = language.getLanguage()[:2]
     os.environ["LANGUAGE"] = lang
+
+    # Standard enigma2 Übersetzungen
     gettext.bindtextdomain("enigma2", resolveFilename(SCOPE_LANGUAGE))
     gettext.textdomain("enigma2")
+
+    # Plugin Übersetzungen
     gettext.bindtextdomain(PluginLanguageDomain, PluginLanguagePath)
-
-
-def _(txt):
-    t = gettext.dgettext(PluginLanguageDomain, txt)
-    if t == txt:
-        t = gettext.gettext(txt)
-    return t
+    gettext.textdomain(PluginLanguageDomain)  # _() nutzt nun standardmäßig das Plugin
 
 
 # Direkt bei Pluginstart die Übersetzung initialisieren
@@ -46,6 +44,8 @@ localeInit()
 if not isDreamOS():
     language.addCallback(localeInit)
 
+# _() Funktion für Übersetzungen
+_ = gettext.gettext
 
 #######################################################
 # Konfiguration initialisieren
