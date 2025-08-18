@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals  # Für Kompatibilität mit Python 2 und 3
 from enigma import eDVBDB
 from Tools.Directories import fileExists, resolveFilename, SCOPE_CONFIG
 import time
