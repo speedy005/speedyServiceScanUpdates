@@ -159,62 +159,53 @@ class SSUUpdateScreen(Screen):
         try:
             if download_path.endswith(".zip"):
                 self.extract_zip(download_path)
-            elif download_path.endswith(".tar") or download_path.endswith(".tar.gz"):
+            elif download_path.endswith(".tar.gz") or download_path.endswith(".tgz"):
                 self.extract_tar(download_path)
             else:
-                self['status'].setText(_("Unsupported archive format."))
+                self['status'].setText(_("Unsupported file format"))
         except Exception as e:
-            self['status'].setText(f"Extraction error: {e}")
+            self['status'].setText(f"Extraction failed: {e}")
+        self.finish_update()
 
-    def extract_zip(self, archive_file):
-        """Entpackt eine ZIP-Datei."""
-        try:
-            if zipfile.is_zipfile(archive_file):
-                if os.path.exists(extract_dir):
-                    shutil.rmtree(extract_dir)  # Existierenden Ordner löschen
-                with zipfile.ZipFile(archive_file, 'r') as zip_ref:
-                    zip_ref.extractall(extract_dir)
-                self['status'].setText(_("ZIP archive extracted."))
-                self.move_update_to_target()
-            else:
-                self['status'].setText(_("Downloaded file is not a valid ZIP archive."))
-        except Exception as e:
-            self['status'].setText(f"ZIP extraction failed: {e}")
+    def extract_zip(self, file_path):
+        """Extrahiert eine ZIP-Datei."""
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
 
-    def extract_tar(self, archive_file):
-        """Entpackt eine TAR-Datei."""
-        try:
-            if tarfile.is_tarfile(archive_file):
-                if os.path.exists(extract_dir):
-                    shutil.rmtree(extract_dir)  # Existierenden Ordner löschen
-                with tarfile.open(archive_file, 'r:gz') as tar_ref:
-                    tar_ref.extractall(extract_dir)
-                self['status'].setText(_("TAR archive extracted."))
-                self.move_update_to_target()
-            else:
-                self['status'].setText(_("Downloaded file is not a valid TAR archive."))
-        except Exception as e:
-            self['status'].setText(f"TAR extraction failed: {e}")
+    def extract_tar(self, file_path):
+        """Extrahiert eine TAR-Datei."""
+        with tarfile.open(file_path, 'r:gz') as tar_ref:
+            tar_ref.extractall(extract_dir)
 
-    def move_update_to_target(self):
-        """Verschiebt entpackte Dateien in das Zielverzeichnis."""
+    def finish_update(self):
+        """Verschiebt die entpackten Dateien ins Zielverzeichnis und beendet den Update-Prozess."""
         try:
-            if os.path.exists(extract_dir):
-                shutil.rmtree(target_dir, ignore_errors=True)
-                shutil.move(extract_dir, target_dir)
-                self['status'].setText(_("Update installed successfully."))
-                # Neustart der Anwendung, um das Update zu laden
-                Notifications.AddNotification(MessageBox, _("Update installed successfully. Restarting..."), MessageBox.TYPE_INFO, 5)
-                self.session.reload()  # Bildschirm neu laden
+            if os.path.isdir(extract_dir):
+                for item in os.listdir(extract_dir):
+                    s = os.path.join(extract_dir, item)
+                    d = os.path.join(target_dir, item)
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(s, d)
+                self['status'].setText(_("Update completed successfully."))
+                self.restart_application()
             else:
-                self['status'].setText(_("Extraction folder is empty."))
+                self['status'].setText(_("Error: Extracted directory not found."))
         except Exception as e:
-            self['status'].setText(f"Installation failed: {e}")
+            self['status'].setText(f"Failed to complete update: {e}")
+
+    def restart_application(self):
+        """Zeigt eine Nachricht und startet die Anwendung neu."""
+        self.session.open(MessageBox, _("Update complete. The application will now restart."), MessageBox.TYPE_INFO, 10)
+        # Anwendung neu starten, wenn nötig
+        # e.g., os.system("reboot") oder ein entsprechendes Kommando je nach Gerät
 
     def check_update(self):
-        """Überprüft auf ein neues Update."""
-        self['status'].setText(_("Checking for updates..."))
-        self.start_update()
+        """Überprüft auf Updates, zeigt den Fortschritt an."""
+        self['status'].setText(_("Checking for available updates..."))
+        # Hier könnte eine API-Anfrage zum Überprüfen einer neuen Version eingebaut werden
+        # Falls ein Update verfügbar ist, kann das Starten des Downloads ausgelöst werden
 
 # --- Setup Screen ---
 class SSUSetupScreen(Screen):
@@ -240,14 +231,17 @@ class SSUSetupScreen(Screen):
         self.close()
 
     def save(self):
+        """Speichert die aktuellen Einstellungen"""
         config.plugins.speedyservicescanupdates.save()
         self.close()
 
     def cancel(self):
+        """Setzt die Änderungen zurück"""
         config.plugins.speedyservicescanupdates.cancel()
         self.close()
 
     def changed(self):
+        """Wird aufgerufen, wenn sich etwas geändert hat"""
         pass
 
     def layoutFinished(self):
