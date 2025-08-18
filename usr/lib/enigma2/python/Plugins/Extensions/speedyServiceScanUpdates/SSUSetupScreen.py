@@ -20,6 +20,20 @@ from Components.config import config
 from Screens.Config import ConfigListScreen
 from Components.ConfigList import getConfigListEntry
 
+# --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
+plugin_path = None
+for base in (
+    "/usr/lib/enigma2/python/Plugins/Extensions",
+    "/usr/lib/enigma2/python/Plugins/SystemPlugins"
+):
+    possible = os.path.join(base, "speedyServiceScanUpdates")
+    if os.path.isdir(possible):
+        plugin_path = possible
+        break
+
+if plugin_path and plugin_path not in sys.path:
+    sys.path.insert(0, plugin_path)
+
 # --- Version ---
 version = "3.5"
 
@@ -285,4 +299,5 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
 
