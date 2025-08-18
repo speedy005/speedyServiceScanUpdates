@@ -7,6 +7,8 @@ import re
 import zipfile
 import requests
 import shutil
+import threading
+import time  # optional für Sleep in Demo-Fortschritt
 
 # Übersetzungsfunktion aus __init__.py laden
 from . import _
@@ -152,7 +154,6 @@ class SSUUpdateScreen(Screen):
         self.close()
 
     def cancel(self):
-        # Einfacher Placeholder
         self['status'].setText(_("Update cancelled."))
         self.download_complete = False
 
@@ -186,7 +187,6 @@ class SSUUpdateScreen(Screen):
                 shutil.rmtree(extract_dir)
             with zipfile.ZipFile(download_path, "r") as zip_ref:
                 zip_ref.extractall(extract_dir)
-            # Move extracted files to target directory
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
             shutil.move(os.path.join(extract_dir, "speedyServiceScanUpdates-main"), target_dir)
@@ -197,7 +197,6 @@ class SSUUpdateScreen(Screen):
 
     def check_update(self):
         self['status'].setText(_("Checking version..."))
-        # Hier könntest du Versionsvergleich mit GitHub API einbauen
         self['status'].setText(_("Latest version: %s") % version)
 
 # --- Setup Screen ---
@@ -236,7 +235,6 @@ class SSUSetupScreen(Screen, ConfigListScreen):
     def save(self):
         for x in self.list:
             x[1].save()
-        configfile = "/etc/enigma2/settings"
         try:
             config.save()
         except Exception as e:
@@ -261,8 +259,6 @@ class SSUSetupScreen(Screen, ConfigListScreen):
 """)
         self['help'].setText(help_text.strip())
 
-
-
     def layoutFinished(self):
         help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
         help_txt += _("All new services found during the scan are inserted there together with a marker.\n")
@@ -271,5 +267,3 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
-
-
