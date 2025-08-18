@@ -8,11 +8,11 @@ import zipfile
 import requests
 import shutil
 
-# Übersetzungsfunktion
+# Übersetzungsfunktion aus __init__.py laden
 from . import _
 
 # Enigma2 Imports
-from enigma import getDesktop
+from enigma import getDesktop, eRestart
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Button import Button
@@ -23,6 +23,7 @@ from Tools.Directories import fileExists
 from Components.config import config
 from Screens.Config import ConfigListScreen
 from Components.ConfigList import getConfigListEntry
+from Tools import Notifications
 
 # --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
 plugin_path = None
@@ -53,7 +54,6 @@ target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdate
 def clean_version(ver):
     """Filtert Versionsnummer auf nur Ziffern und Punkte."""
     return re.sub(r'[^0-9\.]', '', ver)
-
 
 # Bildschirmgröße und Skin-Auswahl
 sz_w = getDesktop(0).size().width()
@@ -114,7 +114,6 @@ else:
         <widget name="help" position="10,655" size="850,145" font="Regular;32" />
     </screen>"""
 
-
 # --- Update Screen ---
 class SSUUpdateScreen(Screen):
     skin = skin_update
@@ -155,14 +154,12 @@ class SSUUpdateScreen(Screen):
     def getLatestVersion(self):
         try:
             response = requests.get("https://api.github.com/repos/speedy005/speedyServiceScanUpdates/releases/latest")
-
             if response.status_code == 200:
                 data = response.json()
                 if "message" in data and "rate limit" in data["message"].lower():
                     self['status'].setText(_('GitHub rate limit reached.'))
                     self['progresstext'].setText(_('Please try again later.'))
                     return
-
                 latest_version = clean_version(str(data.get('tag_name', '0')))
                 if latest_version != version:
                     self['status'].setText(_('New update available: {}').format(latest_version))
@@ -186,7 +183,6 @@ class SSUUpdateScreen(Screen):
                 with open(download_path, 'wb') as f:
                     for data in response.iter_content(chunk_size=1024):
                         f.write(data)
-
                 if os.path.exists(download_path):
                     self['status'].setText(_('Download completed.'))
                     self['progresstext'].setText(f'File saved to: {download_path}')
@@ -202,12 +198,16 @@ class SSUUpdateScreen(Screen):
         try:
             with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
-
             extracted_folder = os.path.join(extract_dir, os.listdir(extract_dir)[0])
             shutil.copytree(extracted_folder, target_dir, dirs_exist_ok=True)
-
-            self['status'].setText(_('Update installed successfully.'))
+            self['status'].setText(_('Update installed successfully, restarting GUI...'))
             self['progresstext'].setText(_('Update installed.'))
+            Notifications.AddNotificationWithID(
+                MessageBox, 
+                _('Update erfolgreich installiert!\nGUI wird neu gestartet.'), 
+                timeout=5
+            )
+            eRestart()
         except Exception as e:
             self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
             self['progresstext'].setText(_('Extraction error.'))
@@ -217,7 +217,6 @@ class SSUUpdateScreen(Screen):
 
     def keyExit(self):
         self.close()
-
 
 # --- Setup Screen ---
 class SSUSetupScreen(ConfigListScreen, Screen):
