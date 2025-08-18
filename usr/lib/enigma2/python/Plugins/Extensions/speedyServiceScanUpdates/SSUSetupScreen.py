@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import zipfile
+import tarfile
 import requests
 import shutil
 
@@ -46,7 +47,7 @@ if plugin_path and plugin_path not in sys.path:
     sys.path.insert(0, plugin_path)
 
 # --- Version & URLs ---
-version = "3.7"
+version = "3.0"
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 download_path = "/tmp/ServiceScanUpdates-main.zip"
 extract_dir = "/tmp/ServiceScanUpdates"
@@ -97,60 +98,151 @@ else:
         <widget name="help" position="10,655" size="850,145" font="Regular;32" />
     </screen>"""
 
-# --- Konfiguration und Setup Screen ---
+# --- Update Screen ---
+class SSUUpdateScreen(Screen):
+    skin = skin_update
+
+    def __init__(self, session):
+        Screen.__init__(self, session)
+        self.session = session
+        self['status'] = Label(_("Checking for updates..."))
+        self['progress'] = ProgressBar()
+        self['progresstext'] = Label("")
+        self['key_red'] = Button(_("Exit"))
+        self['key_green'] = Button(_("Start"))
+        self['key_yellow'] = Button(_("Cancel"))
+        self['key_blue'] = Button(_("Check Update"))
+
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
+                                    {
+                                        'red': self.exit,
+                                        'green': self.start_update,
+                                        'yellow': self.cancel,
+                                        'blue': self.check_update,
+                                        'ok': self.start_update,
+                                        'cancel': self.exit
+                                    }, -1)
+        self.download_complete = False
+
+    def exit(self):
+        self.close()
+
+    def cancel(self):
+        self['status'].setText(_("Update cancelled."))
+        self.download_complete = False
+
+    def start_update(self):
+        try:
+            self['status'].setText(_("Downloading update..."))
+            r = requests.get(update_url, stream=True, timeout=10)
+            if r.status_code == 200:
+                with open(download_path, "wb") as f:
+                    total_length = r.headers.get('content-length')
+                    dl = 0
+                    total_length = int(total_length) if total_length else None
+                    for data in r.iter_content(chunk_size=4096):
+                        f.write(data)
+                        if total_length:
+                            dl += len(data)
+                            percent = int(dl * 100 / total_length)
+                            self['progress'].setValue(percent)
+                            self['progresstext'].setText(f"{percent}%")
+                self.extract_update()
+            else:
+                self['status'].setText(f"Download failed: {r.status_code}")
+        except requests.exceptions.RequestException as e:
+            self['status'].setText(f"Download error: {e}")
+
+    def extract_update(self):
+        """Extrahiert das heruntergeladene Archiv je nach Format (ZIP/TAR)."""
+        try:
+            if download_path.endswith(".zip"):
+                self.extract_zip(download_path)
+            elif download_path.endswith(".tar") or download_path.endswith(".tar.gz"):
+                self.extract_tar(download_path)
+            else:
+                self['status'].setText(_("Unsupported archive format."))
+        except Exception as e:
+            self['status'].setText(f"Extraction error: {e}")
+
+    def extract_zip(self, archive_file):
+        """Entpackt eine ZIP-Datei."""
+        try:
+            if zipfile.is_zipfile(archive_file):
+                if os.path.exists(extract_dir):
+                    shutil.rmtree(extract_dir)  # Existierenden Ordner löschen
+                with zipfile.ZipFile(archive_file, 'r') as zip_ref:
+                    zip_ref.extractall(extract_dir)
+                self['status'].setText(_("ZIP archive extracted."))
+            else:
+                self['status'].setText(_("Downloaded file is not a valid ZIP archive."))
+        except Exception as e:
+            self['status'].setText(f"ZIP extraction failed: {e}")
+
+    def extract_tar(self, archive_file):
+        """Entpackt eine TAR-Datei."""
+        try:
+            if tarfile.is_tarfile(archive_file):
+                if os.path.exists(extract_dir):
+                    shutil.rmtree(extract_dir)  # Existierenden Ordner löschen
+                with tarfile.open(archive_file, 'r:gz') as tar_ref:
+                    tar_ref.extractall(extract_dir)
+                self['status'].setText(_("TAR archive extracted."))
+            else:
+                self['status'].setText(_("Downloaded file is not a valid TAR archive."))
+        except Exception as e:
+            self['status'].setText(f"TAR extraction failed: {e}")
+
+    def move_update_to_target(self):
+        """Verschiebt entpackte Dateien in das Zielverzeichnis."""
+        try:
+            if os.path.exists(extract_dir):
+                shutil.rmtree(target_dir, ignore_errors=True)
+                shutil.move(extract_dir, target_dir)
+                self['status'].setText(_("Update installed successfully."))
+            else:
+                self['status'].setText(_("Extraction folder is empty."))
+        except Exception as e:
+            self['status'].setText(f"Installation failed: {e}")
+
+    def check_update(self):
+        """Überprüft auf ein neues Update."""
+        self['status'].setText(_("Checking for updates..."))
+        self.start_update()
+
+# --- Setup Screen ---
 class SSUSetupScreen(Screen):
     skin = skin_setup
 
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-        self.list = [
-            getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
-            getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
-            getConfigListEntry(_("Clear bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet),
-        ]
+        self['config'] = ConfigListScreen(self.config_list, on_change=self.changed)
+        self['help'] = Label()
         self['key_red'] = Button(_("Exit"))
         self['key_green'] = Button(_("Save"))
-        self['key_yellow'] = Button(_("Default"))
-        self['config'] = ConfigListScreen(self.list, session)
-        self['actions'] = ActionMap(['OkCancelActions', 'ColorActions'], {
-            'red': self.exit,
-            'green': self.save,
-            'yellow': self.set_default,
-            'cancel': self.exit,
-        })
+        self['key_yellow'] = Button(_("Cancel"))
 
-        # Anzeige des Hilfetextes nach Initialisierung
-        self.displayHelp()
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
+                                    {
+                                        'red': self.exit,
+                                        'green': self.save,
+                                        'yellow': self.cancel,
+                                    }, -1)
 
     def exit(self):
         self.close()
 
-    def set_default(self):
-        """Setze die Einstellungen auf Standardwerte."""
-        for x in self.list:
-            x[1].setValue(x[1].default)
-        self.updateList()
-        self.session.open(MessageBox, _("Settings have been reset to default."), MessageBox.TYPE_INFO, timeout=5)
-
     def save(self):
-        """Speichert die Konfiguration."""
-        for x in self.list:
-            x[1].save()
+        config.plugins.speedyservicescanupdates.save()
         self.close()
 
-    def updateList(self):
-        self['config'].setList(self.list)
+    def cancel(self):
+        config.plugins.speedyservicescanupdates.cancel()
+        self.close()
 
-    def displayHelp(self):
-        help_text = _("""
-- Add new TV services: Add missing TV channels to bouquets.
-- Add new Radio services: Add missing radio channels to bouquets.
-- Clear Bouquet: Remove empty or obsolete bouquets.
-- Save: Apply changes.
-- Cancel: Exit without saving.
-""")
-        self['help'].setText(help_text.strip())
+    def changed(self):
+        pass
 
     def layoutFinished(self):
         """Zusätzliche Infos nach Layout-Fertigstellung anzeigen."""
@@ -162,3 +254,4 @@ class SSUSetupScreen(Screen):
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
 
+# --- End of Script ---
