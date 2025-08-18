@@ -74,7 +74,3 @@ wget -qO /tmp/installer.sh "https://raw.githubusercontent.com/speedy005/speedySe
 ![1_0_19_2BA2_3F2_1_C00000_0_0_0_20250817120231](https://github.com/user-attachments/assets/b31b682f-8202-4e4e-93da-d4088ed88c3e)
 
 
-<img width="640" height="360" alt="2" src="https://github.com/user-attachments/assets/6053b043-7ea7-477d-933e-da2bd0483243" />
-<img width="640" height="360" alt="4" src="https://github.com/user-attachments/assets/d439c6b2-511c-4ab5-a8c9-d7160faa18e1" />
-<img width="640" height="360" alt="1" src="https://github.com/user-attachments/assets/30c8b5a6-f047-46a8-86a7-873f7599eb68" />
-
