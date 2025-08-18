@@ -27,7 +27,7 @@ from . import _
 from .SSULameDBParser import SSULameDBParser
 
 # Version
-PLUGIN_VERSION = '2.8'  # Aktuelle Plugin-Version
+PLUGIN_VERSION = '3.0'  # Aktuelle Plugin-Version
 
 # Globale Variablen
 baseServiceScan_execBegin = None
@@ -243,3 +243,4 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
