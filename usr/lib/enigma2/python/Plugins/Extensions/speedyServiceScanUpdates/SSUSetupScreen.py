@@ -25,7 +25,7 @@ from Screens.Config import ConfigListScreen
 from Components.ConfigList import getConfigListEntry
 from Tools import Notifications
 
-# --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
+# --- Plugin-Pfad dynamisch ermitteln ---
 plugin_path = None
 for base in (
     "/usr/lib/enigma2/python/Plugins/Extensions",
@@ -163,7 +163,7 @@ class SSUUpdateScreen(Screen):
                 latest_version = clean_version(str(data.get('tag_name', '0')))
                 if latest_version != version:
                     self['status'].setText(_('New update available: {}').format(latest_version))
-                    self['progresstext'].setText(_('Update available!'))
+                    self['progresstext'].setText(_('Downloading update...'))
                     if self.downloadChangelog():
                         self.extractUpdate(download_path)
                 else:
@@ -171,7 +171,6 @@ class SSUUpdateScreen(Screen):
                     self['progresstext'].setText(_('You have the latest version.'))
             else:
                 self['status'].setText(_('Failed to check for updates.'))
-                self['progresstext'].setText(_('Error: Unable to fetch the update information.'))
         except Exception as e:
             self['status'].setText(_('Failed to check for updates.'))
             self['progresstext'].setText(f'Error: {str(e)}')
@@ -183,10 +182,9 @@ class SSUUpdateScreen(Screen):
                 with open(download_path, 'wb') as f:
                     for data in response.iter_content(chunk_size=1024):
                         f.write(data)
-                if os.path.exists(download_path):
-                    self['status'].setText(_('Download completed.'))
-                    self['progresstext'].setText(f'File saved to: {download_path}')
-                    return True
+                self['status'].setText(_('Download completed.'))
+                self['progresstext'].setText(f'File saved to: {download_path}')
+                return True
             self['status'].setText(_('Download failed.'))
             return False
         except Exception as e:
