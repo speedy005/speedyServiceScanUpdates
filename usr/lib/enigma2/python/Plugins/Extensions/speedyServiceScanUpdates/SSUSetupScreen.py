@@ -7,14 +7,12 @@ import re
 import zipfile
 import requests
 import shutil
-import threading
-import time  # optional für Sleep in Demo-Fortschritt
 
 # Übersetzungsfunktion aus __init__.py laden
 from . import _
 
 # Enigma2 Imports
-from enigma import getDesktop, eRestart
+from enigma import getDesktop
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Button import Button
@@ -43,17 +41,12 @@ for base in (
     if os.path.isdir(possible):
         plugin_path = possible
         break
-
 if plugin_path and plugin_path not in sys.path:
     sys.path.insert(0, plugin_path)
 
-# --- Version ---
+# --- Version & URLs ---
 version = "3.7"
-
-# GitHub ZIP-Download URL
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
-
-# Speicherorte
 download_path = "/tmp/ServiceScanUpdates-main.zip"
 extract_dir = "/tmp/ServiceScanUpdates"
 target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
@@ -63,15 +56,10 @@ def clean_version(ver):
     """Filtert Versionsnummer auf nur Ziffern und Punkte."""
     return re.sub(r'[^0-9\.]', '', ver)
 
-# Bildschirmgröße und Skin-Auswahl
+# --- Bildschirmgröße und Skin-Auswahl ---
 sz_w = getDesktop(0).size().width()
 if sz_w == 1920:
-    skin_update = """
-    <screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
-        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/green.png" position="305,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/yellow.png" position="610,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/blue.png" position="915,5" size="5,70" />
+    skin_update = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
         <widget name="progress" position="10,100" size="1180,50" />
         <widget name="status" position="10,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
         <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
@@ -80,26 +68,15 @@ if sz_w == 1920:
         <widget name="key_yellow" position="604,5" size="300,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_blue" position="916,6" size="295,70" font="Regular;30" halign="center" valign="center" />
     </screen>"""
-    skin_setup = """
-    <screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
-        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/green.png" position="305,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/yellow.png" position="627,5" size="5,70" />
-        <eLabel text="HELP" position="1110,30" size="80,35" backgroundColor="black" valign="center" halign="center" font="Regular;24" />
+    skin_setup = """<screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
         <widget name="key_red" position="10,5" size="295,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_green" position="323,3" size="300,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_yellow" position="627,3" size="300,70" font="Regular;30" halign="center" valign="center" />
-        <widget name="config" position="10,90" itemHeight="35" size="1180,540" enableWrapAround="1" scrollbarMode="showOnDemand" font="NotoSans-Bold; 24" />
-        <ePixmap pixmap="skin_default/div-h.png" position="10,650" size="1180,2" />
+        <widget name="config" position="10,90" itemHeight="35" size="1180,540" enableWrapAround="1" scrollbarMode="showOnDemand" font="NotoSans-Bold;24" />
         <widget name="help" position="10,655" size="1180,145" font="Regular;32" />
     </screen>"""
 else:
-    skin_update = """
-    <screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
-        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/green.png" position="275,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/yellow.png" position="537,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/blue.png" position="795,6" size="5,70" />
+    skin_update = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
         <widget name="progress" position="10,100" size="1050,50" />
         <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
         <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
@@ -108,17 +85,11 @@ else:
         <widget name="key_yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_blue" position="798,5" size="250,70" font="Regular;30" halign="center" valign="center" />
     </screen>"""
-    skin_setup = """
-    <screen name="SSUSetupScreen" position="center,170" size="900,820" title="speedy Service Scan Updates">
-        <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/green.png" position="305,5" size="5,70" />
-        <ePixmap pixmap="skin_default/buttons/yellow.png" position="627,5" size="5,70" />
-        <eLabel text="HELP" position="800,30" size="80,35" backgroundColor="black" valign="center" halign="center" font="Regular;24" />
+    skin_setup = """<screen name="SSUSetupScreen" position="center,170" size="900,820" title="speedy Service Scan Updates">
         <widget name="key_red" position="10,5" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_green" position="323,3" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_yellow" position="627,3" size="250,70" font="Regular;30" halign="center" valign="center" />
-        <widget name="config" position="10,90" itemHeight="35" size="850,540" enableWrapAround="1" scrollbarMode="showOnDemand" font="NotoSans-Bold; 24" />
-        <ePixmap pixmap="skin_default/div-h.png" position="10,650" size="850,2" />
+        <widget name="config" position="10,90" itemHeight="35" size="850,540" enableWrapAround="1" scrollbarMode="showOnDemand" font="NotoSans-Bold;24" />
         <widget name="help" position="10,655" size="850,145" font="Regular;32" />
     </screen>"""
 
@@ -146,8 +117,6 @@ class SSUUpdateScreen(Screen):
                                         'ok': self.start_update,
                                         'cancel': self.exit
                                     }, -1)
-
-        self.progressValue = 0
         self.download_complete = False
 
     def exit(self):
@@ -164,14 +133,12 @@ class SSUUpdateScreen(Screen):
             if r.status_code == 200:
                 with open(download_path, "wb") as f:
                     total_length = r.headers.get('content-length')
-                    if total_length is None:
-                        f.write(r.content)
-                    else:
-                        dl = 0
-                        total_length = int(total_length)
-                        for data in r.iter_content(chunk_size=4096):
+                    dl = 0
+                    total_length = int(total_length) if total_length else None
+                    for data in r.iter_content(chunk_size=4096):
+                        f.write(data)
+                        if total_length:
                             dl += len(data)
-                            f.write(data)
                             percent = int(dl * 100 / total_length)
                             self['progress'].setValue(percent)
                             self['progresstext'].setText(f"{percent}%")
@@ -196,7 +163,6 @@ class SSUUpdateScreen(Screen):
             self['status'].setText(_("Update failed: %s") % e)
 
     def check_update(self):
-        self['status'].setText(_("Checking version..."))
         self['status'].setText(_("Latest version: %s") % version)
 
 # --- Setup Screen ---
@@ -206,12 +172,11 @@ class SSUSetupScreen(Screen, ConfigListScreen):
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-
         self['help'] = Label(_("Configure the update options."))
-
         self['key_red'] = Button(_("Cancel"))
         self['key_green'] = Button(_("Save"))
         self['key_yellow'] = Button(_("Default"))
+
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
                                     {
                                         'red': self.cancel,
@@ -221,21 +186,18 @@ class SSUSetupScreen(Screen, ConfigListScreen):
                                         'cancel': self.cancel
                                     }, -1)
 
-        # Konfigurationsliste
         self.list = [
             getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
             getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
             getConfigListEntry(_("Clear Bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet)
         ]
-
         ConfigListScreen.__init__(self, self.list, session=self.session)
+        self.displayHelp()
 
     def cancel(self):
-        """Abbrechen und Bildschirm schließen."""
         self.close()
 
     def save(self):
-        """Speichert die aktuellen Einstellungen."""
         for x in self.list:
             x[1].save()
         try:
@@ -245,17 +207,14 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         self.close()
 
     def set_default(self):
-        """Setzt die Konfigurationen auf Standardwerte zurück."""
         for x in self.list:
             x[1].setValue(x[1].default)
         self.updateList()
 
     def updateList(self):
-        """Aktualisiert die Anzeige der Konfigurationsliste."""
         self['config'].setList(self.list)
 
     def displayHelp(self):
-        """Zeigt Hilfetext für die Konfiguration an."""
         help_text = _("""
 - Add new TV services: Add missing TV channels to bouquets.
 - Add new Radio services: Add missing radio channels to bouquets.
@@ -274,4 +233,3 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
-
