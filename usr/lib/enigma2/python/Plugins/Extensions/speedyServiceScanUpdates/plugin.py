@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+from __future__ import print_function, unicode_literals  # Kompatibilität mit Python 2 und 3
 
 import os
 import sys
 import json
-import urllib.request
+import urllib
 import zipfile
 import shutil
 from packaging import version
@@ -17,14 +17,15 @@ from Screens.MessageBox import MessageBox
 from Components.ConfigList import ConfigListScreen
 
 try:
-    from Screens.ServiceScan import ServiceScan
+    from Screens.ServiceScan import ServiceScan  # Python 3
 except ImportError:
-    from Components.ServiceScan import ServiceScan
+    import urllib.request  # Für Python 2
+    from Components.ServiceScan import ServiceScan  # Python 2
 
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
-# Globals
+# Globale Variablen
 baseServiceScan_execBegin = None
 baseServiceScan_execEnd = None
 preScanDB = None
@@ -38,7 +39,7 @@ def safeClose(db):
 
 def ServiceScan_execBegin(self):
     flags = getattr(self.scanList[self.run], "flags", "N/A") if hasattr(self, "scanList") else "N/A"
-    print(f"[speedyServiceScanUpdates] ServiceScan_execBegin [{flags}]")
+    print("[speedyServiceScanUpdates] ServiceScan_execBegin [{}]".format(flags))
 
     global preScanDB
     if not preScanDB and (config.plugins.speedyservicescanupdates.add_new_tv_services.value or
@@ -50,7 +51,7 @@ def ServiceScan_execBegin(self):
 def ServiceScan_execEnd(self, onClose=True):
     flags = getattr(self.scanList[self.run], "flags", "N/A") if hasattr(self, "scanList") else "N/A"
     state_val = getattr(self, "state", -1)
-    print(f"[speedyServiceScanUpdates] ServiceScan_execEnd ({state_val}) [{flags}]")
+    print("[speedyServiceScanUpdates] ServiceScan_execEnd ({}) [{}]".format(state_val, flags))
 
     if getattr(self, "state", None) == getattr(self, "DONE", None):
         if config.plugins.speedyservicescanupdates.add_new_tv_services.value or \
@@ -101,33 +102,38 @@ def ServiceScan_execEnd(self, onClose=True):
 
     baseServiceScan_execEnd(self)
 
-# Version Handling
+# Versionsprüfung
 def get_current_version():
     version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
     try:
         with open(version_file, 'r') as f:
             return f.read().strip()
     except Exception as e:
-        print(f"Fehler beim Lesen der Versionsdatei: {e}")
+        print("Fehler beim Lesen der Versionsdatei: {}".format(e))
         return "0.0"
 
 def check_for_update(current_version):
     try:
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
-        with urllib.request.urlopen(url) as response:
-            latest_version = response.read().decode().strip()
+        if sys.version_info[0] < 3:
+            response = urllib.urlopen(url)  # Python 2
+        else:
+            with urllib.request.urlopen(url) as response:  # Python 3
+                response = response.read().decode().strip()
 
-        print(f"[speedyServiceScanUpdates] Aktuelle Version: {current_version}, Neueste Version: {latest_version}")
+        latest_version = response
+
+        print("[speedyServiceScanUpdates] Aktuelle Version: {}, Neueste Version: {}".format(current_version, latest_version))
 
         if version.parse(latest_version) > version.parse(current_version):
             print("[speedyServiceScanUpdates] Ein Update ist verfügbar!")
-            return latest_version, f"https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/tags/{latest_version}.zip"
+            return latest_version, "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/tags/{}.zip".format(latest_version)
         else:
             print("[speedyServiceScanUpdates] Keine neue Version verfügbar.")
             return None, None
 
     except Exception as e:
-        print(f"[speedyServiceScanUpdates] Fehler bei der Updateprüfung: {e}")
+        print("[speedyServiceScanUpdates] Fehler bei der Updateprüfung: {}".format(e))
         return None, None
 
 def prompt_for_update(session, latest_version, download_url):
@@ -138,7 +144,7 @@ def prompt_for_update(session, latest_version, download_url):
             print("User chose not to update.")
 
     session.openWithCallback(update_installed_callback, MessageBox,
-                             f"A new version {latest_version} is available. Do you want to install it?",
+                             "A new version {} is available. Do you want to install it?".format(latest_version),
                              MessageBox.TYPE_YESNO)
 
 def download_and_install_update(download_url):
@@ -180,7 +186,7 @@ def download_and_install_update(download_url):
         print("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
     except Exception as e:
-        print(f"Fehler beim Update: {e}")
+        print("Fehler beim Update: {}".format(e))
 
 # Autostart Hook
 def autostart(reason, **kwargs):
