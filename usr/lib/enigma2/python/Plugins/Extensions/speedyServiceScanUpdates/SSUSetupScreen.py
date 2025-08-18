@@ -7,7 +7,11 @@ import re
 import zipfile
 import requests
 import shutil
-from . import _  # Übersetzungsfunktion aus __init__.py laden
+
+# Übersetzungsfunktion
+from . import _
+
+# Enigma2 Imports
 from enigma import getDesktop
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
@@ -35,7 +39,7 @@ if plugin_path and plugin_path not in sys.path:
     sys.path.insert(0, plugin_path)
 
 # --- Version ---
-version = "3.6"
+version = "3.7"
 
 # GitHub ZIP-Download URL
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
