@@ -221,6 +221,7 @@ class SSUSetupScreen(Screen, ConfigListScreen):
                                         'cancel': self.cancel
                                     }, -1)
 
+        # Konfigurationsliste
         self.list = [
             getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
             getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
@@ -230,9 +231,11 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         ConfigListScreen.__init__(self, self.list, session=self.session)
 
     def cancel(self):
+        """Abbrechen und Bildschirm schließen."""
         self.close()
 
     def save(self):
+        """Speichert die aktuellen Einstellungen."""
         for x in self.list:
             x[1].save()
         try:
@@ -242,14 +245,17 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         self.close()
 
     def set_default(self):
+        """Setzt die Konfigurationen auf Standardwerte zurück."""
         for x in self.list:
             x[1].setValue(x[1].default)
         self.updateList()
 
     def updateList(self):
+        """Aktualisiert die Anzeige der Konfigurationsliste."""
         self['config'].setList(self.list)
 
     def displayHelp(self):
+        """Zeigt Hilfetext für die Konfiguration an."""
         help_text = _("""
 - Add new TV services: Add missing TV channels to bouquets.
 - Add new Radio services: Add missing radio channels to bouquets.
@@ -260,6 +266,7 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         self['help'].setText(help_text.strip())
 
     def layoutFinished(self):
+        """Zusätzliche Infos nach Layout-Fertigstellung anzeigen."""
         help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
         help_txt += _("All new services found during the scan are inserted there together with a marker.\n")
         help_txt += _("This allows you to quickly and clearly see which new services were found,\n")
@@ -267,3 +274,4 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
