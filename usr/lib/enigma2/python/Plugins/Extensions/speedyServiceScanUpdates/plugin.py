@@ -27,7 +27,7 @@ from . import _
 from .SSULameDBParser import SSULameDBParser
 
 # Version
-PLUGIN_VERSION = '3.0'  # Aktuelle Plugin-Version
+PLUGIN_VERSION = '3.1'  # Aktuelle Plugin-Version
 
 # Globale Variablen
 baseServiceScan_execBegin = None
@@ -108,7 +108,7 @@ def ServiceScan_execEnd(self, onClose=True):
 
 # Versionsprüfung und Updatecheck
 def get_current_version():
-    version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
+    version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version"
     try:
         with open(version_file, 'r') as f:
             return f.read().strip()
@@ -118,7 +118,7 @@ def get_current_version():
 
 def check_for_update(current_version, session):
     try:
-        url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
+        url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
         if sys.version_info[0] < 3:
             response = urllib.urlopen(url)  # Python 2
         else:
@@ -243,4 +243,5 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
 
