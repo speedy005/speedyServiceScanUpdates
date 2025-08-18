@@ -97,90 +97,6 @@ else:
         <widget name="help" position="10,655" size="850,145" font="Regular;32" />
     </screen>"""
 
-# --- Update Screen ---
-class SSUUpdateScreen(Screen):
-    skin = skin_update
-
-    def __init__(self, session):
-        Screen.__init__(self, session)
-        self.session = session
-        self['status'] = Label(_("Checking for updates..."))
-        self['progress'] = ProgressBar()
-        self['progresstext'] = Label("")
-        self['key_red'] = Button(_("Exit"))
-        self['key_green'] = Button(_("Start"))
-        self['key_yellow'] = Button(_("Cancel"))
-        self['key_blue'] = Button(_("Check Update"))
-
-        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
-                                    {
-                                        'red': self.exit,
-                                        'green': self.start_update,
-                                        'yellow': self.cancel,
-                                        'blue': self.check_update,
-                                        'ok': self.start_update,
-                                        'cancel': self.exit
-                                    }, -1)
-        self.download_complete = False
-
-    def exit(self):
-        self.close()
-
-    def cancel(self):
-        self['status'].setText(_("Update cancelled."))
-        self.download_complete = False
-
-    def start_update(self):
-        try:
-            self['status'].setText(_("Downloading update..."))
-            r = requests.get(update_url, stream=True, timeout=10)
-            if r.status_code == 200:
-                with open(download_path, "wb") as f:
-                    total_length = r.headers.get('content-length')
-                    dl = 0
-                    total_length = int(total_length) if total_length else None
-                    for data in r.iter_content(chunk_size=4096):
-                        f.write(data)
-                        if total_length:
-                            dl += len(data)
-                            percent = int(dl * 100 / total_length)
-                            self['progress'].setValue(percent)
-                            self['progresstext'].setText(f"{percent}%")
-                self.extract_update()
-            else:
-                self['status'].setText(f"Download failed: {r.status_code}")
-        except requests.exceptions.RequestException as e:
-            self['status'].setText(f"Download error: {e}")
-
-    def extract_update(self):
-        try:
-            if zipfile.is_zipfile(download_path):
-                if os.path.exists(extract_dir):
-                    shutil.rmtree(extract_dir)
-                with zipfile.ZipFile(download_path, "r") as zip_ref:
-                    zip_ref.extractall(extract_dir)
-                self['status'].setText(_("Update extracted."))
-                self.install_update()
-            else:
-                self['status'].setText(_("Downloaded file is not a valid ZIP archive."))
-        except Exception as e:
-            self['status'].setText(f"Extraction failed: {e}")
-
-    def install_update(self):
-        try:
-            if os.path.exists(extract_dir):
-                shutil.rmtree(target_dir, ignore_errors=True)
-                shutil.move(extract_dir, target_dir)
-                self['status'].setText(_("Update installed successfully."))
-            else:
-                self['status'].setText(_("Extraction folder is empty."))
-        except Exception as e:
-            self['status'].setText(f"Installation failed: {e}")
-
-    def check_update(self):
-        self['status'].setText(_("Checking for updates..."))
-        self.start_update()
-
 # --- Konfiguration und Setup Screen ---
 class SSUSetupScreen(Screen):
     skin = skin_setup
@@ -204,6 +120,9 @@ class SSUSetupScreen(Screen):
             'cancel': self.exit,
         })
 
+        # Anzeige des Hilfetextes nach Initialisierung
+        self.displayHelp()
+
     def exit(self):
         self.close()
 
@@ -219,12 +138,6 @@ class SSUSetupScreen(Screen):
         for x in self.list:
             x[1].save()
         self.close()
-
-
-    def set_default(self):
-        for x in self.list:
-            x[1].setValue(x[1].default)
-        self.updateList()
 
     def updateList(self):
         self['config'].setList(self.list)
