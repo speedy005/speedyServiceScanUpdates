@@ -47,7 +47,17 @@ if plugin_path and plugin_path not in sys.path:
     sys.path.insert(0, plugin_path)
 
 # --- Version & URLs ---
-version = "3.0"
+def read_version():
+    """Liest die Versionsnummer aus der Datei version."""
+    version_file = os.path.join(plugin_path, "version")  # Pfad zur version Datei ohne ".txt"
+    try:
+        with open(version_file, "r") as f:
+            version = f.read().strip()  # Entfernt führende und folgende Leerzeichen
+            return version
+    except FileNotFoundError:
+        return "Unknown version"  # Fallback, wenn die Datei nicht existiert
+
+version = read_version()  # Version aus der Datei laden
 update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 download_path = "/tmp/ServiceScanUpdates-main.zip"
 extract_dir = "/tmp/ServiceScanUpdates"
