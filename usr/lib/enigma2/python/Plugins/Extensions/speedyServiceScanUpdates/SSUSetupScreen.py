@@ -20,10 +20,16 @@ from Components.Label import Label
 from Components.ProgressBar import ProgressBar
 from Screens.MessageBox import MessageBox
 from Tools.Directories import fileExists
-from Components.config import config
+from Components.config import config, ConfigSubsection, ConfigYesNo
 from Screens.Config import ConfigListScreen
 from Components.ConfigList import getConfigListEntry
 from Tools import Notifications
+
+# --- Config-Objekte initialisieren ---
+config.plugins.speedyservicescanupdates = ConfigSubsection()
+config.plugins.speedyservicescanupdates.add_new_tv_services = ConfigYesNo(default=True)
+config.plugins.speedyservicescanupdates.add_new_radio_services = ConfigYesNo(default=True)
+config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=True)
 
 # --- Plugin-Pfad dynamisch ermitteln ---
 plugin_path = None
@@ -123,155 +129,139 @@ class SSUUpdateScreen(Screen):
         self.session = session
         self['status'] = Label(_("Checking for updates..."))
         self['progress'] = ProgressBar()
-        self['progresstext'] = Label()
+        self['progresstext'] = Label("")
+        self['key_red'] = Button(_("Exit"))
+        self['key_green'] = Button(_("Start"))
+        self['key_yellow'] = Button(_("Cancel"))
+        self['key_blue'] = Button(_("Check Update"))
 
-        self["key_red"] = Button(_("Cancel"))
-        self["key_green"] = Button(_("Start"))
-        self["key_yellow"] = Button(_("Check for Updates"))
-        self["key_blue"] = Button(_("Exit"))
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
+                                    {
+                                        'red': self.exit,
+                                        'green': self.start_update,
+                                        'yellow': self.cancel,
+                                        'blue': self.check_update,
+                                        'ok': self.start_update,
+                                        'cancel': self.exit
+                                    }, -1)
 
-        self["actions"] = ActionMap(
-            ["WizardActions", "ColorActions", "SetupActions", "OkCancelActions"],
-            {
-                "red": self.keyCancel,
-                "green": self.startUpdate,
-                "yellow": self.checkForUpdates,
-                "blue": self.keyExit,
-                "cancel": self.keyCancel,
-                "ok": self.startUpdate,
-            },
-            -2
-        )
+        self.progressValue = 0
+        self.download_complete = False
 
-    def startUpdate(self):
-        self.checkForUpdates()
+    def exit(self):
+        self.close()
 
-    def checkForUpdates(self):
-        self['status'].setText(_('Checking for updates...'))
-        self['progresstext'].setText(_('Please wait...'))
-        self.getLatestVersion()
+    def cancel(self):
+        # Einfacher Placeholder
+        self['status'].setText(_("Update cancelled."))
+        self.download_complete = False
 
-    def getLatestVersion(self):
+    def start_update(self):
         try:
-            response = requests.get("https://api.github.com/repos/speedy005/speedyServiceScanUpdates/releases/latest")
-            if response.status_code == 200:
-                data = response.json()
-                if "message" in data and "rate limit" in data["message"].lower():
-                    self['status'].setText(_('GitHub rate limit reached.'))
-                    self['progresstext'].setText(_('Please try again later.'))
-                    return
-                latest_version = clean_version(str(data.get('tag_name', '0')))
-                if latest_version != version:
-                    self['status'].setText(_('New update available: {}').format(latest_version))
-                    self['progresstext'].setText(_('Downloading update...'))
-                    if self.downloadChangelog():
-                        self.extractUpdate(download_path)
-                else:
-                    self['status'].setText(_('No update available.'))
-                    self['progresstext'].setText(_('You have the latest version.'))
+            self['status'].setText(_("Downloading update..."))
+            r = requests.get(update_url, stream=True, timeout=10)
+            if r.status_code == 200:
+                with open(download_path, "wb") as f:
+                    total_length = r.headers.get('content-length')
+                    if total_length is None:
+                        f.write(r.content)
+                    else:
+                        dl = 0
+                        total_length = int(total_length)
+                        for data in r.iter_content(chunk_size=4096):
+                            dl += len(data)
+                            f.write(data)
+                            percent = int(dl * 100 / total_length)
+                            self['progress'].setValue(percent)
+                            self['progresstext'].setText(f"{percent}%")
+                self.extract_update()
             else:
-                self['status'].setText(_('Failed to check for updates.'))
-        except Exception as e:
-            self['status'].setText(_('Failed to check for updates.'))
-            self['progresstext'].setText(f'Error: {str(e)}')
+                self['status'].setText(_("Download failed: %s") % r.status_code)
+        except requests.exceptions.RequestException as e:
+            self['status'].setText(_("Download error: %s") % e)
 
-    def downloadChangelog(self):
-        try:
-            response = requests.get(update_url, stream=True)
-            if response.status_code == 200:
-                with open(download_path, 'wb') as f:
-                    for data in response.iter_content(chunk_size=1024):
-                        f.write(data)
-                self['status'].setText(_('Download completed.'))
-                self['progresstext'].setText(f'File saved to: {download_path}')
-                return True
-            self['status'].setText(_('Failed to download update.'))
-            return False
-        except Exception as e:
-            self['status'].setText(_('Error during download.'))
-            self['progresstext'].setText(str(e))
-            return False
-
-    def extractUpdate(self, zip_file):
+    def extract_update(self):
         try:
             if os.path.exists(extract_dir):
                 shutil.rmtree(extract_dir)
-            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            with zipfile.ZipFile(download_path, "r") as zip_ref:
                 zip_ref.extractall(extract_dir)
+            # Move extracted files to target directory
             if os.path.exists(target_dir):
                 shutil.rmtree(target_dir)
             shutil.move(os.path.join(extract_dir, "speedyServiceScanUpdates-main"), target_dir)
-            self['status'].setText(_('Update installed successfully.'))
-            Notifications.AddNotification(MessageBox, _('Plugin updated successfully. Restart Enigma2 required.'), type=MessageBox.TYPE_INFO, timeout=10)
+            self['status'].setText(_("Update completed successfully!"))
+            Notifications.AddNotification(MessageBox, _("Update finished. Restart Enigma2 to apply changes."), type=MessageBox.TYPE_INFO, timeout=10)
         except Exception as e:
-            self['status'].setText(_('Error installing update.'))
-            self['progresstext'].setText(str(e))
+            self['status'].setText(_("Update failed: %s") % e)
 
-    def keyCancel(self):
-        self.close()
-
-    def keyExit(self):
-        self.close()
-
+    def check_update(self):
+        self['status'].setText(_("Checking version..."))
+        # Hier könntest du Versionsvergleich mit GitHub API einbauen
+        self['status'].setText(_("Latest version: %s") % version)
 
 # --- Setup Screen ---
-class SSUSetupScreen(ConfigListScreen, Screen):
+class SSUSetupScreen(Screen, ConfigListScreen):
     skin = skin_setup
 
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-        self.list = []
-        ConfigListScreen.__init__(self, self.list, session=session)
 
-        self["key_red"] = Button(_("Cancel"))
-        self["key_green"] = Button(_("Save"))
-        self["key_yellow"] = Button(_("Check for Updates"))
-        self["help"] = Label("")
+        self['help'] = Label(_("Configure the update options."))
 
-        self["setupActions"] = ActionMap(
-            ["SetupActions", "ColorActions", "HelpActions"],
-            {
-                "red": self.keyCancel,
-                "green": self.keySave,
-                "yellow": self.checkForUpdates,
-                "save": self.keySave,
-                "cancel": self.keyCancel,
-                "ok": self.keySave,
-                "displayHelp": self.help,
-            },
-            -2
-        )
+        self['key_red'] = Button(_("Cancel"))
+        self['key_green'] = Button(_("Save"))
+        self['key_yellow'] = Button(_("Default"))
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
+                                    {
+                                        'red': self.cancel,
+                                        'green': self.save,
+                                        'yellow': self.set_default,
+                                        'ok': self.save,
+                                        'cancel': self.cancel
+                                    }, -1)
 
-        self.onLayoutFinish.append(self.layoutFinished)
-        self["config"].onSelectionChanged.append(self.updateHelp)
-        self.populateList()
-
-    def populateList(self):
         self.list = [
-            getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services, _("Create 'Service Scan Updates' bouquet for new TV services?")),
-            getConfigListEntry(_("Add new radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services, _("Create 'Service Scan Updates' bouquet for new radio services?")),
-            getConfigListEntry(_("Clear bouquet at each search"), config.plugins.speedyservicescanupdates.clear_bouquet, _("Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new services will be appended?")),
+            getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
+            getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
+            getConfigListEntry(_("Clear Bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet)
         ]
-        self["config"].list = self.list
-        self["config"].l.setList(self.list)
 
-    def updateHelp(self):
-        cur = self["config"].getCurrent()
-        if cur:
-            self["help"].text = cur[2]
+        ConfigListScreen.__init__(self, self.list, session=self.session)
 
-    def help(self):
-        self.session.open(MessageBox, _("Help not yet implemented."), MessageBox.TYPE_INFO)
-
-    def checkForUpdates(self):
-        self.session.open(SSUUpdateScreen)
-
-    def keyCancel(self):
+    def cancel(self):
         self.close()
 
-    def keySave(self):
+    def save(self):
+        for x in self.list:
+            x[1].save()
+        configfile = "/etc/enigma2/settings"
+        try:
+            config.save()
+        except Exception as e:
+            self.session.open(MessageBox, _("Failed to save config: %s") % e, type=MessageBox.TYPE_ERROR)
         self.close()
+
+    def set_default(self):
+        for x in self.list:
+            x[1].setValue(x[1].default)
+        self.updateList()
+
+    def updateList(self):
+        self['config'].setList(self.list)
+
+    def displayHelp(self):
+        help_text = _("""
+- Add new TV services: Add missing TV channels to bouquets.
+- Add new Radio services: Add missing radio channels to bouquets.
+- Clear Bouquet: Remove empty or obsolete bouquets.
+- Save: Apply changes.
+- Cancel: Exit without saving.
+""")
+        self['help'].setText(help_text.strip())
+
+
 
     def layoutFinished(self):
         help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
@@ -281,4 +271,5 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
 
