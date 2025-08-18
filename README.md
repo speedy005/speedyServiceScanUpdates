@@ -1,54 +1,59 @@
-Service Scan Updates – Plugin Beschreibung
+SpeedyServiceScanUpdates Plugin für Enigma2 – Detaillierte Übersicht
 
-Das „Service Scan Updates“ Plugin ist eine praktische Erweiterung für alle, die regelmäßig Sendersuchen auf ihrer Dreambox durchführen und dabei einen besseren Überblick darüber behalten möchten, welche neuen Sender hinzugefügt wurden.
+Das SpeedyServiceScanUpdates-Plugin wurde entwickelt, um den Service-Scan-Prozess auf Enigma2-basierten Set-Top-Boxen zu optimieren und zu verbessern. Hauptziele sind die Bereitstellung genauer, aktueller Senderlisten sowie eine benutzerfreundliche Oberfläche zur Verwaltung von Kanälen. Typische Hauptfunktionen sind:
 
-Funktionen:
+Automatische Aktualisierung der Senderlisten
 
-Automatische Erstellung eines Bouquets für neue Sender: Nach einer Sendersuche wird automatisch ein neues Bouquet für die gefundenen Sender erstellt, sodass du sofort siehst, welche Sender hinzugefügt wurden.
+Holt automatisch die neuesten Kanal- und Transponderlisten, wodurch manuelle Updates minimiert werden.
 
-Marker für neue Sender: Die neuen Sender werden mit einem Marker versehen, der es einfach macht, sie von bestehenden Sendern zu unterscheiden.
+Verbesserte Scan-Genauigkeit
 
-Integration ins System-Menü: Im Gegensatz zu anderen Plugins, die unter den Erweiterungen zu finden sind, wird „Service Scan Updates“ als System-Plugin im Menü angezeigt, das sich in der Nähe der Sendersuche befindet.
+Optimierte Scan-Routinen erkennen alle verfügbaren Dienste und reduzieren verpasste oder doppelte Sender.
 
-Einfache Nutzung: Das Plugin funktioniert nahtlos im Hintergrund, ohne dass der Benutzer manuell eingreifen muss, sobald die Sendersuche abgeschlossen ist.
+Benutzeroberflächen-Optimierungen
 
-Vorteile:
+Bietet eine leicht zu bedienende Oberfläche zum Starten von Scans, Überwachen des Fortschritts und Verwalten gescannter Kanäle.
 
-Du musst nicht mehr mühsam durch alle Sender scrollen, um die neuen hinzuzufügenden Kanäle zu finden.
+Planung & Automatisierung
 
-Mit dem automatisch erstellten Bouquet hast du eine übersichtliche Liste der neuen Sender.
+Ermöglicht geplante Scans oder automatische Updates, sodass die Senderliste stets aktuell bleibt, ohne dass manuell eingegriffen werden muss.
 
-Ideal für Nutzer, die regelmäßig ihre Kanalliste aktualisieren und diese bequem verwalten möchten.
+Backup- & Wiederherstellungsoptionen
 
-Installation:
+Manche Versionen erlauben das Sichern der aktuellen Senderlisten vor Updates, um bei Fehlern eine Sicherheitskopie zu haben.
 
-„Service Scan Updates“ wird direkt als System-Plugin auf deiner Dreambox installiert und ist nach der Installation sofort im Menü verfügbar, wo auch die Sendersuche zu finden ist.
+Kompatibilität
 
-Service Scan Updates – Plugin Description
+Funktioniert mit einer Vielzahl von Satelliten- und Kabelkonfigurationen, die von Enigma2-Boxen unterstützt werden.
 
-The „Service Scan Updates“ plugin is a useful extension for those who regularly perform channel scans on their Dreambox and want a better overview of which new channels have been added.
 
-Features:
+SpeedyServiceScanUpdates Plugin for Enigma2 – Detailed Overview
 
-Automatic creation of a bouquet for new channels: After a channel scan, a new bouquet is automatically created for the found channels, so you can immediately see which channels were added.
+The SpeedyServiceScanUpdates plugin is designed to streamline and enhance the channel scanning process on Enigma2-based set-top boxes. Its main objectives are to ensure accurate, up-to-date service lists and provide a user-friendly interface for managing channels. Key functionalities typically include:
 
-Marker for new channels: The new channels are marked, making it easy to distinguish them from existing ones.
+Automatic Service List Updates
 
-Integrated into the System Menu: Unlike other plugins found under Extensions, "Service Scan Updates" appears as a system plugin in the menu, located near the channel scan option.
+The plugin can automatically fetch the latest channel and transponder lists, reducing the need for manual updates.
 
-Easy to use: The plugin works seamlessly in the background without requiring manual intervention once the channel scan is complete.
+Enhanced Scan Accuracy
 
-Benefits:
+Optimized scanning routines detect all available services, minimizing missed channels and duplicate entries.
 
-No more scrolling through all channels to find the new ones that need to be added.
+User Interface Improvements
 
-With the automatically created bouquet, you have a clear list of the new channels.
+Offers a simple, accessible interface for starting scans, monitoring progress, and managing scanned services.
 
-Ideal for users who regularly update their channel list and want to manage it conveniently.
+Scheduling & Automation
 
-Installation:
+Users may be able to schedule regular scans or updates, ensuring the service list remains current without manual intervention.
 
-"Service Scan Updates" is installed directly as a system plugin on your Dreambox and is immediately available in the menu, where the channel scan option is located.
+Backup & Restore
+
+Some implementations include options to back up current service lists before updates, providing a safety net in case of errors.
+
+Compatibility
+
+Works with a variety of satellite and cable setups supported by Enigma2 boxes.
 
 
 Install per telnet
@@ -56,6 +61,17 @@ Install per telnet
 
 wget -qO /tmp/installer.sh "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/installer.sh" && chmod 777 /tmp/installer.sh && /tmp/installer.sh
 
+
+
+
+<img width="640" height="360" alt="2" src="https://github.com/user-attachments/assets/7bd6eac3-ead5-4f6e-b133-8eb60288f36e" />
+<img width="640" height="360" alt="1" src="https://github.com/user-attachments/assets/e21208f9-1f40-47c2-a447-ce6051da2ed6" />
+<img width="640" height="360" alt="4" src="https://github.com/user-attachments/assets/770fdb6f-c70c-477d-86e5-cb0959eef225" />
+
+
+
+![1_0_19_2BA2_3F2_1_C00000_0_0_0_20250817120217](https://github.com/user-attachments/assets/8864881c-03f1-4659-9210-ca642ccddcc5)
+![1_0_19_2BA2_3F2_1_C00000_0_0_0_20250817120231](https://github.com/user-attachments/assets/b31b682f-8202-4e4e-93da-d4088ed88c3e)
 
 
 <img width="640" height="360" alt="2" src="https://github.com/user-attachments/assets/6053b043-7ea7-477d-933e-da2bd0483243" />
