@@ -6,7 +6,9 @@ import sys
 import json
 import urllib.request
 import zipfile
+import shutil
 from packaging import version
+import importlib
 
 from Plugins.Plugin import PluginDescriptor
 from Components.config import config
@@ -142,21 +144,43 @@ def prompt_for_update(session, latest_version, download_url):
 def download_and_install_update(download_url):
     try:
         download_path = "/tmp/plugin_update.zip"
+        extract_path = "/tmp/speedyServiceScanUpdates_update/"
+
         urllib.request.urlretrieve(download_url, download_path)
 
-        with zipfile.ZipFile(download_path, 'r') as zip_ref:
-            zip_ref.extractall("/tmp/")
+        # Alte Extraktion entfernen
+        if os.path.exists(extract_path):
+            shutil.rmtree(extract_path)
 
-        os.rename("/tmp/speedyServiceScanUpdates-"+download_url.split('/')[-1].replace('.zip',''),
-                  "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates")
-        restart_plugin()
+        # ZIP entpacken
+        with zipfile.ZipFile(download_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_path)
+
+        # Plugin-Dateien ersetzen
+        plugin_source_path = os.path.join(extract_path, os.listdir(extract_path)[0])
+        plugin_dest_path = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
+
+        for item in os.listdir(plugin_source_path):
+            s_item = os.path.join(plugin_source_path, item)
+            d_item = os.path.join(plugin_dest_path, item)
+            if os.path.exists(d_item):
+                if os.path.isdir(d_item):
+                    shutil.rmtree(d_item)
+                else:
+                    os.remove(d_item)
+            if os.path.isdir(s_item):
+                shutil.copytree(s_item, d_item)
+            else:
+                shutil.copy2(s_item, d_item)
+
+        # Plugin neu laden
+        if "Plugins.Extensions.speedyServiceScanUpdates" in sys.modules:
+            importlib.reload(sys.modules["Plugins.Extensions.speedyServiceScanUpdates"])
+
+        print("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
     except Exception as e:
         print(f"Fehler beim Update: {e}")
-
-def restart_plugin():
-    print("Restarting the plugin...")
-    os.system("init 6")  # Box Neustart
 
 # Autostart Hook
 def autostart(reason, **kwargs):
