@@ -123,6 +123,7 @@ class SSUUpdateScreen(Screen):
                                         'cancel': self.exit
                                     }, -1)
         self.download_complete = False
+        self.update_installed = False  # Flag, das angibt, ob ein Update erfolgreich installiert wurde
 
     def exit(self):
         self.close()
@@ -130,6 +131,7 @@ class SSUUpdateScreen(Screen):
     def cancel(self):
         self['status'].setText(_("Update cancelled."))
         self.download_complete = False
+        self.update_installed = False  # Update wird abgebrochen
 
     def start_update(self):
         """Startet den Update-Prozess"""
@@ -181,6 +183,7 @@ class SSUUpdateScreen(Screen):
         """Verschiebt die entpackten Dateien ins Zielverzeichnis und beendet den Update-Prozess."""
         try:
             if os.path.isdir(extract_dir):
+                # Versuche, alle Dateien zu verschieben
                 for item in os.listdir(extract_dir):
                     s = os.path.join(extract_dir, item)
                     d = os.path.join(target_dir, item)
@@ -188,24 +191,36 @@ class SSUUpdateScreen(Screen):
                         shutil.copytree(s, d, dirs_exist_ok=True)
                     else:
                         shutil.copy2(s, d)
+
+                # Überprüfen, ob alle Dateien korrekt verschoben wurden
+                if not os.path.exists(target_dir):
+                    raise FileNotFoundError(f"Target directory {target_dir} not found after extraction.")
+
                 self['status'].setText(_("Update completed successfully."))
-                self.restart_application()
+                self.update_installed = True  # Update wurde erfolgreich installiert
+                self.restart_application()  # GUI-Neustart nur, wenn Update erfolgreich war
             else:
                 self['status'].setText(_("Error: Extracted directory not found."))
+                self.update_installed = False  # Sicherstellen, dass kein Neustart erfolgt, falls Fehler auftreten
         except Exception as e:
             self['status'].setText(f"Failed to complete update: {e}")
+            self.update_installed = False  # Setzt das Flag auf False, falls etwas schief geht
 
     def restart_application(self):
-        """Zeigt eine Nachricht und startet die Anwendung neu."""
-        self.session.open(MessageBox, _("Update complete. The application will now restart."), MessageBox.TYPE_INFO, 10)
-        # Anwendung neu starten, wenn nötig
-        # e.g., os.system("reboot") oder ein entsprechendes Kommando je nach Gerät
+        """Zeigt eine Nachricht und startet die Anwendung neu, nur wenn Update installiert wurde."""
+        if self.update_installed:
+            self.session.open(MessageBox, _("Update complete. The application will now restart."), MessageBox.TYPE_INFO, 10)
+            os.system("init 4")  # GUI-Neustart
+        else:
+            self.session.open(MessageBox, _("No update installed. Restart not needed."), MessageBox.TYPE_INFO, 10)
 
     def check_update(self):
         """Überprüft auf Updates, zeigt den Fortschritt an."""
         self['status'].setText(_("Checking for available updates..."))
         # Hier könnte eine API-Anfrage zum Überprüfen einer neuen Version eingebaut werden
         # Falls ein Update verfügbar ist, kann das Starten des Downloads ausgelöst werden
+
+
 
 # --- Setup Screen ---
 class SSUSetupScreen(Screen):
@@ -255,3 +270,4 @@ class SSUSetupScreen(Screen):
         self["help"].setText(help_txt)
 
 # --- End of Script ---
+
