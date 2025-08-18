@@ -9,6 +9,7 @@ import zipfile
 import shutil
 from packaging import version
 import importlib
+import subprocess
 
 from Plugins.Plugin import PluginDescriptor
 from Components.config import config
@@ -26,7 +27,7 @@ from . import _
 from .SSULameDBParser import SSULameDBParser
 
 # Version
-version = '2.8'
+PLUGIN_VERSION = '2.8'  # Aktuelle Plugin-Version
 
 # Globale Variablen
 baseServiceScan_execBegin = None
@@ -105,7 +106,7 @@ def ServiceScan_execEnd(self, onClose=True):
 
     baseServiceScan_execEnd(self)
 
-# Versionsprüfung
+# Versionsprüfung und Updatecheck
 def get_current_version():
     version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
     try:
@@ -115,7 +116,7 @@ def get_current_version():
         print("Fehler beim Lesen der Versionsdatei: {}".format(e))
         return "0.0"
 
-def check_for_update(current_version):
+def check_for_update(current_version, session):
     try:
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
         if sys.version_info[0] < 3:
@@ -203,6 +204,12 @@ def autostart(reason, **kwargs):
             baseServiceScan_execEnd = ServiceScan.execEnd
         ServiceScan.execEnd = ServiceScan_execEnd
 
+        # Versionsprüfung beim Start durchführen
+        current_version = get_current_version()
+        latest_version, download_url = check_for_update(current_version, kwargs['session'])
+        if latest_version:
+            prompt_for_update(kwargs['session'], latest_version, download_url)
+
 # Menü und Setup
 def SSUMain(session, **kwargs):
     from .SSUSetupScreen import SSUSetupScreen
@@ -220,11 +227,6 @@ def menu(menuid, **kwargs):
 
 # Plugin Descriptor
 def Plugins(**kwargs):
-    current_version = get_current_version()
-    latest_version, download_url = check_for_update(current_version)
-    if latest_version:
-        prompt_for_update(kwargs.get('session'), latest_version, download_url)
-
     return [
         PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART],
                          fnc=autostart),
@@ -241,4 +243,3 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
-
