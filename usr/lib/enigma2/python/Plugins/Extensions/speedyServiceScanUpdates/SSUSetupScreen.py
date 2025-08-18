@@ -185,36 +185,34 @@ class SSUUpdateScreen(Screen):
                 self['status'].setText(_('Download completed.'))
                 self['progresstext'].setText(f'File saved to: {download_path}')
                 return True
-            self['status'].setText(_('Download failed.'))
+            self['status'].setText(_('Failed to download update.'))
             return False
         except Exception as e:
-            self['status'].setText(_('Download failed.'))
-            self['progresstext'].setText(f'Error: {str(e)}')
+            self['status'].setText(_('Error during download.'))
+            self['progresstext'].setText(str(e))
             return False
 
-    def extractUpdate(self, downloaded_file):
+    def extractUpdate(self, zip_file):
         try:
-            with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+            if os.path.exists(extract_dir):
+                shutil.rmtree(extract_dir)
+            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
-            extracted_folder = os.path.join(extract_dir, os.listdir(extract_dir)[0])
-            shutil.copytree(extracted_folder, target_dir, dirs_exist_ok=True)
-            self['status'].setText(_('Update installed successfully, restarting GUI...'))
-            self['progresstext'].setText(_('Update installed.'))
-            Notifications.AddNotificationWithID(
-                MessageBox, 
-                _('Update erfolgreich installiert!\nGUI wird neu gestartet.'), 
-                timeout=5
-            )
-            eRestart()
+            if os.path.exists(target_dir):
+                shutil.rmtree(target_dir)
+            shutil.move(os.path.join(extract_dir, "speedyServiceScanUpdates-main"), target_dir)
+            self['status'].setText(_('Update installed successfully.'))
+            Notifications.AddNotification(MessageBox, _('Plugin updated successfully. Restart Enigma2 required.'), type=MessageBox.TYPE_INFO, timeout=10)
         except Exception as e:
-            self['status'].setText(_('Failed to extract update: {}'.format(str(e))))
-            self['progresstext'].setText(_('Extraction error.'))
+            self['status'].setText(_('Error installing update.'))
+            self['progresstext'].setText(str(e))
 
     def keyCancel(self):
         self.close()
 
     def keyExit(self):
         self.close()
+
 
 # --- Setup Screen ---
 class SSUSetupScreen(ConfigListScreen, Screen):
@@ -283,3 +281,4 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
