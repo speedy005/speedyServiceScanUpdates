@@ -59,7 +59,10 @@ def clean_version(ver):
 
 # --- Bildschirmgröße und Skin-Auswahl ---
 sz_w = getDesktop(0).size().width()
-if sz_w == 1920:
+sz_h = getDesktop(0).size().height()
+
+# Bildschirmauflösungen anpassen
+if sz_w == 1920 and sz_h == 1080:
     skin_update = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
         <widget name="progress" position="10,100" size="1180,50" />
         <widget name="status" position="10,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
@@ -142,70 +145,81 @@ class SSUUpdateScreen(Screen):
                             dl += len(data)
                             percent = int(dl * 100 / total_length)
                             self['progress'].setValue(percent)
-                            self['progresstext'].setText("{}%".format(percent))  # Python 2/3-kompatible String-Interpolation
+                            self['progresstext'].setText(f"{percent}%")
                 self.extract_update()
             else:
-                self['status'].setText(_("Download failed: %s") % r.status_code)
+                self['status'].setText(f"Download failed: {r.status_code}")
         except requests.exceptions.RequestException as e:
-            self['status'].setText(_("Download error: %s") % e)
+            self['status'].setText(f"Download error: {e}")
 
     def extract_update(self):
         try:
-            if os.path.exists(extract_dir):
-                shutil.rmtree(extract_dir)
-            with zipfile.ZipFile(download_path, "r") as zip_ref:
-                zip_ref.extractall(extract_dir)
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)
-            shutil.move(os.path.join(extract_dir, "speedyServiceScanUpdates-main"), target_dir)
-            self['status'].setText(_("Update completed successfully!"))
-            Notifications.AddNotification(MessageBox, _("Update finished. Restart Enigma2 to apply changes."), type=MessageBox.TYPE_INFO, timeout=10)
+            if zipfile.is_zipfile(download_path):
+                if os.path.exists(extract_dir):
+                    shutil.rmtree(extract_dir)
+                with zipfile.ZipFile(download_path, "r") as zip_ref:
+                    zip_ref.extractall(extract_dir)
+                self['status'].setText(_("Update extracted."))
+                self.install_update()
+            else:
+                self['status'].setText(_("Downloaded file is not a valid ZIP archive."))
         except Exception as e:
-            self['status'].setText(_("Update failed: %s") % e)
+            self['status'].setText(f"Extraction failed: {e}")
+
+    def install_update(self):
+        try:
+            if os.path.exists(extract_dir):
+                shutil.rmtree(target_dir, ignore_errors=True)
+                shutil.move(extract_dir, target_dir)
+                self['status'].setText(_("Update installed successfully."))
+            else:
+                self['status'].setText(_("Extraction folder is empty."))
+        except Exception as e:
+            self['status'].setText(f"Installation failed: {e}")
 
     def check_update(self):
-        self['status'].setText(_("Latest version: %s") % version)
+        self['status'].setText(_("Checking for updates..."))
+        self.start_update()
 
-# --- Setup Screen ---
-class SSUSetupScreen(Screen, ConfigListScreen):
+# --- Konfiguration und Setup Screen ---
+class SSUSetupScreen(Screen):
     skin = skin_setup
 
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-        self['help'] = Label(_("Configure the update options."))
-        self['key_red'] = Button(_("Cancel"))
-        self['key_green'] = Button(_("Save"))
-        self['key_yellow'] = Button(_("Default"))
-
-        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
-                                    {
-                                        'red': self.cancel,
-                                        'green': self.save,
-                                        'yellow': self.set_default,
-                                        'ok': self.save,
-                                        'cancel': self.cancel
-                                    }, -1)
-
         self.list = [
             getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
             getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
-            getConfigListEntry(_("Clear Bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet)
+            getConfigListEntry(_("Clear bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet),
         ]
-        ConfigListScreen.__init__(self, self.list, session=self.session)
-        self.displayHelp()
+        self['key_red'] = Button(_("Exit"))
+        self['key_green'] = Button(_("Save"))
+        self['key_yellow'] = Button(_("Default"))
+        self['config'] = ConfigListScreen(self.list, session)
+        self['actions'] = ActionMap(['OkCancelActions', 'ColorActions'], {
+            'red': self.exit,
+            'green': self.save,
+            'yellow': self.set_default,
+            'cancel': self.exit,
+        })
 
-    def cancel(self):
+    def exit(self):
         self.close()
+
+    def set_default(self):
+        """Setze die Einstellungen auf Standardwerte."""
+        for x in self.list:
+            x[1].setValue(x[1].default)
+        self.updateList()
+        self.session.open(MessageBox, _("Settings have been reset to default."), MessageBox.TYPE_INFO, timeout=5)
 
     def save(self):
+        """Speichert die Konfiguration."""
         for x in self.list:
             x[1].save()
-        try:
-            config.save()
-        except Exception as e:
-            self.session.open(MessageBox, _("Failed to save config: %s") % e, type=MessageBox.TYPE_ERROR)
         self.close()
+
 
     def set_default(self):
         for x in self.list:
@@ -234,3 +248,4 @@ class SSUSetupScreen(Screen, ConfigListScreen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
