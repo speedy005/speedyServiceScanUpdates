@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals  # Sicherstellen, dass Strings in Python 2 und 3 als Unicode behandelt werden
 from Components.config import config, ConfigSubsection, ConfigYesNo
 from Components.Language import language
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_LANGUAGE
