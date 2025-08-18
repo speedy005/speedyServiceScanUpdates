@@ -25,6 +25,9 @@ except ImportError:
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
+# Version
+version = '2.8'
+
 # Globale Variablen
 baseServiceScan_execBegin = None
 baseServiceScan_execEnd = None
@@ -238,3 +241,4 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
