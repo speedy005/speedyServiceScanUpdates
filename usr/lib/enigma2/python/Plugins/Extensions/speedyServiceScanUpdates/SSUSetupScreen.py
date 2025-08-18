@@ -132,8 +132,9 @@ class SSUUpdateScreen(Screen):
         self.download_complete = False
 
     def start_update(self):
+        """Startet den Update-Prozess"""
+        self['status'].setText(_("Downloading update..."))
         try:
-            self['status'].setText(_("Downloading update..."))
             r = requests.get(update_url, stream=True, timeout=10)
             if r.status_code == 200:
                 with open(download_path, "wb") as f:
@@ -174,6 +175,7 @@ class SSUUpdateScreen(Screen):
                 with zipfile.ZipFile(archive_file, 'r') as zip_ref:
                     zip_ref.extractall(extract_dir)
                 self['status'].setText(_("ZIP archive extracted."))
+                self.move_update_to_target()
             else:
                 self['status'].setText(_("Downloaded file is not a valid ZIP archive."))
         except Exception as e:
@@ -188,6 +190,7 @@ class SSUUpdateScreen(Screen):
                 with tarfile.open(archive_file, 'r:gz') as tar_ref:
                     tar_ref.extractall(extract_dir)
                 self['status'].setText(_("TAR archive extracted."))
+                self.move_update_to_target()
             else:
                 self['status'].setText(_("Downloaded file is not a valid TAR archive."))
         except Exception as e:
