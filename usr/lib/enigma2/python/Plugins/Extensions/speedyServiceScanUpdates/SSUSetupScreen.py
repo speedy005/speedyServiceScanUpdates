@@ -78,7 +78,7 @@ if sz_w == 1920 and sz_h == 1080:
         <widget name="key_green" position="305,3" size="300,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_yellow" position="604,5" size="300,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_blue" position="916,6" size="295,70" font="Regular;30" halign="center" valign="center" />
-        <widget name="version" position="10,280" size="1180,50" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
+        <widget name="version" position="1,1100" size="200,30" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
     </screen>"""
     
     skin_setup = """<screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
@@ -87,7 +87,7 @@ if sz_w == 1920 and sz_h == 1080:
         <widget name="key_yellow" position="627,3" size="300,70" font="Regular;30" halign="center" valign="center" />
         <widget name="config" position="10,90" itemHeight="35" size="1180,540" enableWrapAround="1" scrollbarMode="showOnDemand" font="NotoSans-Bold;24" />
         <widget name="help" position="10,655" size="1180,145" font="Regular;32" />
-        <widget name="version" position="10,655" size="1180,50" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
+        <widget name="version" position="1,655" size="200,30" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
     </screen>"""
 else:
     skin_update = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
@@ -98,7 +98,7 @@ else:
         <widget name="key_green" position="277,3" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_blue" position="798,5" size="250,70" font="Regular;30" halign="center" valign="center" />
-        <widget name="version" position="10,280" size="1050,50" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
+        <widget name="version" position="1,900" size="30,20" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
     </screen>"""
     
     skin_setup = """<screen name="SSUSetupScreen" position="center,170" size="900,820" title="speedy Service Scan Updates">
@@ -107,7 +107,7 @@ else:
         <widget name="key_yellow" position="627,3" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="config" position="10,90" itemHeight="35" size="850,540" enableWrapAround="1" scrollbarMode="showOnDemand" font="NotoSans-Bold;24" />
         <widget name="help" position="10,655" size="850,145" font="Regular;32" />
-        <widget name="version" position="10,655" size="850,50" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
+        <widget name="version" position="1,755" size="300,00" font="Regular;30" valign="center" halign="center" />  <!-- Version hinzugefügt -->
     </screen>"""
 
 
@@ -287,4 +287,5 @@ class SSUSetupScreen(Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
 
