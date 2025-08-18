@@ -203,6 +203,9 @@ class SSUUpdateScreen(Screen):
                 shutil.rmtree(target_dir, ignore_errors=True)
                 shutil.move(extract_dir, target_dir)
                 self['status'].setText(_("Update installed successfully."))
+                # Neustart der Anwendung, um das Update zu laden
+                Notifications.AddNotification(MessageBox, _("Update installed successfully. Restarting..."), MessageBox.TYPE_INFO, 5)
+                self.session.reload()  # Bildschirm neu laden
             else:
                 self['status'].setText(_("Extraction folder is empty."))
         except Exception as e:
