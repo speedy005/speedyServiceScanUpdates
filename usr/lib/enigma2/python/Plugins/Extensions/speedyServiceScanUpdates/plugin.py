@@ -7,7 +7,9 @@ import json
 import urllib
 import zipfile
 import shutil
+#from packaging import version
 import importlib
+#import subprocess
 
 from Plugins.Plugin import PluginDescriptor
 from Components.config import config
@@ -19,11 +21,18 @@ from Components.ConfigList import ConfigListScreen
 try:
     from Screens.ServiceScan import ServiceScan  # Python 3
 except ImportError:
+#   import urllib.request  # Für Python 2
     from Components.ServiceScan import ServiceScan  # Python 2
 
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from . import _
 from .SSULameDBParser import SSULameDBParser
+
+# Correct screen import (fix)
+try:
+    from SSUSetupScreen import SSUUpdateScreen   # Python 2 absolute import
+except ImportError:
+    from .SSUSetupScreen import SSUUpdateScreen  # Python 3 relative import
 
 import sys
 PY2 = sys.version_info[0] == 2
@@ -35,18 +44,15 @@ baseServiceScan_execEnd = None
 # baseServiceScan_scanStatusChanged = None
 preScanDB = None
 
-
 def dictHasKey(dictionary, key):
     if PY2:
         return dictionary.has_key(key)
     else:
         return key in dictionary
 
-
 def safeClose(db):
     if hasattr(db, "close"):
         db.close()
-
 
 def ServiceScan_execBegin(self):
     flags = None
@@ -61,7 +67,6 @@ def ServiceScan_execBegin(self):
                           config.plugins.speedyservicescanupdates.add_new_radio_services.value):
         preScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
     baseServiceScan_execBegin(self)
-
 
 def ServiceScan_execEnd(self, onClose=True):
     flags = None
@@ -130,8 +135,7 @@ def ServiceScan_execEnd(self, onClose=True):
 
     baseServiceScan_execEnd(self)
 
-
-# Versionsprüfung
+# Versionsprüfung und Updatecheck
 def get_current_version():
     version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
     try:
@@ -140,7 +144,6 @@ def get_current_version():
     except Exception as e:
         print("Fehler beim Lesen der Versionsdatei: %s" % str(e))
         return "0.0"
-
 
 def check_for_update(current_version):
     try:
@@ -165,7 +168,6 @@ def check_for_update(current_version):
         print("[speedyServiceScanUpdates] Fehler bei der Updateprüfung: %s" % str(e))
         return None, None
 
-
 def prompt_for_update(session, latest_version, download_url):
     def update_installed_callback(choice):
         if choice:
@@ -176,7 +178,6 @@ def prompt_for_update(session, latest_version, download_url):
     session.openWithCallback(update_installed_callback, MessageBox,
                             "A new version %s is available. Do you want to install it?" % latest_version,
                             MessageBox.TYPE_YESNO)
-
 
 def download_and_install_update(download_url):
     try:
@@ -219,13 +220,13 @@ def download_and_install_update(download_url):
         for item in os.listdir(extracted_folder):
             s_item = os.path.join(extracted_folder, item)
             d_item = os.path.join(plugin_dest_path, item)
-            
+
             if os.path.exists(d_item):
                 if os.path.isdir(d_item):
                     shutil.rmtree(d_item)
                 else:
                     os.remove(d_item)
-                    
+
             if os.path.isdir(s_item):
                 shutil.copytree(s_item, d_item)
             else:
@@ -260,9 +261,7 @@ def autostart(reason, **kwargs):
 
 # Menü und Setup
 def SSUMain(session, **kwargs):
-    from .SSUSetupScreen import SSUSetupScreen
-    session.open(SSUSetupScreen)
-
+    session.open(SSUUpdateScreen)  # Fixed to use correct screen
 
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
@@ -274,7 +273,6 @@ def menu(menuid, **kwargs):
     if menuid == "mainmenu":
         return [(_("speedy ServiceScanUpdates") + " " + _("Setup"), SSUMain, "speedyservicescanupdates_mainmenu", 50)]
     return []
-
 
 # Plugin Descriptor
 def Plugins(**kwargs):
