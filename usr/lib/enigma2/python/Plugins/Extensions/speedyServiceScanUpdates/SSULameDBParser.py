@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals  # Für Kompatibilität mit Python 2 und 3
 import sys
 import re
 from enigma import eDVBDB, eServiceReference
@@ -49,7 +48,6 @@ class SSULameDBParser:
         for line in lines:
             line = line.rstrip('\n')
             if PY2:
-                # In Python 2 müssen wir die Zeile explizit in UTF-8 kodieren
                 line = line.encode('utf-8')
 
             if line == "end":
