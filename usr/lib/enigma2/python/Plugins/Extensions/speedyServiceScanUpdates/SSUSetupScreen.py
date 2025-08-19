@@ -71,7 +71,7 @@ from enigma import getDesktop
 from . import _  # Ubersetzungsfunktion aus __init__.py laden
 
 # --- Version ---
-version = "3.5"
+version = "3.8"
 sz_w = getDesktop(0).size().width()
 
 
@@ -230,4 +230,5 @@ class SSUHelpScreen(Screen):
         help_txt += _("and you can add individual services to your own Favorites bouquets as usual.\n\n")
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
+
         self["help"].setText(help_txt)
