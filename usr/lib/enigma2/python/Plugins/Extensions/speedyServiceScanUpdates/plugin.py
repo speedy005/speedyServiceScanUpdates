@@ -151,11 +151,7 @@ def check_for_update(current_version):
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
         print("[speedyServiceScanUpdates] Checking for updates at:", url)
 
-        if PY2:
-            response = urllib.urlopen(url).read().strip()  # Python 2
-        else:
-            import urllib.request
-            response = urllib.request.urlopen(url).read().decode().strip()  # Python 3
+        response = urllib.request.urlopen(url).read().decode().strip()
 
         latest_version = response.strip()
         print("[speedyServiceScanUpdates] Aktuelle Version: %s, Neueste Version: %s" % (current_version, latest_version))
@@ -204,61 +200,6 @@ def download_and_extract_zip(url, download_path, extract_path):
     except Exception as e:
         print(f"Error: {e}")
 
-def download_and_install_update(download_url):
-    """Lädt das Update herunter und installiert es."""
-    try:
-        download_path = "/tmp/speedyServiceScanUpdates.zip"
-        extract_path = "/tmp/speedyServiceScanUpdates_extract"
-
-        # Download und Entpacken
-        download_and_extract_zip(download_url, download_path, extract_path)
-
-        # Extrahiertes Verzeichnis finden
-        extracted_folder = None
-        for item in os.listdir(extract_path):
-            if item.startswith("speedyServiceScanUpdates-"):
-                extracted_folder = os.path.join(extract_path, item)
-                break
-
-        if not extracted_folder:
-            print("Extracted folder not found!")
-            return
-
-        # Zielverzeichnis des Plugins
-        plugin_dest_path = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
-
-        # Dateien kopieren
-        for item in os.listdir(extracted_folder):
-            s_item = os.path.join(extracted_folder, item)
-            d_item = os.path.join(plugin_dest_path, item)
-
-            if os.path.exists(d_item):
-                if os.path.isdir(d_item):
-                    shutil.rmtree(d_item)
-                else:
-                    os.remove(d_item)
-
-            if os.path.isdir(s_item):
-                shutil.copytree(s_item, d_item)
-            else:
-                shutil.copy2(s_item, d_item)
-
-        # Plugin neu laden
-        module_name = "Plugins.Extensions.speedyServiceScanUpdates"
-        if module_name in sys.modules:
-            if PY2:
-                reload(sys.modules[module_name])  # Python 2
-            else:
-                importlib.reload(sys.modules[module_name])  # Python 3
-
-        print("[speedyServiceScanUpdates] Update erfolgreich installiert!")
-
-    except Exception as e:
-        print("Fehler beim Update: %s" % str(e))
-
-##############################################
-
-
 # Autostart Hook
 def autostart(reason, **kwargs):
     if reason == 0 and "session" in kwargs:
@@ -291,8 +232,6 @@ def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
         return [("speedy ServiceScanUpdates " + _("Setup"), SSUMain, "servicescanupdates", None)]
     return []
-
-##############################################
 
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
