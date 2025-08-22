@@ -17,6 +17,7 @@ from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
 from Components.ConfigList import ConfigListScreen
 
+
 # Compatible import for ServiceScan
 try:
     from Screens.ServiceScan import ServiceScan  # Python 3
@@ -259,9 +260,21 @@ def autostart(reason, **kwargs):
             baseServiceScan_execEnd = ServiceScan.execEnd
         ServiceScan.execEnd = ServiceScan_execEnd
 
+# version on plugin screen
+def read_version():
+    """Liest die Versionsnummer aus der Datei version."""
+    version_file = os.path.join(plugin_path, "version")
+    try:
+        with open(version_file, "r") as f:
+            version = f.read().strip()
+            return version
+    except IOError:  # Fallback für den Fall, dass die Datei nicht existiert
+        return "Unknown version"
+
 # Menü und Setup
 def SSUMain(session, **kwargs):
-    session.open(SSUUpdateScreen)  # Fixed to use correct screen
+    from .SSUSetupScreen import SSUSetupScreen
+    session.open(SSUSetupScreen)
 
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":

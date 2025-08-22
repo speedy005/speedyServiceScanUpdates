@@ -4,6 +4,7 @@ from Components.Language import language
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_LANGUAGE
 import os
 import gettext
+_ = gettext.gettext
 
 PluginLanguageDomain = "speedyServiceScanUpdates"
 # Dynamisch den Pfad ermitteln (funktioniert für Extensions und SystemPlugins)
