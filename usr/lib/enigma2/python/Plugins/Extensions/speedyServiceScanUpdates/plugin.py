@@ -138,7 +138,7 @@ def ServiceScan_execEnd(self, onClose=True):
 
 # Versionsprüfung und Updatecheck
 def get_current_version():
-    version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
+    version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version"
     try:
         with open(version_file, 'r') as f:
             return f.read().strip()
@@ -148,7 +148,7 @@ def get_current_version():
 
 def check_for_update(current_version):
     try:
-        url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
+        url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
         if PY2:
             response = urllib.urlopen(url).read().strip()  # Python 2
         else:
