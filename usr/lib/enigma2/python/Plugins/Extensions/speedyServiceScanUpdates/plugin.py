@@ -141,7 +141,10 @@ def get_current_version():
 
 def parse_version(version):
     """Hilfsfunktion, um Versionsnummern in Tupel zu zerlegen und zu vergleichen."""
-    return tuple(map(int, version.split(".")))
+    parts = version.split(".")
+    if len(parts) == 2:  # Falls nur zwei Teile (z.B. "3.5")
+        parts.append("0")  # Patch-Teil hinzufügen (z.B. "3.5" → "3.5.0")
+    return tuple(map(int, parts))
 
 def check_for_update(current_version):
     try:
@@ -159,7 +162,7 @@ def check_for_update(current_version):
 
         if parse_version(latest_version) > parse_version(current_version):  # Vergleich als Tupel
             print("[speedyServiceScanUpdates] Ein Update ist verfügbar!")
-            return latest_version, "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/tags/%s.zip" % latest_version
+            return latest_version, "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/tags/{version}.zip" % latest_version
         else:
             print("[speedyServiceScanUpdates] Keine neue Version verfügbar.")
             return None, None
@@ -176,6 +179,8 @@ def prompt_for_update(session, latest_version, download_url):
         else:
             print("User chose not to update.")
 
+    # Überprüfe, ob die MessageBox korrekt angezeigt wird
+    print("[speedyServiceScanUpdates] Showing update prompt...")
     session.openWithCallback(update_installed_callback, MessageBox,
                             "A new version %s is available. Do you want to install it?" % latest_version,
                             MessageBox.TYPE_YESNO)
