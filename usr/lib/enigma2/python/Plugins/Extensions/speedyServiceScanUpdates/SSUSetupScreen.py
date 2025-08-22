@@ -1,77 +1,108 @@
 # -*- coding: utf-8 -*-
-### from __future__ import print_function, unicode_literals
-
-# --- Standardbibliothek ---
 import os
 import sys
-import re
 import zipfile
 import tarfile
-import requests
 import shutil
+import traceback
 
-# Übersetzungsfunktion aus __init__.py laden
-from . import _
+# optional dependency
+try:
+    import requests
+except Exception:
+    requests = None
 
-# Enigma2 Imports
+# --- Enigma2 imports (try both common locations for ServiceScan) ---
 from enigma import getDesktop
 from Screens.Screen import Screen
-from Components.ConfigList import ConfigListScreen
+from Screens.MessageBox import MessageBox
 from Components.ActionMap import ActionMap
 from Components.Button import Button
 from Components.Label import Label
 from Components.ProgressBar import ProgressBar
-from Screens.MessageBox import MessageBox
-from Tools.Directories import fileExists
-from Components.config import config, ConfigSubsection, ConfigYesNo
+from Components.config import config, ConfigSubsection, ConfigYesNo, getConfigListEntry
 from Screens.Setup import ConfigListScreen
-from Components.ScrollLabel import ScrollLabel
-from Tools import Notifications
+from Components.ConfigList import ConfigList
+from Plugins.Plugin import PluginDescriptor
+from Tools.Directories import resolveFilename, SCOPE_CONFIG
 
-# --- Fallback for getConfigListEntry ---
-def getConfigListEntry(description, configElement, help_text=""):
-    return (description, configElement, help_text)
+# try to import ServiceScan from the usual places
+ServiceScan = None
+try:
+    from Components.ServiceScan import ServiceScan
+except Exception:
+    try:
+        from Screens.ServiceScan import ServiceScan
+    except Exception:
+        ServiceScan = None
 
-# --- Config init ---
-config.plugins.speedyservicescanupdates = ConfigSubsection()
-config.plugins.speedyservicescanupdates.add_new_tv_services = ConfigYesNo(default=True)
-config.plugins.speedyservicescanupdates.add_new_radio_services = ConfigYesNo(default=True)
-config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=True)
+# Local translations
+from . import _
 
-# --- Plugin path ---
+# ===== Constants / Paths =====
+UPDATE_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
+DOWNLOAD_PATH = "/tmp/ServiceScanUpdates-main.zip"
+EXTRACT_DIR = "/tmp/ServiceScanUpdates"
+TARGET_DIR = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
+
+# ===== Config =====
+# Ensure plugin config subsection exists and keep old alias
+if not hasattr(config, "plugins"):
+    config.plugins = type("obj", (), {})()
+
+if not hasattr(config.plugins, "speedyservicescanupdates"):
+    config.plugins.speedyservicescanupdates = ConfigSubsection()
+cfg = config.plugins.speedyservicescanupdates
+
+def _cfg_yes(name, default):
+    if not hasattr(cfg, name):
+        setattr(cfg, name, ConfigYesNo(default=default))
+_cfg_yes("add_new_tv_services", True)
+_cfg_yes("add_new_radio_services", True)
+_cfg_yes("clear_bouquet", True)
+
+# backward alias for older name
+if not hasattr(config.plugins, "servicescanupdates"):
+    config.plugins.servicescanupdates = cfg
+else:
+    try:
+        config.plugins.servicescanupdates.add_new_tv_services = cfg.add_new_tv_services
+        config.plugins.servicescanupdates.add_new_radio_services = cfg.add_new_radio_services
+        config.plugins.servicescanupdates.clear_bouquet = cfg.clear_bouquet
+    except Exception:
+        pass
+
+# ===== Plugin path & version =====
 plugin_path = None
-for base in (
-    "/usr/lib/enigma2/python/Plugins/Extensions",
-    "/usr/lib/enigma2/python/Plugins/SystemPlugins"
-):
-    possible = os.path.join(base, "speedyServiceScanUpdates")
-    if os.path.isdir(possible):
-        plugin_path = possible
+for base in ("/usr/lib/enigma2/python/Plugins/Extensions", "/usr/lib/enigma2/python/Plugins/SystemPlugins"):
+    p = os.path.join(base, "speedyServiceScanUpdates")
+    if os.path.isdir(p):
+        plugin_path = p
         break
 if plugin_path and plugin_path not in sys.path:
     sys.path.insert(0, plugin_path)
 
-# --- Version & URLs ---
 def read_version():
-    """Liest die Versionsnummer aus der Datei version."""
-    version_file = os.path.join(plugin_path, "version")
-    try:
-        with open(version_file, "r") as f:
-            version = f.read().strip()
-            return version
-    except IOError:  # Python 2.7 kompatibel
+    if not plugin_path:
         return "Unknown version"
-
+    vf = os.path.join(plugin_path, "version")
+    try:
+        f = open(vf, "r")
+        try:
+            return f.read().strip()
+        finally:
+            f.close()
+    except Exception:
+        return "Unknown version"
 version = read_version()
-update_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
-download_path = "/tmp/ServiceScanUpdates-main.zip"
-extract_dir = "/tmp/ServiceScanUpdates"
-target_dir = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
 
-# --- Helpers ---
-def clean_version(ver):
-    """Filtert Versionsnummer auf nur Ziffern und Punkte."""
-    return re.sub(r'[^0-9\.]', '', ver)
+# ===== Skin helper =====
+def _screen_size():
+    try:
+        ds = getDesktop(0).size()
+        return ds.width(), ds.height()
+    except Exception:
+        return 1280, 720
 
 # --- Bildschirmgröße und Skin-Auswahl ---
 try:
@@ -110,22 +141,33 @@ else:
         <widget name="key_yellow" foregroundColor="yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_blue" position="798,5" foregroundColor="blue" size="250,70" font="Regular;30" halign="center" valign="center" />
         <widget name="version" position="364,752" size="300,50" font="Regular;30" valign="center" halign="center" />
-<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,75" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/green.png" position="265,3" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/yellow.png" position="530,0" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/blue.png" position="790,7" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,75" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/green.png" position="265,3" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/yellow.png" position="530,0" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/blue.png" position="790,7" size="5,70" scale="stretch" alphatest="on" />
     </screen>"""
 
-# --- Update Screen ---
+# ===== Utility =====
+def _safe_msg(session, text, mtype=MessageBox.TYPE_INFO, timeout=5):
+    try:
+        session.open(MessageBox, text, type=mtype, timeout=timeout)
+    except Exception:
+        pass
+
+def _exists(path):
+    try:
+        return os.path.exists(path)
+    except Exception:
+        return False
+
+# ===== Update Screen =====
 class SSUUpdateScreen(Screen, ConfigListScreen):
-    skin = skin_update
+    skin = _skin_update()
 
     def __init__(self, session):
         Screen.__init__(self, session)
+        ConfigListScreen.__init__(self, [], session=session)
         self.session = session
-        self.list = []
-        ConfigListScreen.__init__(self, self.list, session=session)
-
         self['status'] = Label(_("Checking for updates..."))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
@@ -133,148 +175,153 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
         self['key_green'] = Button(_("Start"))
         self['key_yellow'] = Button(_("Cancel"))
         self['key_blue'] = Button(_("Check Update"))
-        self['help'] = Label("")
-        self['version'] = Label(read_version())  # Version hier anzeigen
-
-        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
-                                    {
-                                        'red': self.exit,
-                                        'green': self.start_update,
-                                        'yellow': self.cancel,
-                                        'blue': self.check_update,
-                                        'ok': self.start_update,
-                                        'cancel': self.exit
-                                    }, -1)
+        self['version'] = Label(version)
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
+            'red': self.exit,
+            'green': self.start_update,
+            'yellow': self.cancel,
+            'blue': self.check_update,
+            'ok': self.start_update,
+            'cancel': self.exit
+        }, -1)
         self.download_complete = False
-        self.update_installed = False  # Flag, das angibt, ob ein Update erfolgreich installiert wurde
+        self.update_installed = False
 
+    # --- UI actions ---
     def exit(self):
         self.close()
 
     def cancel(self):
         self['status'].setText(_("Update cancelled."))
         self.download_complete = False
-        self.update_installed = False  # Update wird abgebrochen
+        self.update_installed = False
 
-    def start_update(self):
-        """Startet den Update-Prozess"""
-        self['status'].setText(_("Downloading update..."))
-        try:
-            r = requests.get(update_url, stream=True, timeout=30)
-            total_size = int(r.headers.get('content-length', 0))
-            with open(download_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
-                        self['progress'].setValue((f.tell() / total_size) * 100)
-            self['status'].setText(_("Download complete. Extracting files..."))
-            self.extract_files()
-        except Exception as e:
-            self['status'].setText(_("Download failed. Please try again later."))
-            print(str(e))
-
-    def extract_files(self):
-        """Entpackt die heruntergeladene ZIP-Datei"""
-        try:
-            with zipfile.ZipFile(download_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_dir)
-            self['status'].setText(_("Extracting complete. Installing..."))
-            self.install_update()
-        except zipfile.BadZipFile:
-            self['status'].setText(_("Error during extraction."))
-        except Exception as e:
-            self['status'].setText(_("Error during extraction."))
-            print(str(e))
-
-    def install_update(self):
-        """Installiert das Update"""
-        try:
-            if os.path.isdir(target_dir):
-                shutil.rmtree(target_dir)
-            shutil.move(extract_dir, target_dir)
-            self['status'].setText(_("Update installed successfully!"))
-            self.update_installed = True
-        except Exception as e:
-            self['status'].setText(_("Error during installation."))
-            print(str(e))
+    def _requests_missing(self):
+        if requests is None:
+            self['status'].setText(_("Python 'requests' module not available."))
+            return True
+        return False
 
     def check_update(self):
-        """Überprüft, ob Updates verfügbar sind"""
+        if self._requests_missing():
+            return
         self['status'].setText(_("Checking for updates..."))
         try:
-            # Hier könnte eine Logik zur Überprüfung der Update-Verfügbarkeit hinzukommen
-            self['status'].setText(_("No updates found."))
-        except Exception as e:
+            r = requests.head(UPDATE_URL, timeout=10)
+            if r.status_code == 200:
+                self['status'].setText(_("Update available"))
+            else:
+                self['status'].setText(_("No update available"))
+        except Exception:
             self['status'].setText(_("Update check failed."))
-            print(str(e))
 
-
-    def extract_update(self):
-        """Extrahiert das heruntergeladene Archiv je nach Format (ZIP/TAR)."""
+    def start_update(self):
+        if self._requests_missing():
+            return
+        self['status'].setText(_("Downloading update..."))
         try:
-            if download_path.endswith(".zip"):
-                self.extract_zip(download_path)
-            elif download_path.endswith(".tar.gz") or download_path.endswith(".tgz"):
-                self.extract_tar(download_path)
+            r = requests.get(UPDATE_URL, stream=True, timeout=20)
+            if r.status_code != 200:
+                self['status'].setText(_("Failed to download update."))
+                return
+            f = open(DOWNLOAD_PATH, "wb")
+            try:
+                total = r.headers.get('content-length')
+                total = int(total) if total else None
+                dl = 0
+                for chunk in r.iter_content(chunk_size=8192):
+                    if not chunk:
+                        continue
+                    f.write(chunk)
+                    if total:
+                        dl += len(chunk)
+                        try:
+                            pct = int(dl * 100 / total)
+                            self['progress'].setValue(pct)
+                            self['progresstext'].setText("%d%%" % pct)
+                        except Exception:
+                            pass
+            finally:
+                f.close()
+            self._extract_and_install(DOWNLOAD_PATH)
+        except Exception:
+            self['status'].setText(_("Download failed."))
+
+    # --- extraction + install ---
+    def _extract_and_install(self, file_path):
+        try:
+            if _exists(EXTRACT_DIR):
+                shutil.rmtree(EXTRACT_DIR)
+            os.makedirs(EXTRACT_DIR)
+        except Exception:
+            pass
+        try:
+            if file_path.endswith(".zip"):
+                zf = zipfile.ZipFile(file_path, 'r')
+                try:
+                    zf.extractall(EXTRACT_DIR)
+                finally:
+                    zf.close()
+            elif file_path.endswith(".tar.gz") or file_path.endswith(".tgz"):
+                tf = tarfile.open(file_path, 'r:gz')
+                try:
+                    tf.extractall(EXTRACT_DIR)
+                finally:
+                    tf.close()
             else:
                 self['status'].setText(_("Unsupported file format"))
-        except Exception as e:
-            self['status'].setText("Extraction failed: %s" % str(e))
+                return
+        except Exception:
+            self['status'].setText(_("Extraction failed."))
+        else:
+            self._finish_update()
 
-    def extract_zip(self, path):
-        """Extrahiert ein ZIP-Archiv."""
-        with zipfile.ZipFile(path, 'r') as zip_ref:
-            zip_ref.extractall(extract_dir)
-        self.finish_update()
-
-    def extract_tar(self, path):
-        """Extrahiert ein TAR-Archiv."""
-        with tarfile.open(path, 'r:gz') as tar_ref:
-            tar_ref.extractall(extract_dir)
-        self.finish_update()
-
-    def finish_update(self):
-        """Verschiebt die entpackten Dateien ins Zielverzeichnis und beendet den Update-Prozess."""
+    def _finish_update(self):
         try:
-            # Der Quellpfad nach dem Entpacken
-            extracted_folder = "/tmp/ServiceScanUpdates/speedyServiceScanUpdates-main/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
-            
-            # Das Zielverzeichnis
-            if os.path.isdir(extracted_folder):
-                for item in os.listdir(extracted_folder):
-                    s = os.path.join(extracted_folder, item)
-                    d = os.path.join(target_dir, item)
-                    
+            if not os.path.isdir(EXTRACT_DIR):
+                self['status'].setText(_("Error: Extracted directory not found."))
+                return
+            if not os.path.isdir(TARGET_DIR):
+                try:
+                    os.makedirs(TARGET_DIR)
+                except Exception:
+                    pass
+
+            # copy extracted content into TARGET_DIR (replace dirs)
+            for item in os.listdir(EXTRACT_DIR):
+                s = os.path.join(EXTRACT_DIR, item)
+                d = os.path.join(TARGET_DIR, item)
+                try:
                     if os.path.isdir(s):
-                        if os.path.exists(d):
+                        if _exists(d):
                             shutil.rmtree(d)
                         shutil.copytree(s, d)
                     else:
                         shutil.copy2(s, d)
+                except Exception:
+                    # ignore copy errors but continue
+                    pass
 
-                if not os.path.exists(target_dir):
-                    raise IOError("Target directory %s not found after extraction." % target_dir)
+            if not _exists(TARGET_DIR):
+                raise IOError("Target dir missing after extraction")
 
-                self['status'].setText(_("Update completed successfully."))
-                self.update_installed = True
-                self.restart_application()
-            else:
-                self['status'].setText(_("Error: Extracted directory not found."))
-                self.update_installed = False
-        except Exception as e:
-            self['status'].setText("Failed to complete update: %s" % str(e))
-            self.update_installed = False
+            self['status'].setText(_("Update completed successfully."))
+            self.update_installed = True
+            self._restart_application()
+        except Exception:
+            self['status'].setText(_("Failed to complete update."))
 
-    def restart_application(self):
-        """Startet die Anwendung nach dem Update neu."""
-        self['status'].setText(_("Restarting application..."))
-        Notifications.AddNotification(MessageBox, _("Application will now restart."), type=MessageBox.TYPE_INFO)
-        self.close()
-        os.system("reboot")
+    def _restart_application(self):
+        if not self.update_installed:
+            _safe_msg(self.session, _("No update installed. Restart not needed."), MessageBox.TYPE_INFO, 6)
+            return
+        _safe_msg(self.session, _("Update complete. The application will now restart."), MessageBox.TYPE_INFO, 8)
+        try:
+            os.system("init 4")
+        except Exception:
+            pass
 
-    
-
-# --- Setup Screen ---
+# ===== Setup Screen =====
 class SSUSetupScreen(ConfigListScreen, Screen):
     if sz_w == 1920:
         skin = """
@@ -313,121 +360,275 @@ class SSUSetupScreen(ConfigListScreen, Screen):
 
     def __init__(self, session):
         Screen.__init__(self, session)
+        ConfigListScreen.__init__(self, [], session=session)
         self.session = session
 
-        # Erstelle eine Liste von Konfigurationseinträgen
+        # --- Define ALL widgets that external skins may reference ---
+        self["version"] = Label(_("v %s") % version)
+        self["key_red"] = Button(_("Cancel"))
+        self["key_green"] = Button(_("Save"))
+        self["key_yellow"] = Button(_("Update"))
+        self["key_blue"] = Button(_("Close"))
+        self["help"] = Label(_("Configure the update options."))
+
+        # Config options
         self.list = [
-            getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
-            getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
-            getConfigListEntry(_("Clear bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet)
+            getConfigListEntry(_("Add new TV services"), cfg.add_new_tv_services),
+            getConfigListEntry(_("Add new Radio services"), cfg.add_new_radio_services),
+            getConfigListEntry(_("Clear Bouquet"), cfg.clear_bouquet)
         ]
+        # Re-init with the list so ConfigListScreen creates self["config"]
+        ConfigListScreen.__init__(self, self.list, session=self.session)
 
-        # Initialisiere ConfigListScreen mit der Konfigurationsliste
-        ConfigListScreen.__init__(self, self.list, session=session)
+        # Actions
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
+            'red': self.cancel,
+            'green': self.save,
+            'yellow': self.openUpdate,
+            'blue': self.close,
+            'ok': self.save,
+            'cancel': self.cancel
+        }, -1)
 
-        # Widget Initialisierungen
-        self['status'] = Label(_("Please configure the plugin settings"))
-        self['help'] = Label(_("Choose your settings and press green to confirm"))
-        self['key_red'] = Button(_("Exit"))
-        self['key_green'] = Button(_("Save"))
-        self['key_yellow'] = Button(_("Restore Default"))
-        self['key_blue'] = Button(_("Update"))
-        
-        
-        # Tastenaktionen
-        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
-                                    {
-                                        'red': self.exit,  # Exit über Red Key
-                                        'green': self.save_settings,
-                                        'yellow': self.restore_default,
-                                        'blue': self.open_ssu_update_screen,
-                                    }, -1)
+        self.onLayoutFinish.append(self.layoutFinished)
 
-    def open_ssu_update_screen(self):
-        """Öffnet den SSUUpdateScreen und überprüft im Hintergrund auf Updates"""
-        self.session.open(SSUUpdateScreen)
+    def openUpdate(self):
+        try:
+            self.session.open(SSUUpdateScreen)
+        except Exception:
+            _safe_msg(self.session, _("Unable to open update screen."), MessageBox.TYPE_ERROR, 5)
 
-    def check_for_update(self):
-        """Simuliert die Überprüfung auf ein Update im Hintergrund"""
-        import time
-        time.sleep(2)  # Simuliert eine 2-sekündige Verzögerung für die Update-Überprüfung
-        
-        # Simuliere Update-Status (True = Update verfügbar, False = Kein Update)
-        update_available = True  # Dies kannst du durch echte Logik ersetzen
-        
-        if update_available:
-            self.session.openWithCallback(self.ask_for_update, MessageBox,
-                                          _("Update found! Do you want to install it?"),
-                                          MessageBox.TYPE_YESNO)
-        else:
-            self.session.open(MessageBox, _("No updates found."), MessageBox.TYPE_INFO, 3)
-            self.close()
-
-    def ask_for_update(self, answer):
-        """Fragt den Benutzer, ob das Update installiert werden soll"""
-        if answer:  # Der Benutzer hat auf "Ja" geklickt
-            self.session.openWithCallback(self.install_update, MessageBox,
-                                          _("Do you really want to install the update?"),
-                                          MessageBox.TYPE_YESNO)
-        else:  # Der Benutzer hat auf "Nein" geklickt
-            self.close()
-
-    def install_update(self, answer):
-        """Installiert das Update, wenn der Benutzer zustimmt"""
-        if answer:
-            self['status'].setText(_("Installing the update..."))
-            self['help'].setText(_("Please wait while the update is being installed"))
-
-            # Simuliere die Installationszeit
-            import time
-            time.sleep(3)
-
-            self.session.open(MessageBox, _("Update installed successfully!"), MessageBox.TYPE_INFO, 5)
-            self.close()
-        else:
-            self.session.open(MessageBox, _("Update installation cancelled."), MessageBox.TYPE_INFO, 3)
-            self.close()
-
-    def exit(self):
-        """Fragt den Benutzer, ob er wirklich verlassen möchte"""
-        self.session.openWithCallback(self.confirm_exit, MessageBox,
-                                      _("Do you really want to exit?"),
-                                      MessageBox.TYPE_YESNO)
-
-    def confirm_exit(self, answer):
-        """Bestätigt das Verlassen der Anwendung"""
-        if answer:  # Der Benutzer hat "Ja" gewählt
-            self.close()
-        else:  # Der Benutzer hat "Nein" gewählt
-            pass  # Nichts tun, um die Bildschirmansicht zu erhalten
-    
-    def save_settings(self):
-        """Speichert die aktuellen Einstellungen"""
-        # Logik zum Speichern der Einstellungen hinzufügen
-        self.session.open(MessageBox, _("Settings saved!"), MessageBox.TYPE_INFO, 3)
+    def cancel(self):
         self.close()
 
-    def restore_default(self):
-        """Stellt die Standardeinstellungen wieder her"""
-        # Logik zum Wiederherstellen der Standardeinstellungen hinzufügen
-        self.session.open(MessageBox, _("Default settings restored!"), MessageBox.TYPE_INFO, 3)
+    def save(self):
+        for x in self.list:
+            try:
+                x[1].save()
+            except Exception:
+                pass
+        try:
+            config.save()
+            _safe_msg(self.session, _("Settings saved successfully!"), MessageBox.TYPE_INFO, 4)
+        except Exception:
+            _safe_msg(self.session, _("Failed to save config."), MessageBox.TYPE_ERROR, 6)
         self.close()
-
-    def reset_settings(self):
-        """Setzt alle Einstellungen zurück."""
-        self.session.open(MessageBox, _("Resetting all settings..."), MessageBox.TYPE_INFO, 5)
-
-    def changed(self):
-        """Speichert Änderungen."""
-        for item in self['config'].list:
-            item[1].save()  # Speichert das Konfigurationselement
 
     def layoutFinished(self):
-        """Zusätzliche Informationen nach Layout-Fertigstellung anzeigen."""
-        help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
-        help_txt += _("All new services found during the scan are inserted there together with a marker.\n")
-        help_txt += _("This allows you to quickly and clearly see which new services were found,\n")
-        help_txt += _("and you can add individual services to your own Favorites bouquets as usual.\n\n")
-        help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
-        help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
+        help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) named 'Service Scan Updates'.\n")
+        help_txt += _("All new services found during scans are inserted with a marker, so you can copy them to your favorites.\n\n")
+        help_txt += _("For the bouquet to be visible, enable 'Allow multiple bouquets' in system settings.")
         self["help"].setText(help_txt)
+
+# ===== ServiceScan hook =====
+_base_execBegin = None
+_base_execEnd = None
+_preScanDB = None
+
+# optional parser
+try:
+    from .SSULameDBParser import SSULameDBParser
+except Exception:
+    SSULameDBParser = None
+
+def _has(d, k):
+    # Python 2/3-safe membership check helper
+    try:
+        return k in d
+    except Exception:
+        try:
+            return d.has_key(k)  # Py2 fallback
+        except Exception:
+            return False
+
+def ServiceScan_execBegin_hook(self, *args, **kwargs):
+    global _preScanDB
+    # snapshot pre-scan DB if configured
+    try:
+        if SSULameDBParser and not _preScanDB:
+            add_tv = getattr(config.plugins.servicescanupdates.add_new_tv_services, "value", False)
+            add_radio = getattr(config.plugins.servicescanupdates.add_new_radio_services, "value", False)
+            if add_tv or add_radio:
+                try:
+                    _preScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
+                except Exception:
+                    _preScanDB = None
+    except Exception:
+        pass
+
+    # call original execBegin
+    try:
+        if _base_execBegin:
+            try:
+                _base_execBegin(self, *args, **kwargs)
+            except TypeError:
+                try:
+                    _base_execBegin(self)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+def ServiceScan_execEnd_hook(self, *args, **kwargs):
+    global _preScanDB
+    # call original first
+    try:
+        if _base_execEnd:
+            try:
+                _base_execEnd(self, *args, **kwargs)
+            except TypeError:
+                try:
+                    _base_execEnd(self)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # post-scan handling
+    try:
+        if not SSULameDBParser:
+            return
+        add_tv = getattr(config.plugins.servicescanupdates.add_new_tv_services, "value", False)
+        add_radio = getattr(config.plugins.servicescanupdates.add_new_radio_services, "value", False)
+        if not (add_tv or add_radio):
+            return
+
+        # ensure scan finished if attributes exist
+        proceed = True
+        try:
+            Done = getattr(self, "Done", None)
+            state = getattr(self, "state", None)
+            if Done is not None and state is not None:
+                proceed = (state == Done)
+        except Exception:
+            proceed = True
+        if not proceed:
+            return
+
+        if not _preScanDB:
+            return
+
+        # read post-scan DB
+        try:
+            postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
+        except Exception:
+            return
+
+        postServices = postScanDB.getServices()
+        preServices = _preScanDB.getServices()
+
+        newTV, newRadio = [], []
+        for sref in postServices.keys():
+            try:
+                if not _has(preServices, sref):
+                    if SSULameDBParser.isVideoService(sref):
+                        newTV.append(sref)
+                    elif SSULameDBParser.isRadioService(sref):
+                        newRadio.append(sref)
+            except Exception:
+                pass
+
+        if (not newTV) and (not newRadio):
+            return
+
+        try:
+            from .SSUBouquetHandler import SSUBouquetHandler
+            bh = SSUBouquetHandler()
+        except Exception:
+            return
+
+        def _apply(side, items):
+            if not items:
+                return
+            try:
+                bh.addToIndexBouquet(side)
+                if config.plugins.servicescanupdates.clear_bouquet.value:
+                    bh.createSSUBouquet(items, side)
+                else:
+                    if bh.doesSSUBouquetFileExists(side):
+                        bh.appendToSSUBouquet(items, side)
+                    else:
+                        bh.createSSUBouquet(items, side)
+            except Exception:
+                pass
+
+        if add_tv:
+            _apply("tv", newTV)
+        if add_radio:
+            _apply("radio", newRadio)
+
+        try:
+            bh.reloadBouquets()
+        except Exception:
+            pass
+    except Exception:
+        pass
+    finally:
+        _preScanDB = None
+
+# ===== Autostart: patch ServiceScan =====
+def _autostart(reason, **kwargs):
+    global _base_execBegin, _base_execEnd
+    try:
+        if reason == 0 and "session" in kwargs:
+            if ServiceScan is None:
+                return
+            if _base_execBegin is None and hasattr(ServiceScan, "execBegin"):
+                _base_execBegin = ServiceScan.execBegin
+                ServiceScan.execBegin = ServiceScan_execBegin_hook
+            if _base_execEnd is None and hasattr(ServiceScan, "execEnd"):
+                _base_execEnd = ServiceScan.execEnd
+                ServiceScan.execEnd = ServiceScan_execEnd_hook
+    except Exception:
+        pass
+
+# ===== Menu openers =====
+def openUpdate(session, **kwargs):
+    session.open(SSUUpdateScreen)
+
+def openSetup(session, **kwargs):
+    session.open(SSUSetupScreen)
+
+# ===== Menu integration =====
+def menuHook(menuid, **kwargs):
+    if menuid == "scan":  # Service Searching
+        return [(_("ServiceScanUpdates"), openSetup, "servicescanupdates", 50)]
+    return []
+
+# ===== Plugin registration =====
+def Plugins(**kwargs):
+    """
+    Return plugin descriptors:
+     - autostart/sessionstart for service scan hooks
+     - SpeedyServiceScanUpdates -> updater screen (plugin menu and extensions)
+     - ServiceScanUpdates -> configuration screen (plugin menu, extensions, and service searching menu)
+    """
+    items = [
+        PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART], fnc=_autostart),
+
+        PluginDescriptor(name="SpeedyServiceScanUpdates",
+                         description=_("Download and install Service Scan Updates"),
+                         where=PluginDescriptor.WHERE_PLUGINMENU,
+                         icon="plugin.png",
+                         fnc=openUpdate),
+        PluginDescriptor(name="SpeedyServiceScanUpdates",
+                         description=_("Download and install Service Scan Updates"),
+                         where=PluginDescriptor.WHERE_EXTENSIONSMENU,
+                         icon="plugin.png",
+                         fnc=openUpdate),
+
+        PluginDescriptor(name="ServiceScanUpdates",
+                         description=_("Configure Service Scan Updates"),
+                         where=PluginDescriptor.WHERE_PLUGINMENU,
+                         icon="plugin.png",
+                         fnc=openSetup),
+        PluginDescriptor(name="ServiceScanUpdates",
+                         description=_("Configure Service Scan Updates"),
+                         where=PluginDescriptor.WHERE_EXTENSIONSMENU,
+                         icon="plugin.png",
+                         fnc=openSetup),
+
+        # New entry in Main Menu ? Setup ? Service & Recording ? Service Searching
+        PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menuHook)
+    ]
+    return items
