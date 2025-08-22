@@ -1,10 +1,9 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 
 import os
 import sys
-import json
-import urllib
+import urllib.request
 import zipfile
 import shutil
 import importlib
@@ -148,6 +147,7 @@ def parse_version(version):
 
 def check_for_update(current_version):
     try:
+        # URL für die neueste Version im main-Branch
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
         print("[speedyServiceScanUpdates] Checking for updates at:", url)
 
@@ -162,7 +162,10 @@ def check_for_update(current_version):
 
         if parse_version(latest_version) > parse_version(current_version):  # Vergleich als Tupel
             print("[speedyServiceScanUpdates] Ein Update ist verfügbar!")
-            return latest_version, "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/tags/{version}.zip" % latest_version
+            
+            # URL auf die main.zip umstellen
+            download_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
+            return latest_version, download_url
         else:
             print("[speedyServiceScanUpdates] Keine neue Version verfügbar.")
             return None, None
@@ -185,29 +188,30 @@ def prompt_for_update(session, latest_version, download_url):
                             "A new version %s is available. Do you want to install it?" % latest_version,
                             MessageBox.TYPE_YESNO)
 
+def download_and_extract_zip(url, download_path, extract_path):
+    """Lädt die ZIP-Datei herunter und extrahiert sie."""
+    try:
+        # Download der ZIP-Datei
+        print(f"Downloading from {url}...")
+        urllib.request.urlretrieve(url, download_path)
+        print(f"Download complete: {download_path}")
+
+        # Extrahieren der ZIP-Datei
+        print(f"Extracting to {extract_path}...")
+        with zipfile.ZipFile(download_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_path)
+        print(f"Extraction complete.")
+    except Exception as e:
+        print(f"Error: {e}")
+
 def download_and_install_update(download_url):
     """Lädt das Update herunter und installiert es."""
     try:
-        download_path = "/tmp/plugin_update.zip"
-        extract_path = "/tmp/speedyServiceScanUpdates_update/"
+        download_path = "/tmp/speedyServiceScanUpdates.zip"
+        extract_path = "/tmp/speedyServiceScanUpdates_extract"
 
-        # Download der Datei
-        if PY2:
-            urllib.urlretrieve(download_url, download_path)
-        else:
-            import urllib.request
-            urllib.request.urlretrieve(download_url, download_path)
-
-        # Altes Extrahierungsverzeichnis entfernen
-        if os.path.exists(extract_path):
-            shutil.rmtree(extract_path)
-
-        # Neues Verzeichnis erstellen
-        os.makedirs(extract_path)
-
-        # Entpacken
-        with zipfile.ZipFile(download_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_path)
+        # Download und Entpacken
+        download_and_extract_zip(download_url, download_path, extract_path)
 
         # Extrahiertes Verzeichnis finden
         extracted_folder = None
@@ -253,6 +257,7 @@ def download_and_install_update(download_url):
         print("Fehler beim Update: %s" % str(e))
 
 ##############################################
+
 
 # Autostart Hook
 def autostart(reason, **kwargs):
