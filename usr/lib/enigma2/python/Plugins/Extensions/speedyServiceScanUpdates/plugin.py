@@ -7,9 +7,7 @@ import json
 import urllib
 import zipfile
 import shutil
-#from packaging import version
 import importlib
-#import subprocess
 
 from Plugins.Plugin import PluginDescriptor
 from Components.config import config
@@ -17,15 +15,12 @@ from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
 from Components.ConfigList import ConfigListScreen
 
-
 # Compatible import for ServiceScan
 try:
     from Screens.ServiceScan import ServiceScan  # Python 3
 except ImportError:
-#   import urllib.request  # Für Python 2
     from Components.ServiceScan import ServiceScan  # Python 2
 
-from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
@@ -35,14 +30,12 @@ try:
 except ImportError:
     from .SSUSetupScreen import SSUUpdateScreen  # Python 3 relative import
 
-import sys
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
 # Globale Variablen
 baseServiceScan_execBegin = None
 baseServiceScan_execEnd = None
-# baseServiceScan_scanStatusChanged = None
 preScanDB = None
 
 def dictHasKey(dictionary, key):
@@ -146,19 +139,25 @@ def get_current_version():
         print("Fehler beim Lesen der Versionsdatei: %s" % str(e))
         return "0.0"
 
+def parse_version(version):
+    """Hilfsfunktion, um Versionsnummern in Tupel zu zerlegen und zu vergleichen."""
+    return tuple(map(int, version.split(".")))
+
 def check_for_update(current_version):
     try:
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
+        print("[speedyServiceScanUpdates] Checking for updates at:", url)
+
         if PY2:
             response = urllib.urlopen(url).read().strip()  # Python 2
         else:
             import urllib.request
             response = urllib.request.urlopen(url).read().decode().strip()  # Python 3
 
-        latest_version = response
+        latest_version = response.strip()
         print("[speedyServiceScanUpdates] Aktuelle Version: %s, Neueste Version: %s" % (current_version, latest_version))
 
-        if latest_version > current_version:  # Simple string comparison
+        if parse_version(latest_version) > parse_version(current_version):  # Vergleich als Tupel
             print("[speedyServiceScanUpdates] Ein Update ist verfügbar!")
             return latest_version, "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/tags/%s.zip" % latest_version
         else:
@@ -170,6 +169,7 @@ def check_for_update(current_version):
         return None, None
 
 def prompt_for_update(session, latest_version, download_url):
+    """Fragt den Benutzer, ob das Update installiert werden soll."""
     def update_installed_callback(choice):
         if choice:
             download_and_install_update(download_url)
@@ -181,29 +181,30 @@ def prompt_for_update(session, latest_version, download_url):
                             MessageBox.TYPE_YESNO)
 
 def download_and_install_update(download_url):
+    """Lädt das Update herunter und installiert es."""
     try:
         download_path = "/tmp/plugin_update.zip"
         extract_path = "/tmp/speedyServiceScanUpdates_update/"
 
-        # Download file
+        # Download der Datei
         if PY2:
             urllib.urlretrieve(download_url, download_path)
         else:
             import urllib.request
             urllib.request.urlretrieve(download_url, download_path)
 
-        # Remove old extraction
+        # Altes Extrahierungsverzeichnis entfernen
         if os.path.exists(extract_path):
             shutil.rmtree(extract_path)
 
-        # Create directory
+        # Neues Verzeichnis erstellen
         os.makedirs(extract_path)
 
-        # Unzip
+        # Entpacken
         with zipfile.ZipFile(download_path, 'r') as zip_ref:
             zip_ref.extractall(extract_path)
 
-        # Find extracted folder
+        # Extrahiertes Verzeichnis finden
         extracted_folder = None
         for item in os.listdir(extract_path):
             if item.startswith("speedyServiceScanUpdates-"):
@@ -214,10 +215,10 @@ def download_and_install_update(download_url):
             print("Extracted folder not found!")
             return
 
-        # Plugin destination
+        # Zielverzeichnis des Plugins
         plugin_dest_path = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
 
-        # Copy files
+        # Dateien kopieren
         for item in os.listdir(extracted_folder):
             s_item = os.path.join(extracted_folder, item)
             d_item = os.path.join(plugin_dest_path, item)
@@ -233,7 +234,7 @@ def download_and_install_update(download_url):
             else:
                 shutil.copy2(s_item, d_item)
 
-        # Reload plugin
+        # Plugin neu laden
         module_name = "Plugins.Extensions.speedyServiceScanUpdates"
         if module_name in sys.modules:
             if PY2:
@@ -280,6 +281,7 @@ def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
         return [("speedy ServiceScanUpdates " + _("Setup"), SSUMain, "servicescanupdates", None)]
     return []
+
 ##############################################
 
 def menu(menuid, **kwargs):
