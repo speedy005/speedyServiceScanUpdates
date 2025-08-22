@@ -262,3 +262,4 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
