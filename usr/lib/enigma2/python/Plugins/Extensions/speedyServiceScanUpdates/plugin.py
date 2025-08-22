@@ -3,10 +3,15 @@ from __future__ import print_function
 
 import os
 import sys
-import urllib.request
 import zipfile
 import shutil
 import importlib
+
+# Python 2 compatible urllib
+try:
+    import urllib2 as urllib_request
+except ImportError:
+    import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
 from Components.config import config
@@ -23,7 +28,7 @@ except ImportError:
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
-# Correct screen import (fix)
+# Correct screen import
 try:
     from SSUSetupScreen import SSUUpdateScreen   # Python 2 absolute import
 except ImportError:
@@ -142,23 +147,22 @@ def parse_version(version):
     """Hilfsfunktion, um Versionsnummern in Tupel zu zerlegen und zu vergleichen."""
     parts = version.split(".")
     if len(parts) == 2:  # Falls nur zwei Teile (z.B. "3.5")
-        parts.append("0")  # Patch-Teil hinzufügen (z.B. "3.5" → "3.5.0")
+        parts.append("0")  # Patch-Teil hinzufügen (z.B. "3.5" ? "3.5.0")
     return tuple(map(int, parts))
 
 def check_for_update(current_version):
     try:
         # URL für die neueste Version im main-Branch
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
-        print("[speedyServiceScanUpdates] Checking for updates at:", url)
+        print("[speedyServiceScanUpdates] Checking for updates at: %s" % url)
 
-        response = urllib.request.urlopen(url).read().decode().strip()
+        response = urllib_request.urlopen(url).read().strip()
+        latest_version = response
 
-        latest_version = response.strip()
         print("[speedyServiceScanUpdates] Aktuelle Version: %s, Neueste Version: %s" % (current_version, latest_version))
 
-        if parse_version(latest_version) > parse_version(current_version):  # Vergleich als Tupel
+        if parse_version(latest_version) > parse_version(current_version):
             print("[speedyServiceScanUpdates] Ein Update ist verfügbar!")
-            
             # URL auf die main.zip umstellen
             download_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
             return latest_version, download_url
@@ -178,27 +182,27 @@ def prompt_for_update(session, latest_version, download_url):
         else:
             print("User chose not to update.")
 
-    # Überprüfe, ob die MessageBox korrekt angezeigt wird
+    # Uberprüfe, ob die MessageBox korrekt angezeigt wird
     print("[speedyServiceScanUpdates] Showing update prompt...")
     session.openWithCallback(update_installed_callback, MessageBox,
-                            "A new version %s is available. Do you want to install it?" % latest_version,
-                            MessageBox.TYPE_YESNO)
+        "A new version %s is available. Do you want to install it?" % latest_version,
+        MessageBox.TYPE_YESNO)
 
 def download_and_extract_zip(url, download_path, extract_path):
-    """Lädt die ZIP-Datei herunter und extrahiert sie."""
     try:
-        # Download der ZIP-Datei
-        print(f"Downloading from {url}...")
-        urllib.request.urlretrieve(url, download_path)
-        print(f"Download complete: {download_path}")
+        print("Downloading from %s..." % url)
+        req = urllib_request.urlopen(url)
+        with open(download_path, "wb") as f:
+            f.write(req.read())
+        print("Download complete: %s" % download_path)
 
-        # Extrahieren der ZIP-Datei
-        print(f"Extracting to {extract_path}...")
-        with zipfile.ZipFile(download_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_path)
-        print(f"Extraction complete.")
+        print("Extracting to %s..." % extract_path)
+        zip_ref = zipfile.ZipFile(download_path, 'r')
+        zip_ref.extractall(extract_path)
+        zip_ref.close()
+        print("Extraction complete.")
     except Exception as e:
-        print(f"Error: {e}")
+        print("Error: %s" % str(e))
 
 # Autostart Hook
 def autostart(reason, **kwargs):
@@ -211,17 +215,6 @@ def autostart(reason, **kwargs):
         if baseServiceScan_execEnd is None:
             baseServiceScan_execEnd = ServiceScan.execEnd
         ServiceScan.execEnd = ServiceScan_execEnd
-
-# version on plugin screen
-def read_version():
-    """Liest die Versionsnummer aus der Datei version."""
-    version_file = os.path.join(plugin_path, "version")
-    try:
-        with open(version_file, "r") as f:
-            version = f.read().strip()
-            return version
-    except IOError:  # Fallback für den Fall, dass die Datei nicht existiert
-        return "Unknown version"
 
 # Menü und Setup
 def SSUMain(session, **kwargs):
@@ -262,4 +255,3 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
-
