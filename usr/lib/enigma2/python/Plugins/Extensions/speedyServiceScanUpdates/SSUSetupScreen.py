@@ -16,6 +16,7 @@ except Exception:
 from enigma import getDesktop
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
+from Screens.Standby import TryQuitMainloop
 from Components.ActionMap import ActionMap
 from Components.Button import Button
 from Components.Label import Label
@@ -167,7 +168,8 @@ def _exists(path):
 
 # ===== Update Screen =====
 class SSUUpdateScreen(Screen, ConfigListScreen):
-    skin = skin_update  # Referenz zur Skin-Definition
+    # Skin-Definition für das UI
+    skin = skin_update  # Skin für die Update-Ansicht
 
     def __init__(self, session):
         Screen.__init__(self, session)
@@ -182,31 +184,78 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
         self['key_blue'] = Button(_("Check Update"))
         self['version'] = Label(version)
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
-            'red': self.exit,
+            'red': self.exit,  # Wenn "Exit" gedrückt wird, die exit() Methode aufrufen
             'green': self.start_update,
             'yellow': self.cancel,
             'blue': self.check_update,
             'ok': self.start_update,
-            'cancel': self.exit
+            'cancel': self.exit  # Auch beim "Cancel" wird die exit() Methode aufgerufen
         }, -1)
+
         self.download_complete = False
         self.update_installed = False
 
-    # --- UI actions ---
+    # --- Exit-Methode: Beendet das Update-Fenster ---
     def exit(self):
-        self.close()
+        self.close()  # Schließt das Update-Fenster
 
-    def cancel(self):
-        self['status'].setText(_("Update cancelled."))
-        self.download_complete = False
-        self.update_installed = False
+    # --- GUI neu starten nach erfolgreicher Installation ---
+    def restartGUI(self, answer):
+        if answer is True:
+            self.session.open(TryQuitMainloop, 3)  # GUI wird neu gestartet
+        else:
+            self.close()  # Das Fenster wird geschlossen, wenn der Benutzer "Nein" drückt
 
-    def _requests_missing(self):
-        if requests is None:
-            self['status'].setText(_("Python 'requests' module not available."))
-            return True
-        return False
+    # --- Update-Installation abschließen (Daten extrahieren und installieren) ---
+    # --- Update-Installation abschließen (Daten extrahieren und installieren) ---
+def _finish_update(self):
+    try:
+        # Überprüfen, ob das Extraktionsverzeichnis existiert
+        if not os.path.isdir(EXTRACT_DIR):
+            self['status'].setText(_("Error: Extracted directory not found."))
+            return
+        if not os.path.isdir(TARGET_DIR):
+            try:
+                os.makedirs(TARGET_DIR)
+            except Exception:
+                pass
 
+        # Der spezifische Ordner, den du kopieren möchtest
+        update_folder = os.path.join(EXTRACT_DIR, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdate")
+
+        # Überprüfen, ob der Ordner existiert
+        if not os.path.isdir(update_folder):
+            self['status'].setText(_("Error: Update folder not found."))
+            return
+
+        # Kopieren des Inhalts des `speedyServiceScanUpdate`-Ordners in das Zielverzeichnis
+        for item in os.listdir(update_folder):
+            s = os.path.join(update_folder, item)
+            d = os.path.join(TARGET_DIR, item)
+            try:
+                if os.path.isdir(s):
+                    if _exists(d):
+                        shutil.rmtree(d)  # Entferne existierende Verzeichnisse
+                    shutil.copytree(s, d)  # Kopiere das Verzeichnis
+                else:
+                    shutil.copy2(s, d)  # Kopiere die Datei
+            except Exception:
+                # Fehler beim Kopieren werden ignoriert und fortgesetzt
+                pass
+
+        if not _exists(TARGET_DIR):
+            raise IOError("Target dir missing after extraction")
+
+        self['status'].setText(_("Update completed successfully."))
+        self.update_installed = True
+
+        # Benutzer fragen, ob die GUI neu gestartet werden soll
+        self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
+
+    except Exception:
+        self['status'].setText(_("Failed to complete update."))
+
+    # --- Überprüfen, ob ein Update verfügbar ist ---
     def check_update(self):
         if self._requests_missing():
             return
@@ -220,6 +269,7 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
         except Exception:
             self['status'].setText(_("Update check failed."))
 
+    # --- Starten des Update-Vorgangs ---
     def start_update(self):
         if self._requests_missing():
             return
@@ -252,7 +302,7 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
         except Exception:
             self['status'].setText(_("Download failed."))
 
-    # --- extraction + install ---
+    # --- Extrahieren und Installieren der Update-Datei ---
     def _extract_and_install(self, file_path):
         try:
             if _exists(EXTRACT_DIR):
@@ -281,50 +331,23 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
         else:
             self._finish_update()
 
-    def _finish_update(self):
-        try:
-            if not os.path.isdir(EXTRACT_DIR):
-                self['status'].setText(_("Error: Extracted directory not found."))
-                return
-            if not os.path.isdir(TARGET_DIR):
-                try:
-                    os.makedirs(TARGET_DIR)
-                except Exception:
-                    pass
+    # --- Überprüfen, ob das 'requests'-Modul fehlt ---
+    def _requests_missing(self):
+        if requests is None:
+            self['status'].setText(_("Python 'requests' module not available."))
+            return True
+        return False
 
-            # copy extracted content into TARGET_DIR (replace dirs)
-            for item in os.listdir(EXTRACT_DIR):
-                s = os.path.join(EXTRACT_DIR, item)
-                d = os.path.join(TARGET_DIR, item)
-                try:
-                    if os.path.isdir(s):
-                        if _exists(d):
-                            shutil.rmtree(d)
-                        shutil.copytree(s, d)
-                    else:
-                        shutil.copy2(s, d)
-                except Exception:
-                    # ignore copy errors but continue
-                    pass
+    # --- Wenn das Update abgebrochen wird ---
+    def cancel(self):
+        self['status'].setText(_("Update cancelled."))
+        self.download_complete = False
+        self.update_installed = False
 
-            if not _exists(TARGET_DIR):
-                raise IOError("Target dir missing after extraction")
+    # --- Startbildschirm für das Update ---
+    def exit(self):
+        self.close()  # Schließt das Update-Fenster
 
-            self['status'].setText(_("Update completed successfully."))
-            self.update_installed = True
-            self._restart_application()
-        except Exception:
-            self['status'].setText(_("Failed to complete update."))
-
-    def _restart_application(self):
-        if not self.update_installed:
-            _safe_msg(self.session, _("No update installed. Restart not needed."), MessageBox.TYPE_INFO, 6)
-            return
-        _safe_msg(self.session, _("Update complete. The application will now restart."), MessageBox.TYPE_INFO, 8)
-        try:
-            os.system("init 4")
-        except Exception:
-            pass
 class SSUSetupScreen(ConfigListScreen, Screen):
     # Bildschirmauflösung abfragen
     skin = skin_update  # Direkte Zuweisung der skin_update-Variable
