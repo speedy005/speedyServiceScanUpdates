@@ -12,7 +12,6 @@ try:
 except Exception:
     requests = None
 
-version = "3.0"
 # --- Enigma2 imports (try both common locations for ServiceScan) ---
 from enigma import getDesktop
 from Screens.Screen import Screen
@@ -168,9 +167,30 @@ def _exists(path):
         return False
 
 # ===== Update Screen =====
+import shutil
+import os
+import zipfile
+import tarfile
+import requests
+from enigma import eTimer
+from Screens.MessageBox import MessageBox
+from Components.ActionMap import ActionMap
+from Components.Label import Label
+from Components.ProgressBar import ProgressBar
+from Components.Button import Button
+from Screens.Screen import Screen
+from Screens.ConfigList import ConfigListScreen
+
+# Beispiel für Konstante
+EXTRACT_DIR = "/tmp/ServiceScanUpdates"
+TARGET_DIR = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdate"
+DOWNLOAD_PATH = "/tmp/ServiceScanUpdate.zip"
+UPDATE_URL = "http://example.com/update.zip"
+version = "1.0.0"  # Beispielversion
+
 class SSUUpdateScreen(Screen, ConfigListScreen):
     # Skin-Definition für das UI
-    skin = skin_update  # Skin für die Update-Ansicht
+    skin = "skin_update"  # Skin für die Update-Ansicht
 
     def __init__(self, session):
         Screen.__init__(self, session)
@@ -186,11 +206,11 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
         self['version'] = Label(version)
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
             'red': self.exit,  # Wenn "Exit" gedrückt wird, die exit() Methode aufrufen
-            'green': self.start_update,
-            'yellow': self.cancel,
-            'blue': self.check_update,
-            'ok': self.start_update,
-            'cancel': self.exit  # Auch beim "Cancel" wird die exit() Methode aufgerufen
+            'green': self.start_update,  # Methode für "Start"
+            'yellow': self.cancel,  # Methode für "Cancel"
+            'blue': self.check_update,  # Methode für "Check Update"
+            'ok': self.start_update,  # Methode für "OK"
+            'cancel': self.exit  # Methode für "Cancel"
         }, -1)
 
         self.download_complete = False
@@ -200,61 +220,52 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
     def exit(self):
         self.close()  # Schließt das Update-Fenster
 
-    # --- GUI neu starten nach erfolgreicher Installation ---
-    def restartGUI(self, answer):
-        if answer is True:
-            self.session.open(TryQuitMainloop, 3)  # GUI wird neu gestartet
-        else:
-            self.close()  # Das Fenster wird geschlossen, wenn der Benutzer "Nein" drückt
-
     # --- Update-Installation abschließen (Daten extrahieren und installieren) ---
-    # --- Update-Installation abschließen (Daten extrahieren und installieren) ---
-def _finish_update(self):
-    try:
-        # Überprüfen, ob das Extraktionsverzeichnis existiert
-        if not os.path.isdir(EXTRACT_DIR):
-            self['status'].setText(_("Error: Extracted directory not found."))
-            return
-        if not os.path.isdir(TARGET_DIR):
-            try:
-                os.makedirs(TARGET_DIR)
-            except Exception:
-                pass
+    def _finish_update(self):
+        try:
+            if not os.path.isdir(EXTRACT_DIR):
+                self['status'].setText(_("Error: Extracted directory not found."))
+                return
+            if not os.path.isdir(TARGET_DIR):
+                try:
+                    os.makedirs(TARGET_DIR)
+                except Exception:
+                    pass
 
-        # Der spezifische Ordner, den du kopieren möchtest
-        update_folder = os.path.join(EXTRACT_DIR, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdate")
+            # Der spezifische Ordner, den du kopieren möchtest
+            update_folder = os.path.join(EXTRACT_DIR, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdate")
 
-        # Überprüfen, ob der Ordner existiert
-        if not os.path.isdir(update_folder):
-            self['status'].setText(_("Error: Update folder not found."))
-            return
+            # Überprüfen, ob der Ordner existiert
+            if not os.path.isdir(update_folder):
+                self['status'].setText(_("Error: Update folder not found."))
+                return
 
-        # Kopieren des Inhalts des `speedyServiceScanUpdate`-Ordners in das Zielverzeichnis
-        for item in os.listdir(update_folder):
-            s = os.path.join(update_folder, item)
-            d = os.path.join(TARGET_DIR, item)
-            try:
-                if os.path.isdir(s):
-                    if _exists(d):
-                        shutil.rmtree(d)  # Entferne existierende Verzeichnisse
-                    shutil.copytree(s, d)  # Kopiere das Verzeichnis
-                else:
-                    shutil.copy2(s, d)  # Kopiere die Datei
-            except Exception:
-                # Fehler beim Kopieren werden ignoriert und fortgesetzt
-                pass
+            # Kopieren des Inhalts des `speedyServiceScanUpdate`-Ordners in das Zielverzeichnis
+            for item in os.listdir(update_folder):
+                s = os.path.join(update_folder, item)
+                d = os.path.join(TARGET_DIR, item)
+                try:
+                    if os.path.isdir(s):
+                        if os.path.exists(d):
+                            shutil.rmtree(d)  # Entferne existierende Verzeichnisse
+                        shutil.copytree(s, d)  # Kopiere das Verzeichnis
+                    else:
+                        shutil.copy2(s, d)  # Kopiere die Datei
+                except Exception:
+                    # Fehler beim Kopieren werden ignoriert und fortgesetzt
+                    pass
 
-        if not _exists(TARGET_DIR):
-            raise IOError("Target dir missing after extraction")
+            if not os.path.exists(TARGET_DIR):
+                raise IOError("Target dir missing after extraction")
 
-        self['status'].setText(_("Update completed successfully."))
-        self.update_installed = True
+            self['status'].setText(_("Update completed successfully."))
+            self.update_installed = True
 
-        # Benutzer fragen, ob die GUI neu gestartet werden soll
-        self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
+            # Benutzer fragen, ob die GUI neu gestartet werden soll
+            self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
 
-    except Exception:
-        self['status'].setText(_("Failed to complete update."))
+        except Exception:
+            self['status'].setText(_("Failed to complete update."))
 
     # --- Überprüfen, ob ein Update verfügbar ist ---
     def check_update(self):
@@ -306,7 +317,7 @@ def _finish_update(self):
     # --- Extrahieren und Installieren der Update-Datei ---
     def _extract_and_install(self, file_path):
         try:
-            if _exists(EXTRACT_DIR):
+            if os.path.exists(EXTRACT_DIR):
                 shutil.rmtree(EXTRACT_DIR)
             os.makedirs(EXTRACT_DIR)
         except Exception:
@@ -348,6 +359,7 @@ def _finish_update(self):
     # --- Startbildschirm für das Update ---
     def exit(self):
         self.close()  # Schließt das Update-Fenster
+
 
 class SSUSetupScreen(ConfigListScreen, Screen):
     # Bildschirmauflösung abfragen
@@ -522,4 +534,3 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
-
