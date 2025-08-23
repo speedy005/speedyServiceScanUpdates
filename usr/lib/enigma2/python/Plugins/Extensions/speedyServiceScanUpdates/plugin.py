@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
+#version = "3.5"
 from __future__ import print_function
 
 import os
@@ -7,7 +8,6 @@ import zipfile
 import shutil
 import importlib
 
-version = "1.2"
 # Python 2 compatible urllib
 try:
     import urllib2 as urllib_request
