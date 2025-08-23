@@ -7,7 +7,7 @@ import zipfile
 import shutil
 import importlib
 
-version = "3.0"
+version = "1.2"
 # Python 2 compatible urllib
 try:
     import urllib2 as urllib_request
