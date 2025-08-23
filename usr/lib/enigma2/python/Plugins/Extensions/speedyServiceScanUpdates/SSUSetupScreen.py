@@ -23,6 +23,7 @@ from Components.Label import Label
 from Components.ProgressBar import ProgressBar
 from Components.config import config, ConfigSubsection, ConfigYesNo, getConfigListEntry
 from Screens.Setup import ConfigListScreen
+from Screens.ConfigList import ConfigListScreen
 from Components.ConfigList import ConfigList
 from Plugins.Plugin import PluginDescriptor
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
