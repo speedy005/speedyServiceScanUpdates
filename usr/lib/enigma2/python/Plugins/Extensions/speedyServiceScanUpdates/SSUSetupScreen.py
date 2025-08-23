@@ -12,6 +12,7 @@ try:
 except Exception:
     requests = None
 
+version = "3.0"
 # --- Enigma2 imports (try both common locations for ServiceScan) ---
 from enigma import getDesktop
 from Screens.Screen import Screen
@@ -521,3 +522,4 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
         help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
+
