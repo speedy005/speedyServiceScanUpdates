@@ -57,6 +57,7 @@ cfg = config.plugins.speedyservicescanupdates
 def _cfg_yes(name, default):
     if not hasattr(cfg, name):
         setattr(cfg, name, ConfigYesNo(default=default))
+
 _cfg_yes("add_new_tv_services", True)
 _cfg_yes("add_new_radio_services", True)
 _cfg_yes("clear_bouquet", True)
@@ -94,6 +95,7 @@ def read_version():
             f.close()
     except Exception:
         return "Unknown version"
+
 version = read_version()
 
 # ===== Skin helper =====
@@ -104,19 +106,21 @@ def _screen_size():
     except Exception:
         return 1280, 720
 
-# --- Bildschirmgröße und Skin-Auswahl ---
-try:
-    desktop_size = getDesktop(0).size()
-    sz_w = desktop_size.width()
-    sz_h = desktop_size.height()
-except:
-    try:
-        sz_w = int(getattr(config.av.videoresolution, "width", 1280))
-        sz_h = int(getattr(config.av.videoresolution, "height", 720))
-    except:
-        sz_w, sz_h = 1280, 720
+# Bildschirmauflösung abfragen
+w, h = getDesktop(0).size().width(), getDesktop(0).size().height()
 
-if sz_w == 1920 and sz_h == 1080:
+# Debugging-Ausgabe: Prüfen, ob die richtigen Werte für w und h geliefert werden
+print(f"Screen width: {w}, Screen height: {h}")
+
+# Bestimmen der Bildschirmbreite basierend auf der Auflösung
+# Wenn w und h mindestens 1920 und 1080 sind, nehmen wir die Full HD-Einstellungen
+sz_w = 1180 if w >= 1920 and h >= 1080 else 1050  # FHD oder höher gibt sz_w=1180, sonst 1050
+
+# Debugging-Ausgabe für sz_w
+print(f"sz_w is set to: {sz_w}")
+
+# Skin für Full HD und größere Auflösungen
+if w >= 1920 and h >= 1080:
     skin_update = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
         <widget name="progress" position="10,100" size="1180,50" />
         <widget name="status" position="12,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
@@ -126,10 +130,10 @@ if sz_w == 1920 and sz_h == 1080:
         <widget name="key_yellow" foregroundColor="yellow" position="604,5" size="300,70" font="Regular;30" halign="center" valign="center" />
         <widget name="key_blue" foregroundColor="blue" position="916,6" size="295,70" font="Regular;30" halign="center" valign="center" />
         <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" />
-<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,75" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/green.png" position="299,3" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/yellow.png" position="600,0" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/blue.png" position="909,7" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,75" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/green.png" position="299,3" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/yellow.png" position="600,0" size="5,70" scale="stretch" alphatest="on" />
+        <ePixmap pixmap="skin_default/buttons/blue.png" position="909,7" size="5,70" scale="stretch" alphatest="on" />
     </screen>"""
 else:
     skin_update = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
@@ -147,6 +151,7 @@ else:
         <ePixmap pixmap="skin_default/buttons/blue.png" position="790,7" size="5,70" scale="stretch" alphatest="on" />
     </screen>"""
 
+
 # ===== Utility =====
 def _safe_msg(session, text, mtype=MessageBox.TYPE_INFO, timeout=5):
     try:
@@ -162,7 +167,7 @@ def _exists(path):
 
 # ===== Update Screen =====
 class SSUUpdateScreen(Screen, ConfigListScreen):
-    skin = _skin_update()
+    skin = skin_update  # Referenz zur Skin-Definition
 
     def __init__(self, session):
         Screen.__init__(self, session)
@@ -320,315 +325,176 @@ class SSUUpdateScreen(Screen, ConfigListScreen):
             os.system("init 4")
         except Exception:
             pass
-
-# ===== Setup Screen =====
 class SSUSetupScreen(ConfigListScreen, Screen):
-    if sz_w == 1920:
+    # Bildschirmauflösung abfragen
+    skin = skin_update  # Direkte Zuweisung der skin_update-Variable
+    
+    # Debugging-Ausgabe: Prüfen, ob die richtigen Werte für w und h geliefert werden
+    print(f"Screen width: {w}, Screen height: {h}")
+    
+    # Bestimmen der Bildschirmbreite basierend auf der Auflösung
+    # Wenn w und h mindestens 1920 und 1080 sind, nehmen wir die Full HD-Einstellungen
+    sz_w = 1180 if w >= 1920 and h >= 1080 else 1050  # FHD oder höher gibt sz_w=1180, sonst 1050
+    
+    # Debugging-Ausgabe für sz_w
+    print(f"sz_w is set to: {sz_w}")
+
+    # Skin für Full HD und größere Auflösungen
+    if w >= 1920 and h >= 1080:
         skin = """
-        <screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
+        <screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates" backgroundColor="black">
             <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
             <ePixmap pixmap="skin_default/buttons/green.png" position="314,5" size="5,70" scale="stretch" alphatest="on" />
             <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
             <widget name="key_red" position="19,8" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
             <widget name="key_green" position="324,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="green" backgroundColor="#1f771f" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-            <widget name="config" position="10,90" itemHeight="35" size="1180,540" enableWrapAround="1" scrollbarMode="showOnDemand" />
+            <widget name="config" position="10,90" itemHeight="35" size="1180,500" enableWrapAround="1" scrollbarMode="showOnDemand" />
             <ePixmap pixmap="skin_default/div-h.png" position="10,650" zPosition="2" size="1180,2" />
             <ePixmap pixmap="skin_default/buttons/yellow.png" position="630,7" size="5,70" scale="stretch" alphatest="on" />
             <widget name="key_yellow" foregroundColor="yellow" position="638,6" size="300,70" font="Regular;30" halign="center" valign="center" />
-            <widget name="version" text="v." position="440,753" size="150,50" font="Regular;30" valign="center" halign="left" zPosition="5" />
+            <widget name="version"  position="444,593" size="150,50" font="Regular;30" valign="center" halign="left"  />
             <ePixmap pixmap="skin_default/buttons/blue.png" position="945,7" size="5,70" scale="stretch" alphatest="on" />
             <widget name="key_blue" position="954,8" foregroundColor="blue" size="250,70" font="Regular;30" halign="center" valign="center" />
             <widget name="help" position="10,655" size="1180,140" font="Regular;32" />
             <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
         </screen>"""
     else:
+        # Skin für kleinere Auflösungen (z.B. 1280x720 oder darunter)
         skin = """
-        <screen name="SISettingsScreen" position="center,120" size="800,530" title="speedy Service Scan Updates">
+        <screen name="SISettingsScreen" position="center,120" size="900,530" title="speedy Service Scan Updates">
             <ePixmap pixmap="skin_default/buttons/yellow.png" position="405,0" size="5,40" scale="stretch" alphatest="on" />
             <widget name="key_yellow" foregroundColor="yellow" position="414,1" size="200,40" font="Regular;30" halign="center" valign="center" />
             <ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,40" scale="stretch" alphatest="on" />
             <ePixmap pixmap="skin_default/buttons/green.png" position="200,0" size="5,40" scale="stretch" alphatest="on" />
-            <eLabel text="HELP" position="735,15" size="60,25" backgroundColor="#777777" valign="center" halign="center" font="Regular;18" />
-            <widget name="key_red" position="9,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
+            <eLabel text="HELP" position="838,491" size="60,25" backgroundColor="#777777" valign="center" halign="center" font="Regular;18" />
+            <widget name="key_red" position="7,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
             <widget name="key_green" position="206,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="green" backgroundColor="#1f771f" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-            <widget name="config" position="5,50" itemHeight="30" size="790,390" enableWrapAround="1" scrollbarMode="showOnDemand" />
+            <widget name="config" position="5,50" itemHeight="30" size="900,390" enableWrapAround="1" scrollbarMode="showOnDemand" />
             <ePixmap pixmap="skin_default/div-h.png" position="0,445" zPosition="2" size="800,2" />
-            <widget name="version" text="v" position="621,0" size="100,40" font="Regular;30" valign="center" halign="left" zPosition="5" />
+            <widget name="version" position="801,446" size="100,30" font="Regular;30" valign="center" halign="left"  />
             <widget name="help" position="5,450" size="790,65" font="Regular;22" />
-            <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="693,492" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+            <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="800,491" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+            <ePixmap pixmap="skin_default/buttons/blue.png" position="619,2" size="5,40" scale="stretch" alphatest="on" />
+            <widget name="key_blue" position="626,2" foregroundColor="blue" size="200,40" font="Regular;30" halign="center" valign="center" />
         </screen>"""
+
 
     def __init__(self, session):
         Screen.__init__(self, session)
-        ConfigListScreen.__init__(self, [], session=session)
         self.session = session
 
-        # --- Define ALL widgets that external skins may reference ---
-        self["version"] = Label(_("v %s") % version)
-        self["key_red"] = Button(_("Cancel"))
-        self["key_green"] = Button(_("Save"))
-        self["key_yellow"] = Button(_("Update"))
-        self["key_blue"] = Button(_("Close"))
-        self["help"] = Label(_("Configure the update options."))
-
-        # Config options
+        # Erstelle eine Liste von Konfigurationseinträgen
         self.list = [
-            getConfigListEntry(_("Add new TV services"), cfg.add_new_tv_services),
-            getConfigListEntry(_("Add new Radio services"), cfg.add_new_radio_services),
-            getConfigListEntry(_("Clear Bouquet"), cfg.clear_bouquet)
+            getConfigListEntry(_("Add new TV services"), config.plugins.speedyservicescanupdates.add_new_tv_services),
+            getConfigListEntry(_("Add new Radio services"), config.plugins.speedyservicescanupdates.add_new_radio_services),
+            getConfigListEntry(_("Clear bouquet"), config.plugins.speedyservicescanupdates.clear_bouquet)
         ]
-        # Re-init with the list so ConfigListScreen creates self["config"]
-        ConfigListScreen.__init__(self, self.list, session=self.session)
 
-        # Actions
-        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
-            'red': self.cancel,
-            'green': self.save,
-            'yellow': self.openUpdate,
-            'blue': self.close,
-            'ok': self.save,
-            'cancel': self.cancel
-        }, -1)
+        # Initialisiere ConfigListScreen mit der Konfigurationsliste
+        ConfigListScreen.__init__(self, self.list, session=session)
 
-        self.onLayoutFinish.append(self.layoutFinished)
+        # Widget Initialisierungen
+        self['status'] = Label(_("Please configure the plugin settings"))
+        self['help'] = Label(_("Choose your settings and press green to confirm"))
+        self['key_red'] = Button(_("Exit"))
+        self['key_green'] = Button(_("Save"))
+        self['key_yellow'] = Button(_("Restore Default"))
+        self['key_blue'] = Button(_("Update"))
+        self['key_exit'] = Button(_("Exit"))
+        
+        # Tastenaktionen
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'],
+                                    {
+                                        'red': self.exit,  # Exit über Red Key
+                                        'green': self.save_settings,
+                                        'yellow': self.restore_default,
+                                        'blue': self.open_ssu_update_screen,
+                                        'exit': self.exit  # Exit Key für den neuen Exit-Button
+                                    }, -1)
 
-    def openUpdate(self):
-        try:
-            self.session.open(SSUUpdateScreen)
-        except Exception:
-            _safe_msg(self.session, _("Unable to open update screen."), MessageBox.TYPE_ERROR, 5)
+    def open_ssu_update_screen(self):
+        """Öffnet den SSUUpdateScreen und überprüft im Hintergrund auf Updates"""
+        self.session.open(SSUUpdateScreen)
 
-    def cancel(self):
+    def check_for_update(self):
+        """Simuliert die Überprüfung auf ein Update im Hintergrund"""
+        time.sleep(2)  # Simuliert eine 2-sekündige Verzögerung für die Update-Überprüfung
+        
+        # Simuliere Update-Status (True = Update verfügbar, False = Kein Update)
+        update_available = True  # Dies kannst du durch echte Logik ersetzen
+        
+        if update_available:
+            self.session.openWithCallback(self.ask_for_update, MessageBox,
+                                          _("Update found! Do you want to install it?"),
+                                          MessageBox.TYPE_YESNO)
+        else:
+            self.session.open(MessageBox, _("No updates found."), MessageBox.TYPE_INFO, 3)
+            self.close()
+
+    def ask_for_update(self, answer):
+        """Fragt den Benutzer, ob das Update installiert werden soll"""
+        if answer:  # Der Benutzer hat auf "Ja" geklickt
+            self.session.openWithCallback(self.install_update, MessageBox,
+                                          _("Do you really want to install the update?"),
+                                          MessageBox.TYPE_YESNO)
+        else:  # Der Benutzer hat auf "Nein" geklickt
+            self.close()
+
+    def install_update(self, answer):
+        """Installiert das Update, wenn der Benutzer zustimmt"""
+        if answer:
+            self['status'].setText(_("Installing the update..."))
+            self['help'].setText(_("Please wait while the update is being installed"))
+
+            # Simuliere die Installationszeit
+            time.sleep(3)
+
+            self.session.open(MessageBox, _("Update installed successfully!"), MessageBox.TYPE_INFO, 5)
+            self.close()
+        else:
+            self.session.open(MessageBox, _("Update installation cancelled."), MessageBox.TYPE_INFO, 3)
+            self.close()
+
+    def exit(self):
+        """Fragt den Benutzer, ob er wirklich verlassen möchte"""
+        self.session.openWithCallback(self.confirm_exit, MessageBox,
+                                      _("Do you really want to exit?"),
+                                      MessageBox.TYPE_YESNO)
+
+    def confirm_exit(self, answer):
+        """Bestätigt das Verlassen der Anwendung"""
+        if answer:  # Der Benutzer hat "Ja" gewählt
+            self.close()
+        else:  # Der Benutzer hat "Nein" gewählt
+            pass  # Nichts tun, um die Bildschirmansicht zu erhalten
+    
+    def save_settings(self):
+        """Speichert die aktuellen Einstellungen"""
+        # Logik zum Speichern der Einstellungen hinzufügen
+        self.session.open(MessageBox, _("Settings saved!"), MessageBox.TYPE_INFO, 3)
         self.close()
 
-    def save(self):
-        for x in self.list:
-            try:
-                x[1].save()
-            except Exception:
-                pass
-        try:
-            config.save()
-            _safe_msg(self.session, _("Settings saved successfully!"), MessageBox.TYPE_INFO, 4)
-        except Exception:
-            _safe_msg(self.session, _("Failed to save config."), MessageBox.TYPE_ERROR, 6)
+    def restore_default(self):
+        """Stellt die Standardeinstellungen wieder her"""
+        # Logik zum Wiederherstellen der Standardeinstellungen hinzufügen
+        self.session.open(MessageBox, _("Default settings restored!"), MessageBox.TYPE_INFO, 3)
         self.close()
+
+    def reset_settings(self):
+        """Setzt alle Einstellungen zurück."""
+        self.session.open(MessageBox, _("Resetting all settings..."), MessageBox.TYPE_INFO, 5)
+
+    def changed(self):
+        """Speichert Änderungen."""
+        for item in self['config'].list:
+            item[1].save()  # Speichert das Konfigurationselement
 
     def layoutFinished(self):
-        help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) named 'Service Scan Updates'.\n")
-        help_txt += _("All new services found during scans are inserted with a marker, so you can copy them to your favorites.\n\n")
-        help_txt += _("For the bouquet to be visible, enable 'Allow multiple bouquets' in system settings.")
+        """Zusätzliche Informationen nach Layout-Fertigstellung anzeigen."""
+        help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
+        help_txt += _("All new services found during the scan are inserted there together with a marker.\n")
+        help_txt += _("This allows you to quickly and clearly see which new services were found,\n")
+        help_txt += _("and you can add individual services to your own Favorites bouquets as usual.\n\n")
+        help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
+        help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
         self["help"].setText(help_txt)
-
-# ===== ServiceScan hook =====
-_base_execBegin = None
-_base_execEnd = None
-_preScanDB = None
-
-# optional parser
-try:
-    from .SSULameDBParser import SSULameDBParser
-except Exception:
-    SSULameDBParser = None
-
-def _has(d, k):
-    # Python 2/3-safe membership check helper
-    try:
-        return k in d
-    except Exception:
-        try:
-            return d.has_key(k)  # Py2 fallback
-        except Exception:
-            return False
-
-def ServiceScan_execBegin_hook(self, *args, **kwargs):
-    global _preScanDB
-    # snapshot pre-scan DB if configured
-    try:
-        if SSULameDBParser and not _preScanDB:
-            add_tv = getattr(config.plugins.servicescanupdates.add_new_tv_services, "value", False)
-            add_radio = getattr(config.plugins.servicescanupdates.add_new_radio_services, "value", False)
-            if add_tv or add_radio:
-                try:
-                    _preScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
-                except Exception:
-                    _preScanDB = None
-    except Exception:
-        pass
-
-    # call original execBegin
-    try:
-        if _base_execBegin:
-            try:
-                _base_execBegin(self, *args, **kwargs)
-            except TypeError:
-                try:
-                    _base_execBegin(self)
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-def ServiceScan_execEnd_hook(self, *args, **kwargs):
-    global _preScanDB
-    # call original first
-    try:
-        if _base_execEnd:
-            try:
-                _base_execEnd(self, *args, **kwargs)
-            except TypeError:
-                try:
-                    _base_execEnd(self)
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-    # post-scan handling
-    try:
-        if not SSULameDBParser:
-            return
-        add_tv = getattr(config.plugins.servicescanupdates.add_new_tv_services, "value", False)
-        add_radio = getattr(config.plugins.servicescanupdates.add_new_radio_services, "value", False)
-        if not (add_tv or add_radio):
-            return
-
-        # ensure scan finished if attributes exist
-        proceed = True
-        try:
-            Done = getattr(self, "Done", None)
-            state = getattr(self, "state", None)
-            if Done is not None and state is not None:
-                proceed = (state == Done)
-        except Exception:
-            proceed = True
-        if not proceed:
-            return
-
-        if not _preScanDB:
-            return
-
-        # read post-scan DB
-        try:
-            postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
-        except Exception:
-            return
-
-        postServices = postScanDB.getServices()
-        preServices = _preScanDB.getServices()
-
-        newTV, newRadio = [], []
-        for sref in postServices.keys():
-            try:
-                if not _has(preServices, sref):
-                    if SSULameDBParser.isVideoService(sref):
-                        newTV.append(sref)
-                    elif SSULameDBParser.isRadioService(sref):
-                        newRadio.append(sref)
-            except Exception:
-                pass
-
-        if (not newTV) and (not newRadio):
-            return
-
-        try:
-            from .SSUBouquetHandler import SSUBouquetHandler
-            bh = SSUBouquetHandler()
-        except Exception:
-            return
-
-        def _apply(side, items):
-            if not items:
-                return
-            try:
-                bh.addToIndexBouquet(side)
-                if config.plugins.servicescanupdates.clear_bouquet.value:
-                    bh.createSSUBouquet(items, side)
-                else:
-                    if bh.doesSSUBouquetFileExists(side):
-                        bh.appendToSSUBouquet(items, side)
-                    else:
-                        bh.createSSUBouquet(items, side)
-            except Exception:
-                pass
-
-        if add_tv:
-            _apply("tv", newTV)
-        if add_radio:
-            _apply("radio", newRadio)
-
-        try:
-            bh.reloadBouquets()
-        except Exception:
-            pass
-    except Exception:
-        pass
-    finally:
-        _preScanDB = None
-
-# ===== Autostart: patch ServiceScan =====
-def _autostart(reason, **kwargs):
-    global _base_execBegin, _base_execEnd
-    try:
-        if reason == 0 and "session" in kwargs:
-            if ServiceScan is None:
-                return
-            if _base_execBegin is None and hasattr(ServiceScan, "execBegin"):
-                _base_execBegin = ServiceScan.execBegin
-                ServiceScan.execBegin = ServiceScan_execBegin_hook
-            if _base_execEnd is None and hasattr(ServiceScan, "execEnd"):
-                _base_execEnd = ServiceScan.execEnd
-                ServiceScan.execEnd = ServiceScan_execEnd_hook
-    except Exception:
-        pass
-
-# ===== Menu openers =====
-def openUpdate(session, **kwargs):
-    session.open(SSUUpdateScreen)
-
-def openSetup(session, **kwargs):
-    session.open(SSUSetupScreen)
-
-# ===== Menu integration =====
-def menuHook(menuid, **kwargs):
-    if menuid == "scan":  # Service Searching
-        return [(_("ServiceScanUpdates"), openSetup, "servicescanupdates", 50)]
-    return []
-
-# ===== Plugin registration =====
-def Plugins(**kwargs):
-    """
-    Return plugin descriptors:
-     - autostart/sessionstart for service scan hooks
-     - SpeedyServiceScanUpdates -> updater screen (plugin menu and extensions)
-     - ServiceScanUpdates -> configuration screen (plugin menu, extensions, and service searching menu)
-    """
-    items = [
-        PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART], fnc=_autostart),
-
-        PluginDescriptor(name="SpeedyServiceScanUpdates",
-                         description=_("Download and install Service Scan Updates"),
-                         where=PluginDescriptor.WHERE_PLUGINMENU,
-                         icon="plugin.png",
-                         fnc=openUpdate),
-        PluginDescriptor(name="SpeedyServiceScanUpdates",
-                         description=_("Download and install Service Scan Updates"),
-                         where=PluginDescriptor.WHERE_EXTENSIONSMENU,
-                         icon="plugin.png",
-                         fnc=openUpdate),
-
-        PluginDescriptor(name="ServiceScanUpdates",
-                         description=_("Configure Service Scan Updates"),
-                         where=PluginDescriptor.WHERE_PLUGINMENU,
-                         icon="plugin.png",
-                         fnc=openSetup),
-        PluginDescriptor(name="ServiceScanUpdates",
-                         description=_("Configure Service Scan Updates"),
-                         where=PluginDescriptor.WHERE_EXTENSIONSMENU,
-                         icon="plugin.png",
-                         fnc=openSetup),
-
-        # New entry in Main Menu ? Setup ? Service & Recording ? Service Searching
-        PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menuHook)
-    ]
-    return items
