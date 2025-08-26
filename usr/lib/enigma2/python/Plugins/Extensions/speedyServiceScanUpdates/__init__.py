@@ -4,14 +4,16 @@ from Components.Language import language
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_LANGUAGE
 import os
 import gettext
-_ = gettext.gettext
 
 PluginLanguageDomain = "speedyServiceScanUpdates"
+
 # Dynamisch den Pfad ermitteln (funktioniert für Extensions und SystemPlugins)
 plugin_path = resolveFilename(SCOPE_PLUGINS, "Extensions/" + PluginLanguageDomain + "/locale/")
 if not os.path.exists(plugin_path):
     plugin_path = resolveFilename(SCOPE_PLUGINS, "SystemPlugins/" + PluginLanguageDomain + "/locale/")
+
 PluginLanguagePath = plugin_path
+
 
 def isDreamOS():
     try:
@@ -21,15 +23,21 @@ def isDreamOS():
     else:
         return True
 
+
 def localeInit():
     lang = language.getLanguage()[:2]
     os.environ["LANGUAGE"] = lang
-    # Standard enigma2 Übersetzungen
     gettext.bindtextdomain("enigma2", resolveFilename(SCOPE_LANGUAGE))
     gettext.textdomain("enigma2")
-    # Plugin Übersetzungen
     gettext.bindtextdomain(PluginLanguageDomain, PluginLanguagePath)
-    gettext.textdomain(PluginLanguageDomain)  # _() nutzt nun standardmäßig das Plugin
+
+
+def _(txt):
+    t = gettext.dgettext(PluginLanguageDomain, txt)
+    if t == txt:
+        t = gettext.gettext(txt)
+    return t
+
 
 # Direkt bei Pluginstart die Übersetzung initialisieren
 localeInit()
@@ -38,8 +46,6 @@ localeInit()
 if not isDreamOS():
     language.addCallback(localeInit)
 
-# _() Funktion für Übersetzungen
-_ = gettext.gettext
 
 #######################################################
 # Konfiguration initialisieren

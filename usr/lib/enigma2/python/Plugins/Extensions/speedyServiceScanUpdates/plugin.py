@@ -1,5 +1,4 @@
-﻿# -*- coding: utf-8 -*-
-#version = "3.5"
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 
 import os
@@ -8,6 +7,7 @@ import zipfile
 import shutil
 import importlib
 
+version = "3.5"
 # Python 2 compatible urllib
 try:
     import urllib2 as urllib_request
@@ -29,11 +29,6 @@ except ImportError:
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
-# Correct screen import
-try:
-    from SSUSetupScreen import SSUUpdateScreen   # Python 2 absolute import
-except ImportError:
-    from .SSUSetupScreen import SSUUpdateScreen  # Python 3 relative import
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
