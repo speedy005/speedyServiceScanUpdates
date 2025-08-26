@@ -328,6 +328,36 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self["help"] = Label(_("Configure the update options."))
         
         # Aktionen
+        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions', 'HelpActions'], {
+            'red': self.cancel,
+            'green': self.save,
+            'yellow': self.restore_default,
+            'blue': self.openUpdate,
+            'ok': self.save,
+            'cancel': self.cancel,
+            'help': self.showHelp  # Help Key hinzugefügt
+        }, -1)
+
+        self.onLayoutFinish.append(self.layoutFinished)
+        self["config"].onSelectionChanged.append(self.updateHelp)
+
+    def showHelp(self):
+        """Zeigt den Hilfetext an"""
+        help_text = "Hier können Sie die Optionen für den Service Scan konfigurieren."
+        self["help"].setText(help_text)
+
+        # Weitere Methoden bleiben unverändert
+
+
+        # --- Definiere alle Widgets, die von externen Skins referenziert werden können ---
+        self["version"] = Label(_("v %s") % version)
+        self["key_red"] = Button(_("Cancel"))
+        self["key_green"] = Button(_("Save"))
+        self["key_yellow"] = Button(_("Restore Default"))
+        self["key_blue"] = Button(_("Update"))
+        self["help"] = Label(_("Configure the update options."))
+        
+        # Aktionen
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
             'red': self.cancel,
             'green': self.save,

@@ -196,7 +196,9 @@ def download_and_install_update(session):
 def check_for_update(session):
     current_version = get_current_version()
     remote_version = get_remote_version()
+    
     if not remote_version:
+        print("[speedyServiceScanUpdates] Keine Remote-Version gefunden.")
         return
 
     print("[speedyServiceScanUpdates] DEBUG: Vergleiche Versionen...")
@@ -206,14 +208,18 @@ def check_for_update(session):
     if parse_version(remote_version) > parse_version(current_version):
         def callback(choice):
             if choice:
+                print("[speedyServiceScanUpdates] Benutzer hat das Update bestätigt.")
                 download_and_install_update(session)
             else:
-                print("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
+                print("[speedyServiceScanUpdates] Benutzer hat das Update abgelehnt.")
+        
+        print("[speedyServiceScanUpdates] Update verfügbar. Starte Callback...")
         session.openWithCallback(callback, MessageBox,
             "Eine neue Version %s ist verfügbar. Möchten Sie das Update installieren?" % remote_version,
             MessageBox.TYPE_YESNO)
     else:
         print("[speedyServiceScanUpdates] Kein Update verfügbar.")
+
 
 # --- Autostart Hook ---
 def autostart(reason, **kwargs):
