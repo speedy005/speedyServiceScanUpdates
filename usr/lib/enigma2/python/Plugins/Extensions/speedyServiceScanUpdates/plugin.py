@@ -124,8 +124,8 @@ def ServiceScan_execEnd(self, onClose=True):
     baseServiceScan_execEnd(self)
 
 # --- Update-Funktionen ---
-VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version"
-GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
+VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
 GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/"
 
@@ -148,7 +148,7 @@ def get_remote_version():
         response = urllib_request.urlopen(GITHUB_VERSION_URL).read()
         if PY3:
             response = response.decode("utf-8")
-        return response.strip()
+        return response.strip().split()[0]
     except Exception as e:
         print("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version:", e)
         return None
@@ -168,7 +168,9 @@ def download_and_install_update(session):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        extracted_folder = os.path.join(tmp_dir, "speedyServiceScanUpdates-main", "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+        extracted_folder = os.path.join(tmp_dir, "speedyServiceScanUpdates-main",
+                                       "usr", "lib", "enigma2", "python", "Plugins", "Extensions",
+                                       "speedyServiceScanUpdates")
         for item in os.listdir(extracted_folder):
             s = os.path.join(extracted_folder, item)
             d = os.path.join(PLUGIN_PATH, item)
@@ -230,7 +232,8 @@ def SSUMenuItem(menuid, **kwargs):
 
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
-        return [(_("speedy ServiceScanUpdates") + " " + _("Setup"), SSUMain, "speedyservicescanupdates_mainmenu", 50)]
+        return [(_("speedy ServiceScanUpdates") + " " + _("Setup"), SSUMain,
+                 "speedyservicescanupdates_mainmenu", 50)]
     return []
 
 # --- Plugin Descriptor ---
