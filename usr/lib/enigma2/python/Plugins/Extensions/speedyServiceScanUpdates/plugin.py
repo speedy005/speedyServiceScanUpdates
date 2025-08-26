@@ -152,8 +152,11 @@ def check_for_update(current_version):
         url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
         print("[speedyServiceScanUpdates] Checking for updates at: %s" % url)
 
-        response = urllib_request.urlopen(url).read().strip()
-        latest_version = response
+        response = urllib_request.urlopen(url).read()
+        if PY3:
+            response = response.decode("utf-8")
+        latest_version = response.strip()
+
 
         print("[speedyServiceScanUpdates] Aktuelle Version: %s, Neueste Version: %s" % (current_version, latest_version))
 
