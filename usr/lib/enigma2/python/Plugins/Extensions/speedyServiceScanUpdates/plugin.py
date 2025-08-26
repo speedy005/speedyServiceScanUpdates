@@ -132,23 +132,31 @@ PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdat
 def get_current_version():
     try:
         with open(VERSION_FILE, 'r') as f:
-            return f.read().strip()
+            ver = f.read().strip()
+            print("[speedyServiceScanUpdates] Lokale Version:", ver)
+            return ver
     except Exception as e:
         print("[speedyServiceScanUpdates] Fehler beim Lesen der lokalen Version:", e)
         return "0.0"
 
 def parse_version(version):
-    parts = version.split(".")
+    parts = version.strip().split(".")
     while len(parts) < 3:
         parts.append("0")
-    return tuple(map(int, parts))
+    try:
+        return tuple(map(int, parts))
+    except Exception as e:
+        print("[speedyServiceScanUpdates] Fehler beim Parsen der Version:", version, e)
+        return (0,0,0)
 
 def get_remote_version():
     try:
         response = urllib_request.urlopen(GITHUB_VERSION_URL).read()
         if PY3:
             response = response.decode("utf-8")
-        return response.strip().split()[0]
+        remote_ver = response.strip().split()[0]
+        print("[speedyServiceScanUpdates] Remote-Version vom GitHub:", remote_ver)
+        return remote_ver
     except Exception as e:
         print("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version:", e)
         return None
@@ -158,13 +166,13 @@ def download_and_install_update(session):
         tmp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(tmp_dir, "plugin_update.zip")
 
-        print("[speedyServiceScanUpdates] Downloading update...")
+        print("[speedyServiceScanUpdates] Lade Update herunter...")
         req = urllib_request.urlopen(GITHUB_ZIP_URL)
         with open(zip_path, "wb") as f:
             f.write(req.read())
-        print("[speedyServiceScanUpdates] Download complete:", zip_path)
+        print("[speedyServiceScanUpdates] Download abgeschlossen:", zip_path)
 
-        print("[speedyServiceScanUpdates] Extracting update...")
+        print("[speedyServiceScanUpdates] Entpacke Update...")
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
@@ -181,7 +189,7 @@ def download_and_install_update(session):
             else:
                 shutil.copy2(s, d)
 
-        print("[speedyServiceScanUpdates] Update installed successfully!")
+        print("[speedyServiceScanUpdates] Update erfolgreich installiert!")
     except Exception as e:
         print("[speedyServiceScanUpdates] Fehler beim Update:", e)
 
@@ -190,18 +198,22 @@ def check_for_update(session):
     remote_version = get_remote_version()
     if not remote_version:
         return
-    print("[speedyServiceScanUpdates] Local version:", current_version, "Remote version:", remote_version)
+
+    print("[speedyServiceScanUpdates] DEBUG: Vergleiche Versionen...")
+    print("[speedyServiceScanUpdates] Lokale Version (tuple):", parse_version(current_version))
+    print("[speedyServiceScanUpdates] Remote Version (tuple):", parse_version(remote_version))
+
     if parse_version(remote_version) > parse_version(current_version):
         def callback(choice):
             if choice:
                 download_and_install_update(session)
             else:
-                print("[speedyServiceScanUpdates] User canceled update.")
+                print("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
         session.openWithCallback(callback, MessageBox,
-            "A new version %s is available. Do you want to install it?" % remote_version,
+            "Eine neue Version %s ist verfügbar. Möchten Sie das Update installieren?" % remote_version,
             MessageBox.TYPE_YESNO)
     else:
-        print("[speedyServiceScanUpdates] No update available.")
+        print("[speedyServiceScanUpdates] Kein Update verfügbar.")
 
 # --- Autostart Hook ---
 def autostart(reason, **kwargs):
@@ -232,7 +244,7 @@ def SSUMenuItem(menuid, **kwargs):
 
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
-        return [(_("speedy ServiceScanUpdates") + " " + _("Setup"), SSUMain,
+        return [(_("speedyServiceScanUpdates") + " " + _("Setup"), SSUMain,
                  "speedyservicescanupdates_mainmenu", 50)]
     return []
 
