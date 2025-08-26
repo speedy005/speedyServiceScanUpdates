@@ -59,7 +59,7 @@ config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=Fals
 def read_version():
     if not plugin_path:
         return "Unknown version"
-    vf = os.path.join(plugin_path, "version")
+    vf = os.path.join(plugin_path, "version.txt")
     try:
         with open(vf, "r") as f:
             return f.read().strip()
