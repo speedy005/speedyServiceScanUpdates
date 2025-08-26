@@ -5,10 +5,12 @@ import os
 import sys
 import zipfile
 import shutil
+import tempfile
 import importlib
 
 version = "3.5"
-# Python 2 compatible urllib
+
+# Python 2 kompatible urllib
 try:
     import urllib2 as urllib_request
 except ImportError:
@@ -29,7 +31,6 @@ except ImportError:
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
-
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
@@ -38,6 +39,7 @@ baseServiceScan_execBegin = None
 baseServiceScan_execEnd = None
 preScanDB = None
 
+# --- Funktionen für ServiceScan Wrapper ---
 def dictHasKey(dictionary, key):
     if PY2:
         return dictionary.has_key(key)
@@ -69,18 +71,16 @@ def ServiceScan_execEnd(self, onClose=True):
     except (AttributeError, KeyError, IndexError, TypeError):
         flags = "N/A"
 
-    # Sicherstellen, dass self.state existiert
     state_val = getattr(self, "state", -1)
     print("[speedyServiceScanUpdates] ServiceScan_execEnd (%d) [%s]" % (state_val, str(flags)))
 
-    # Auch hier getattr nutzen, um Absturz zu vermeiden
     if getattr(self, "state", None) == getattr(self, "DONE", None):
         if config.plugins.speedyservicescanupdates.add_new_tv_services.value or \
            config.plugins.speedyservicescanupdates.add_new_radio_services.value:
 
             postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
             postScanServices = postScanDB.getServices()
-            safeClose(postScanDB)  # <- Hier statt direktem postScanDB.close()
+            safeClose(postScanDB)
 
             global preScanDB
             if preScanDB:
@@ -88,7 +88,6 @@ def ServiceScan_execEnd(self, onClose=True):
                 newTVServices = []
                 newRadioServices = []
 
-                # Neue Services finden
                 for service_ref in postScanServices.keys():
                     if not dictHasKey(preScanServices, service_ref):
                         if SSULameDBParser.isVideoService(service_ref):
@@ -99,8 +98,6 @@ def ServiceScan_execEnd(self, onClose=True):
                 from .SSUBouquetHandler import SSUBouquetHandler
                 bouquet_handler = SSUBouquetHandler()
 
-                # TV-Services
-                print("[speedyServiceScanUpdates] Found %d new TV services" % len(newTVServices))
                 if newTVServices and config.plugins.speedyservicescanupdates.add_new_tv_services.value:
                     bouquet_handler.addToIndexBouquet("tv")
                     if config.plugins.speedyservicescanupdates.clear_bouquet.value:
@@ -111,8 +108,6 @@ def ServiceScan_execEnd(self, onClose=True):
                         else:
                             bouquet_handler.createSSUBouquet(newTVServices, "tv")
 
-                # Radio-Services
-                print("[speedyServiceScanUpdates] Found %d new radio services" % len(newRadioServices))
                 if newRadioServices and config.plugins.speedyservicescanupdates.add_new_radio_services.value:
                     bouquet_handler.addToIndexBouquet("radio")
                     if config.plugins.speedyservicescanupdates.clear_bouquet.value:
@@ -124,89 +119,94 @@ def ServiceScan_execEnd(self, onClose=True):
                             bouquet_handler.createSSUBouquet(newRadioServices, "radio")
 
                 bouquet_handler.reloadBouquets()
-                # Reset pre scan db
                 preScanDB = None
 
     baseServiceScan_execEnd(self)
 
-# Versionsprüfung und Updatecheck
+# --- Update-Funktionen ---
+VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version"
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
+GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
+PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/"
+
 def get_current_version():
-    version_file = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version"
     try:
-        with open(version_file, 'r') as f:
+        with open(VERSION_FILE, 'r') as f:
             return f.read().strip()
     except Exception as e:
-        print("Fehler beim Lesen der Versionsdatei: %s" % str(e))
+        print("[speedyServiceScanUpdates] Fehler beim Lesen der lokalen Version:", e)
         return "0.0"
 
 def parse_version(version):
-    """Hilfsfunktion, um Versionsnummern in Tupel zu zerlegen und zu vergleichen."""
     parts = version.split(".")
-    if len(parts) == 2:  # Falls nur zwei Teile (z.B. "3.5")
-        parts.append("0")  # Patch-Teil hinzufügen (z.B. "3.5" ? "3.5.0")
+    while len(parts) < 3:
+        parts.append("0")
     return tuple(map(int, parts))
 
-def check_for_update(current_version):
+def get_remote_version():
     try:
-        # URL für die neueste Version im main-Branch
-        url = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version"
-        print("[speedyServiceScanUpdates] Checking for updates at: %s" % url)
-
-        response = urllib_request.urlopen(url).read()
+        response = urllib_request.urlopen(GITHUB_VERSION_URL).read()
         if PY3:
             response = response.decode("utf-8")
-        latest_version = response.strip()
-
-
-        print("[speedyServiceScanUpdates] Aktuelle Version: %s, Neueste Version: %s" % (current_version, latest_version))
-
-        if parse_version(latest_version) > parse_version(current_version):
-            print("[speedyServiceScanUpdates] Ein Update ist verfügbar!")
-            # URL auf die main.zip umstellen
-            download_url = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
-            return latest_version, download_url
-        else:
-            print("[speedyServiceScanUpdates] Keine neue Version verfügbar.")
-            return None, None
-
+        return response.strip()
     except Exception as e:
-        print("[speedyServiceScanUpdates] Fehler bei der Updateprüfung: %s" % str(e))
-        return None, None
+        print("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version:", e)
+        return None
 
-def prompt_for_update(session, latest_version, download_url):
-    """Fragt den Benutzer, ob das Update installiert werden soll."""
-    def update_installed_callback(choice):
-        if choice:
-            download_and_install_update(download_url)
-        else:
-            print("User chose not to update.")
-
-    # Uberprüfe, ob die MessageBox korrekt angezeigt wird
-    print("[speedyServiceScanUpdates] Showing update prompt...")
-    session.openWithCallback(update_installed_callback, MessageBox,
-        "A new version %s is available. Do you want to install it?" % latest_version,
-        MessageBox.TYPE_YESNO)
-
-def download_and_extract_zip(url, download_path, extract_path):
+def download_and_install_update(session):
     try:
-        print("Downloading from %s..." % url)
-        req = urllib_request.urlopen(url)
-        with open(download_path, "wb") as f:
+        tmp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(tmp_dir, "plugin_update.zip")
+
+        print("[speedyServiceScanUpdates] Downloading update...")
+        req = urllib_request.urlopen(GITHUB_ZIP_URL)
+        with open(zip_path, "wb") as f:
             f.write(req.read())
-        print("Download complete: %s" % download_path)
+        print("[speedyServiceScanUpdates] Download complete:", zip_path)
 
-        print("Extracting to %s..." % extract_path)
-        zip_ref = zipfile.ZipFile(download_path, 'r')
-        zip_ref.extractall(extract_path)
-        zip_ref.close()
-        print("Extraction complete.")
+        print("[speedyServiceScanUpdates] Extracting update...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(tmp_dir)
+
+        extracted_folder = os.path.join(tmp_dir, "speedyServiceScanUpdates-main", "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
+        for item in os.listdir(extracted_folder):
+            s = os.path.join(extracted_folder, item)
+            d = os.path.join(PLUGIN_PATH, item)
+            if os.path.isdir(s):
+                if os.path.exists(d):
+                    shutil.rmtree(d)
+                shutil.copytree(s, d)
+            else:
+                shutil.copy2(s, d)
+
+        print("[speedyServiceScanUpdates] Update installed successfully!")
     except Exception as e:
-        print("Error: %s" % str(e))
+        print("[speedyServiceScanUpdates] Fehler beim Update:", e)
 
-# Autostart Hook
+def check_for_update(session):
+    current_version = get_current_version()
+    remote_version = get_remote_version()
+    if not remote_version:
+        return
+    print("[speedyServiceScanUpdates] Local version:", current_version, "Remote version:", remote_version)
+    if parse_version(remote_version) > parse_version(current_version):
+        def callback(choice):
+            if choice:
+                download_and_install_update(session)
+            else:
+                print("[speedyServiceScanUpdates] User canceled update.")
+        session.openWithCallback(callback, MessageBox,
+            "A new version %s is available. Do you want to install it?" % remote_version,
+            MessageBox.TYPE_YESNO)
+    else:
+        print("[speedyServiceScanUpdates] No update available.")
+
+# --- Autostart Hook ---
 def autostart(reason, **kwargs):
     if reason == 0 and "session" in kwargs:
         global baseServiceScan_execBegin, baseServiceScan_execEnd
+        session = kwargs["session"]
+
         if baseServiceScan_execBegin is None:
             baseServiceScan_execBegin = ServiceScan.execBegin
         ServiceScan.execBegin = ServiceScan_execBegin
@@ -215,7 +215,10 @@ def autostart(reason, **kwargs):
             baseServiceScan_execEnd = ServiceScan.execEnd
         ServiceScan.execEnd = ServiceScan_execEnd
 
-# Menü und Setup
+        # Updateprüfung beim Start
+        check_for_update(session)
+
+# --- Menü & Setup ---
 def SSUMain(session, **kwargs):
     from .SSUSetupScreen import SSUSetupScreen
     session.open(SSUSetupScreen)
@@ -230,14 +233,8 @@ def menu(menuid, **kwargs):
         return [(_("speedy ServiceScanUpdates") + " " + _("Setup"), SSUMain, "speedyservicescanupdates_mainmenu", 50)]
     return []
 
-# Plugin Descriptor
+# --- Plugin Descriptor ---
 def Plugins(**kwargs):
-    current_version = get_current_version()
-    latest_version, download_url = check_for_update(current_version)
-    session = kwargs.get('session')
-    
-    if latest_version and session:
-        prompt_for_update(session, latest_version, download_url)
     return [
         PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART],
                          fnc=autostart),
