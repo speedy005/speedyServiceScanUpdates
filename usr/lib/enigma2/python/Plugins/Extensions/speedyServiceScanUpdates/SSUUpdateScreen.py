@@ -144,14 +144,14 @@ class SSUUpdateScreen(Screen):
         self.timer.start(100, True)
 
     def _update_gui(self):
-        self['progress'].setValue(min(self.download_progress, 100))
-        self['progresstext'].setText(f"{min(self.download_progress, 100)}%")
+    self['progress'].setValue(min(self.download_progress, 100))
+    self['progresstext'].setText(f"{min(self.download_progress, 100)}%")
 
-    def exit(self):
-        self.close()
+def exit(self):
+    self.close()
 
-    # ===== NEUE FINISH_UPDATE METHODEN =====
-    def _finish_update(self):
+# ===== NEUE FINISH_UPDATE METHODEN =====
+def _finish_update(self):
     try:
         # Pfad zum entpackten Plugin-Ordner
         update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
@@ -185,56 +185,60 @@ class SSUUpdateScreen(Screen):
         self['status'].setText(_("Failed to complete update."))
 
 
-    def check_update(self):
-        if not requests:
-            self['status'].setText(_("Requests module missing"))
-            return
-        self['status'].setText(_("Checking for updates..."))
-        try:
-            r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
-            if r.status_code == 200:
-                remote_version = r.text.strip()
-                if remote_version > version:
-                    self['status'].setText(_("Update available"))
-                else:
-                    self['status'].setText(_("No update available"))
+def check_update(self):
+    if not requests:
+        self['status'].setText(_("Requests module missing"))
+        return
+    self['status'].setText(_("Checking for updates..."))
+    try:
+        r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
+        if r.status_code == 200:
+            remote_version = r.text.strip()
+            if remote_version > version:
+                self['status'].setText(_("Update available"))
             else:
                 self['status'].setText(_("No update available"))
-        except Exception as e:
-            print("Check update error:", str(e))
-            self['status'].setText(_("Update check failed."))
+        else:
+            self['status'].setText(_("No update available"))
+    except Exception as e:
+        print("Check update error:", str(e))
+        self['status'].setText(_("Update check failed."))
 
-    def start_update(self):
-        if not requests:
-            self['status'].setText(_("Requests module missing"))
-            return
-        self['status'].setText(_("Downloading update..."))
-        try:
-            r = requests.get(UPDATE_URL, stream=True, timeout=20)
-            if r.status_code == 200:
-                total_size = int(r.headers.get('Content-Length', 0))
-                self.download_progress = 0
-                with open(DOWNLOAD_PATH, 'wb') as f:
-                    for data in r.iter_content(chunk_size=1024):
-                        if data:
-                            f.write(data)
-                            self.download_progress += len(data) * 100 // max(total_size, 1)
-                            self._update_gui()
-                with zipfile.ZipFile(DOWNLOAD_PATH, 'r') as zip_ref:
-                    zip_ref.extractall(EXTRACT_DIR)
-                self._finish_update()
-            else:
-                self['status'].setText(_("Download failed"))
-        except Exception as e:
-            print("Download error:", str(e))
+
+def start_update(self):
+    if not requests:
+        self['status'].setText(_("Requests module missing"))
+        return
+    self['status'].setText(_("Downloading update..."))
+    try:
+        r = requests.get(UPDATE_URL, stream=True, timeout=20)
+        if r.status_code == 200:
+            total_size = int(r.headers.get('Content-Length', 0))
+            self.download_progress = 0
+            with open(DOWNLOAD_PATH, 'wb') as f:
+                for data in r.iter_content(chunk_size=1024):
+                    if data:
+                        f.write(data)
+                        self.download_progress += len(data) * 100 // max(total_size, 1)
+                        self._update_gui()
+            with zipfile.ZipFile(DOWNLOAD_PATH, 'r') as zip_ref:
+                zip_ref.extractall(EXTRACT_DIR)
+            self._finish_update()
+        else:
             self['status'].setText(_("Download failed"))
+    except Exception as e:
+        print("Download error:", str(e))
+        self['status'].setText(_("Download failed"))
 
-    def cancel(self):
-        self['status'].setText(_("Update canceled"))
+
+def cancel(self):
+    self['status'].setText(_("Update canceled"))
+    self.close()
+
+
+def restartGUI(self, answer):
+    if answer:
+        self.session.open(TryQuitMainloop, 3)
+    else:
         self.close()
 
-    def restartGUI(self, answer):
-        if answer:
-            self.session.open(TryQuitMainloop, 3)
-        else:
-            self.close()
