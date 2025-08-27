@@ -152,38 +152,38 @@ class SSUUpdateScreen(Screen):
 
     # ===== NEUE FINISH_UPDATE METHODEN =====
     def _finish_update(self):
-        try:
-            update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
-            if not os.path.isdir(update_folder):
-                self['status'].setText(_("Error: speedyServiceScanUpdates folder not found."))
-                return
-            if not os.path.isdir(TARGET_DIR):
-                os.makedirs(TARGET_DIR)
+    try:
+        # Pfad zum entpackten Plugin-Ordner
+        update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
+        if not os.path.isdir(update_folder):
+            self['status'].setText(_("Error: speedyServiceScanUpdates folder not found."))
+            return
 
-            # Nur Inhalt kopieren
-            for item in os.listdir(update_folder):
-                s = os.path.join(update_folder, item)
-                if os.path.isdir(s):
-                    for root, dirs, files in os.walk(s):
-                        rel_path = os.path.relpath(root, s)
-                        dest_dir = os.path.join(TARGET_DIR, rel_path)
-                        if not os.path.exists(dest_dir):
-                            os.makedirs(dest_dir)
-                        for file in files:
-                            shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
-                else:
-                    shutil.copy2(s, os.path.join(TARGET_DIR, item))
+        # Zielordner erstellen, falls er nicht existiert
+        if not os.path.isdir(TARGET_DIR):
+            os.makedirs(TARGET_DIR)
 
-            self['status'].setText(_("Update completed successfully."))
-            self.session.openWithCallback(
-                self.restartGUI,
-                MessageBox,
-                _("Update complete. Do you want to restart the GUI?"),
-                MessageBox.TYPE_YESNO
-            )
-        except Exception as e:
-            print("Finish update error:", str(e))
-            self['status'].setText(_("Failed to complete update."))
+        # Inhalt (Unterordner und Dateien) kopieren, ohne den Hauptordner selbst
+        for item in os.listdir(update_folder):
+            s = os.path.join(update_folder, item)
+            d = os.path.join(TARGET_DIR, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, dirs_exist_ok=True)  # Unterordner rekursiv kopieren
+            else:
+                shutil.copy2(s, d)  # einzelne Dateien kopieren
+
+        self['status'].setText(_("Update completed successfully."))
+        self.session.openWithCallback(
+            self.restartGUI,
+            MessageBox,
+            _("Update complete. Do you want to restart the GUI?"),
+            MessageBox.TYPE_YESNO
+        )
+
+    except Exception as e:
+        print("Finish update error:", str(e))
+        self['status'].setText(_("Failed to complete update."))
+
 
     def check_update(self):
         if not requests:
