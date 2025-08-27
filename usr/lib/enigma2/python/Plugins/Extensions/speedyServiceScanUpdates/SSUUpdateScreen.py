@@ -92,9 +92,15 @@ class SSUUpdateScreen(Screen):
                 <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
                 <widget name="key_red" position="3,4" size="295,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_green" foregroundColor="green" position="305,3" size="300,70" font="Regular;30" halign="center" valign="center" />
-                <widget name="key_yellow" foregroundColor="yellow" position="604,5" size="300,70" font="Regular;30" halign="center" valign="center" />
-                <widget name="key_blue" foregroundColor="blue" position="916,6" size="295,70" font="Regular;30" halign="center" valign="center" />
+                <widget name="key_yellow" foregroundColor="yellow" position="609,3" size="300,70" font="Regular;30" halign="center" valign="center" />
+                <widget name="key_blue" foregroundColor="blue" position="917,4" size="295,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" />
+				<eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
+<ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+<ePixmap pixmap="skin_default/buttons/blue.png" position="909,5" size="5,70" scale="stretch" alphatest="on" />
+<ePixmap pixmap="skin_default/buttons/yellow.png" position="601,4" size="5,70" scale="stretch" alphatest="on" />
+<ePixmap pixmap="skin_default/buttons/green.png" position="300,5" size="5,70" scale="stretch" alphatest="on" />
+<ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
         else:
             self.skin = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
@@ -106,6 +112,12 @@ class SSUUpdateScreen(Screen):
                 <widget name="key_yellow" foregroundColor="yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_blue" position="798,5" foregroundColor="blue" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="version" position="364,752" size="300,50" font="Regular;30" valign="center" halign="center" />
+				<eLabel text="HELP" position="930,761" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
+<ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="841,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+<ePixmap pixmap="skin_default/buttons/blue.png" position="791,5" size="5,70" scale="stretch" alphatest="on" />
+<ePixmap pixmap="skin_default/buttons/yellow.png" position="529,2" size="5,70" scale="stretch" alphatest="on" />
+<ePixmap pixmap="skin_default/buttons/green.png" position="269,2" size="5,70" scale="stretch" alphatest="on" />
+<ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
 
         self['status'] = Label(_("Ready"))
@@ -140,26 +152,22 @@ class SSUUpdateScreen(Screen):
 
     def _finish_update(self):
         try:
-            if not os.path.isdir(EXTRACT_DIR):
-                self['status'].setText(_("Error: Extracted directory not found."))
+            update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
+            if not os.path.isdir(update_folder):
+                self['status'].setText(_("Error: speedyServiceScanUpdates folder not found."))
                 return
             if not os.path.isdir(TARGET_DIR):
                 os.makedirs(TARGET_DIR)
 
-            update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main")
-            for root, dirs, files in os.walk(update_folder):
-                for d in dirs:
-                    s = os.path.join(root, d)
-                    rel = os.path.relpath(s, update_folder)
-                    d_target = os.path.join(TARGET_DIR, rel)
-                    if os.path.exists(d_target):
-                        shutil.rmtree(d_target)
-                    shutil.copytree(s, d_target)
-                for f in files:
-                    s = os.path.join(root, f)
-                    rel = os.path.relpath(s, update_folder)
-                    d_target = os.path.join(TARGET_DIR, rel)
-                    shutil.copy2(s, d_target)
+            for item in os.listdir(update_folder):
+                s = os.path.join(update_folder, item)
+                d = os.path.join(TARGET_DIR, item)
+                if os.path.isdir(s):
+                    if os.path.exists(d):
+                        shutil.rmtree(d)
+                    shutil.copytree(s, d)
+                else:
+                    shutil.copy2(s, d)
 
             self['status'].setText(_("Update completed successfully."))
             self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
@@ -173,9 +181,13 @@ class SSUUpdateScreen(Screen):
             return
         self['status'].setText(_("Checking for updates..."))
         try:
-            r = requests.head(UPDATE_URL, timeout=10)
+            r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
             if r.status_code == 200:
-                self['status'].setText(_("Update available"))
+                remote_version = r.text.strip()
+                if remote_version > version:
+                    self['status'].setText(_("Update available"))
+                else:
+                    self['status'].setText(_("No update available"))
             else:
                 self['status'].setText(_("No update available"))
         except Exception as e:
