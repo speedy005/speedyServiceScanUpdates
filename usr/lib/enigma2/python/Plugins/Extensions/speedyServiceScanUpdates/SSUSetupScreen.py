@@ -5,7 +5,6 @@ import zipfile
 import shutil
 import traceback
 import time
-import requests
 
 # optional dependency
 try:
@@ -19,13 +18,13 @@ for base in (
     "/usr/lib/enigma2/python/Plugins/Extensions",
     "/usr/lib/enigma2/python/Plugins/SystemPlugins"
 ):
-    possible = os.path.join(base, "speedyServiceScanUpdates")  # Plugin-Ordnername geändert
+    possible = os.path.join(base, "speedyServiceScanUpdates")
     if os.path.isdir(possible):
         plugin_path = possible
         break
 
-# --- Enigma2 imports (try both common locations for ServiceScan) ---
-from enigma import ePixmap, eLabel, getDesktop
+# --- Enigma2 imports ---
+from enigma import ePixmap, eLabel, getDesktop, eTimer
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
@@ -34,9 +33,7 @@ from Components.ActionMap import ActionMap
 from Components.Button import Button
 from Components.Label import Label
 from Components.ProgressBar import ProgressBar
-from enigma import eTimer
 from Components.config import config, ConfigSubsection, ConfigYesNo, getConfigListEntry
-from Screens.Setup import ConfigListScreen
 from Plugins.Plugin import PluginDescriptor
 from Tools.Directories import resolveFilename, SCOPE_CONFIG, fileExists
 
@@ -50,12 +47,12 @@ EXTRACT_DIR = "/tmp/ServiceScanUpdates"
 TARGET_DIR = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
 
 # ===== Config =====
-# Initialize configuration
 config.plugins.speedyservicescanupdates = ConfigSubsection()
 config.plugins.speedyservicescanupdates.add_new_tv_services = ConfigYesNo(default=True)
 config.plugins.speedyservicescanupdates.add_new_radio_services = ConfigYesNo(default=True)
 config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=False)
 
+# ===== Version =====
 def read_version():
     if not plugin_path:
         return "Unknown version"
@@ -92,18 +89,17 @@ except ImportError:
         pass
 
 # ===== SSUUpdateScreen Class =====
-
 class SSUUpdateScreen(Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
 
-        from enigma import getDesktop
+        # Bildschirmauflösung
         desktop = getDesktop(0)
         width = desktop.size().width()
         height = desktop.size().height()
 
-        if width == 1920:  # FHD
+        if width >= 1920:
             self.skin = """
             <screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1180,50" />
@@ -116,7 +112,7 @@ class SSUUpdateScreen(Screen):
                 <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" />
             </screen>
             """
-        else:  # HD
+        else:
             self.skin = """
             <screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1050,50" />
@@ -130,10 +126,6 @@ class SSUUpdateScreen(Screen):
             </screen>
             """
 
-         
-
-
-        # Widgets initialisieren
         self['status'] = Label(_("Checking for updates..."))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
@@ -143,7 +135,6 @@ class SSUUpdateScreen(Screen):
         self['key_blue'] = Button(_("Check Update"))
         self['version'] = Label(version)
 
-        # Aktionen
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
             'red': self.exit,
             'green': self.start_update,
@@ -153,23 +144,16 @@ class SSUUpdateScreen(Screen):
             'cancel': self.exit
         }, -1)
 
-        # Status-Variablen
         self.download_progress = 0
-        self.download_complete = False
-        self.update_installed = False
-
-        # Timer für GUI-Updates
         self.timer = eTimer()
         self.timer.callback.append(self._update_gui)
         self.timer.start(100, True)
 
     def _update_gui(self):
-        # Diese Methode wird alle 100ms aufgerufen
         self['progress'].setValue(self.download_progress)
         self['progresstext'].setText(f"{self.download_progress}%")
 
     def exit(self):
-        print("Der Update-Bildschirm wird geschlossen...")
         self.close()
 
     def _finish_update(self):
@@ -180,12 +164,7 @@ class SSUUpdateScreen(Screen):
             if not os.path.isdir(TARGET_DIR):
                 os.makedirs(TARGET_DIR)
 
-            update_folder = os.path.join(EXTRACT_DIR, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdate")
-
-            if not os.path.isdir(update_folder):
-                self['status'].setText(_("Error: Update folder not found."))
-                return
-
+            update_folder = os.path.join(EXTRACT_DIR, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
             for item in os.listdir(update_folder):
                 s = os.path.join(update_folder, item)
                 d = os.path.join(TARGET_DIR, item)
@@ -196,24 +175,18 @@ class SSUUpdateScreen(Screen):
                         shutil.copytree(s, d)
                     else:
                         shutil.copy2(s, d)
-                except Exception as e:
-                    print(f"Fehler beim Kopieren: {str(e)}")
+                except Exception:
                     pass
 
-            if not os.path.exists(TARGET_DIR):
-                raise IOError("Target dir missing after extraction")
-
             self['status'].setText(_("Update completed successfully."))
-            self.update_installed = True
-
             self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
-
         except Exception as e:
-            print(f"Fehler in _finish_update: {str(e)}")
+            print("Finish update error:", str(e))
             self['status'].setText(_("Failed to complete update."))
 
     def check_update(self):
-        if self._requests_missing():
+        if not requests:
+            self['status'].setText(_("Requests module missing"))
             return
         self['status'].setText(_("Checking for updates..."))
         try:
@@ -223,11 +196,12 @@ class SSUUpdateScreen(Screen):
             else:
                 self['status'].setText(_("No update available"))
         except Exception as e:
-            print(f"Fehler beim Überprüfen des Updates: {str(e)}")
+            print("Check update error:", str(e))
             self['status'].setText(_("Update check failed."))
 
     def start_update(self):
-        if self._requests_missing():
+        if not requests:
+            self['status'].setText(_("Requests module missing"))
             return
         self['status'].setText(_("Downloading update..."))
         try:
@@ -235,7 +209,7 @@ class SSUUpdateScreen(Screen):
             if r.status_code == 200:
                 total_size = int(r.headers.get('Content-Length', 0))
                 self.download_progress = 0
-                with open(TEMP_UPDATE_FILE, 'wb') as f:
+                with open(DOWNLOAD_PATH, 'wb') as f:
                     for data in r.iter_content(chunk_size=1024):
                         if data:
                             f.write(data)
@@ -245,15 +219,12 @@ class SSUUpdateScreen(Screen):
             else:
                 self['status'].setText(_("Download failed"))
         except Exception as e:
-            print(f"Fehler beim Download des Updates: {str(e)}")
+            print("Download error:", str(e))
             self['status'].setText(_("Download failed"))
 
     def cancel(self):
         self['status'].setText(_("Update canceled"))
         self.close()
-
-    def _screen_size(self):
-        return 1920, 1080  # Beispiel
 
     def restartGUI(self, answer):
         if answer:
@@ -261,32 +232,16 @@ class SSUUpdateScreen(Screen):
         else:
             self.close()
 
-    def _requests_missing(self):
-        try:
-            import requests
-            return False
-        except ImportError:
-            self['status'].setText(_("Requests module missing"))
-            return True
-
-    
-
+# ===== Setup Screen =====
 class SSUSetupScreen(ConfigListScreen, Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         ConfigListScreen.__init__(self, [], session=session)
         self.session = session
+        w, h = getDesktop(0).size().width(), getDesktop(0).size().height()
 
-        # Bildschirmauflösung abfragen und Skin setzen
-        w, h = self._screen_size()
-
-        # Bestimmen der Bildschirmbreite basierend auf der Auflösung
-        sz_w = 1180 if w >= 1920 and h >= 1080 else 1050
-
-        # Skin für verschiedene Auflösungen festlegen
-        if w >= 1920 and h >= 1080:
-            self.skin = """
-            <screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Setup" backgroundColor="black">
+        self.skin = """
+         <screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Setup" backgroundColor="black">
                 <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/green.png" position="314,5" size="5,70" scale="stretch" alphatest="on" />
                 <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
@@ -319,45 +274,9 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <widget name="help" position="210,450" size="685,65" font="Regular;22" />
             </screen>"""
 
-        # --- Definiere alle Widgets, die von externen Skins referenziert werden können ---
         self["version"] = Label(_("v %s") % version)
-        self["key_red"] = Button(_("Cancel"))
-        self["key_green"] = Button(_("Save"))
-        self["key_yellow"] = Button(_("Restore Default"))
-        self["key_blue"] = Button(_("Update"))
         self["help"] = Label(_("Configure the update options."))
-        
-        # Aktionen
-        self['actions'] = ActionMap(['ColorActions', 'OkCancelActions', 'HelpActions'], {
-            'red': self.cancel,
-            'green': self.save,
-            'yellow': self.restore_default,
-            'blue': self.openUpdate,
-            'ok': self.save,
-            'cancel': self.cancel,
-            'help': self.showHelp  # Help Key hinzugefügt
-        }, -1)
 
-        self.onLayoutFinish.append(self.layoutFinished)
-        self["config"].onSelectionChanged.append(self.updateHelp)
-
-    def showHelp(self):
-        """Zeigt den Hilfetext an"""
-        help_text = "Hier können Sie die Optionen für den Service Scan konfigurieren."
-        self["help"].setText(help_text)
-
-        # Weitere Methoden bleiben unverändert
-
-
-        # --- Definiere alle Widgets, die von externen Skins referenziert werden können ---
-        self["version"] = Label(_("v %s") % version)
-        self["key_red"] = Button(_("Cancel"))
-        self["key_green"] = Button(_("Save"))
-        self["key_yellow"] = Button(_("Restore Default"))
-        self["key_blue"] = Button(_("Update"))
-        self["help"] = Label(_("Configure the update options."))
-        
-        # Aktionen
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
             'red': self.cancel,
             'green': self.save,
@@ -367,31 +286,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
             'cancel': self.cancel
         }, -1)
 
-        self.onLayoutFinish.append(self.layoutFinished)
-        self["config"].onSelectionChanged.append(self.updateHelp)
-
-    def restore_default(self):
-        """Stellt die Standardeinstellungen wieder her"""
-        self.session.open(MessageBox, _("Default settings restored!"), MessageBox.TYPE_INFO, 3)
-        self.close()
-
-    def openUpdate(self):
-        try:
-            self.session.open(SSUUpdateScreen)
-        except Exception as e:
-            print("Error opening update screen:", str(e))
-            _safe_msg(self.session, _("Unable to open update screen."), MessageBox.TYPE_ERROR, 5)
-
-    def _screen_size(self):
-        """Ermittelt die Bildschirmgröße"""
-        try:
-            ds = getDesktop(0).size()
-            return ds.width(), ds.height()
-        except Exception:
-            return 1920, 1080
-
-    def layoutFinished(self):
-        self.populateList()
+        self.onLayoutFinish.append(self.populateList)
 
     def populateList(self):
         self.list = [
@@ -401,77 +296,31 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         ]
         for entry in self.list:
             entry[1].helpText = entry[2]
-
         self["config"].list = self.list
         self["config"].l.setList(self.list)
 
-    def updateHelp(self):
-        """Aktualisiert die Hilfetextanzeige basierend auf der ausgewählten Option"""
-        selected = self["config"].getCurrent()
-        if selected:
-            help_text = getattr(selected[1], 'helpText', _("No help available for this option."))
-            self["help"].setText(help_text)
-        else:
-            self["help"].setText("")
+    def restore_default(self):
+        self.session.open(MessageBox, _("Default settings restored!"), MessageBox.TYPE_INFO, 3)
+        self.close()
+
+    def openUpdate(self):
+        try:
+            self.session.open(SSUUpdateScreen)
+        except Exception:
+            _safe_msg(self.session, _("Unable to open update screen."), MessageBox.TYPE_ERROR, 5)
 
     def cancel(self):
-        """Bricht ab und schließt das Fenster"""
         self.close()
 
     def save(self):
-        """Speichert die Änderungen und bestätigt"""
         self.session.open(MessageBox, _("Changes saved!"), MessageBox.TYPE_INFO, 3)
         self.close()
 
-class SSUHelpScreen(Screen):
-    def __init__(self, session):
-        Screen.__init__(self, session)
-
-        # Bildschirmauflösung abfragen und Skin setzen
-        w, h = self._screen_size()
-
-        # Setzen des Skin je nach Bildschirmgröße
-        self.skin = self._get_skin(w, h)
-
-        # Hilfe-Widget initialisieren
-        self["help"] = Label(_("Help information goes here"))
-
-    def _screen_size(self):
-        """Ermittelt die Bildschirmgröße"""
-        try:
-            ds = getDesktop(0).size()
-            return ds.width(), ds.height()
-        except Exception:
-            return 1280, 720
-
-    def _get_skin(self, w, h):
-        """Hilfsmethode zur Bestimmung des Skins basierend auf Bildschirmauflösung"""
-        if w >= 1920 and h >= 1080:
-            return """
-            <screen name="SSUHelpScreen" position="center,170" size="1200,820" title="Service Scan Updates">
-                <widget name="help" position="20,5" size="1100,780" font="Regular;30" />
-            </screen>"""
-        else:
-            return """
-            <screen name="SSUHelpScreen" position="center,120" size="800,530" title="Service Scan Updates">
-                <widget name="help" position="10,5" size="760,500" font="Regular;21" />
-            </screen>"""
-
-    def layoutFinished(self):
-        help_txt = _("This plugin creates a favorites bouquet (for TV and Radio) with the name 'Service Scan Updates'.\n")
-        help_txt += _("All new services found during the scan are inserted there together with a marker.\n")
-        help_txt += _("This allows you to quickly and clearly see which new services were found,\n")
-        help_txt += _("and you can add individual services to your own Favorites bouquets as usual.\n\n")
-        help_txt += _("In order for the 'Service Scan Updates' bouquet to be displayed,\n")
-        help_txt += _("the option 'Allow multiple bouquets' must be activated in the system settings of the box.")
-        self["help"].setText(help_txt)
-
-# ===== ServiceScan hook =====
+# ===== ServiceScan hooks for automatic bouquet insertion =====
 _base_execBegin = None
 _base_execEnd = None
 _preScanDB = None
 
-# optional parser
 try:
     from .SSULameDBParser import SSULameDBParser
 except Exception:
@@ -482,13 +331,12 @@ def _has(d, k):
         return k in d
     except Exception:
         try:
-            return d.has_key(k)  # Py2 fallback
+            return d.has_key(k)
         except Exception:
             return False
 
 def ServiceScan_execBegin_hook(self, *args, **kwargs):
     global _preScanDB
-    # snapshot pre-scan DB if configured
     try:
         if SSULameDBParser and not _preScanDB:
             add_tv = getattr(config.plugins.speedyservicescanupdates.add_new_tv_services, "value", False)
@@ -500,36 +348,25 @@ def ServiceScan_execBegin_hook(self, *args, **kwargs):
                     _preScanDB = None
     except Exception:
         pass
-
-    # call original execBegin
-    try:
-        if _base_execBegin:
+    if _base_execBegin:
+        try:
+            _base_execBegin(self, *args, **kwargs)
+        except TypeError:
             try:
-                _base_execBegin(self, *args, **kwargs)
-            except TypeError:
-                try:
-                    _base_execBegin(self)
-                except Exception:
-                    pass
-    except Exception:
-        pass
+                _base_execBegin(self)
+            except Exception:
+                pass
 
 def ServiceScan_execEnd_hook(self, *args, **kwargs):
     global _preScanDB
-    # call original first
-    try:
-        if _base_execEnd:
+    if _base_execEnd:
+        try:
+            _base_execEnd(self, *args, **kwargs)
+        except TypeError:
             try:
-                _base_execEnd(self, *args, **kwargs)
-            except TypeError:
-                try:
-                    _base_execEnd(self)
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-    # post-scan handling
+                _base_execEnd(self)
+            except Exception:
+                pass
     try:
         if not SSULameDBParser:
             return
@@ -537,81 +374,44 @@ def ServiceScan_execEnd_hook(self, *args, **kwargs):
         add_radio = getattr(config.plugins.speedyservicescanupdates.add_new_radio_services, "value", False)
         if not (add_tv or add_radio):
             return
-
-        # ensure scan finished if attributes exist
-        proceed = True
-        try:
-            Done = getattr(self, "Done", None)
-            state = getattr(self, "state", None)
-            if Done is not None and state is not None:
-                proceed = (state == Done)
-        except Exception:
-            proceed = True
-        if not proceed:
-            return
-
         if not _preScanDB:
             return
-
-        # read post-scan DB
-        try:
-            postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
-        except Exception:
-            return
-
+        postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
         postServices = postScanDB.getServices()
         preServices = _preScanDB.getServices()
-
         newTV, newRadio = [], []
         for sref in postServices.keys():
-            try:
-                if not _has(preServices, sref):
-                    if SSULameDBParser.isVideoService(sref):
-                        newTV.append(sref)
-                    elif SSULameDBParser.isRadioService(sref):
-                        newRadio.append(sref)
-            except Exception:
-                pass
-
+            if not _has(preServices, sref):
+                if SSULameDBParser.isVideoService(sref):
+                    newTV.append(sref)
+                elif SSULameDBParser.isRadioService(sref):
+                    newRadio.append(sref)
         if (not newTV) and (not newRadio):
             return
-
-        try:
-            from .SSUBouquetHandler import SSUBouquetHandler
-            bh = SSUBouquetHandler()
-        except Exception:
-            return
-
+        from .SSUBouquetHandler import SSUBouquetHandler
+        bh = SSUBouquetHandler()
         def _apply(side, items):
             if not items:
                 return
-            try:
-                bh.addToIndexBouquet(side)
-                if config.plugins.speedyservicescanupdates.clear_bouquet.value:
-                    bh.createSSUBouquet(items, side)
+            bh.addToIndexBouquet(side)
+            if config.plugins.speedyservicescanupdates.clear_bouquet.value:
+                bh.createSSUBouquet(items, side)
+            else:
+                if bh.doesSSUBouquetFileExists(side):
+                    bh.appendToSSUBouquet(items, side)
                 else:
-                    if bh.doesSSUBouquetFileExists(side):
-                        bh.appendToSSUBouquet(items, side)
-                    else:
-                        bh.createSSUBouquet(items, side)
-            except Exception:
-                pass
-
+                    bh.createSSUBouquet(items, side)
         if add_tv:
             _apply("tv", newTV)
         if add_radio:
             _apply("radio", newRadio)
-
         try:
             bh.reloadBouquets()
         except Exception:
             pass
-    except Exception:
-        pass
     finally:
         _preScanDB = None
 
-# ===== Autostart: patch ServiceScan =====
 def _autostart(reason, **kwargs):
     global _base_execBegin, _base_execEnd
     try:
@@ -634,20 +434,13 @@ def openUpdate(session, **kwargs):
 def openSetup(session, **kwargs):
     session.open(SSUSetupScreen)
 
-# ===== Menu integration =====
 def menuHook(menuid, **kwargs):
-    if menuid == "scan":  # Service Searching
+    if menuid == "scan":
         return [(_("ServiceScanUpdates"), openSetup, "servicescanupdates", 50)]
     return []
 
 # ===== Plugin registration =====
 def Plugins(**kwargs):
-    """
-    Return plugin descriptors:
-     - autostart/sessionstart for service scan hooks
-     - SpeedyServiceScanUpdates -> updater screen (plugin menu and extensions)
-     - ServiceScanUpdates -> configuration screen (plugin menu, extensions, and service searching menu)
-    """
     items = [
         PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART], fnc=_autostart),
         PluginDescriptor(name="SpeedyServiceScanUpdates",
