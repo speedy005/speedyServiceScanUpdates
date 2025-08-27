@@ -85,6 +85,7 @@ class SSUUpdateScreen(Screen):
         desktop = getDesktop(0)
         width = desktop.size().width()
 
+        # Skin abhängig von der Auflösung setzen
         if width >= 1920:
             self.skin = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1180,50" />
@@ -120,15 +121,17 @@ class SSUUpdateScreen(Screen):
                 <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
 
-        self['status'] = Label(_("Ready"))
+        # GUI-Komponenten initialisieren
+        self['status'] = Label(_("Bereit"))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
-        self['key_red'] = Button(_("Exit"))
+        self['key_red'] = Button(_("Beenden"))
         self['key_green'] = Button(_("Start"))
-        self['key_yellow'] = Button(_("Cancel"))
-        self['key_blue'] = Button(_("Check Update"))
+        self['key_yellow'] = Button(_("Abbrechen"))
+        self['key_blue'] = Button(_("Update prüfen"))
         self['version'] = Label(version)
 
+        # Aktionen definieren
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
             'red': self.exit,
             'green': self.start_update,
@@ -138,107 +141,109 @@ class SSUUpdateScreen(Screen):
             'cancel': self.exit
         }, -1)
 
+        # Fortschritt initialisieren und Timer starten
         self.download_progress = 0
         self.timer = eTimer()
         self.timer.callback.append(self._update_gui)
         self.timer.start(100, True)
 
+    # --- GUI aktualisieren ---
     def _update_gui(self):
-    self['progress'].setValue(min(self.download_progress, 100))
-    self['progresstext'].setText(f"{min(self.download_progress, 100)}%")
+        self['progress'].setValue(min(self.download_progress, 100))
+        self['progresstext'].setText(f"{min(self.download_progress, 100)}%")
 
-def exit(self):
-    self.close()
-
-# ===== NEUE FINISH_UPDATE METHODEN =====
-def _finish_update(self):
-    try:
-        # Pfad zum entpackten Plugin-Ordner
-        update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
-        if not os.path.isdir(update_folder):
-            self['status'].setText(_("Error: speedyServiceScanUpdates folder not found."))
-            return
-
-        # Zielordner erstellen, falls er nicht existiert
-        if not os.path.isdir(TARGET_DIR):
-            os.makedirs(TARGET_DIR)
-
-        # Inhalt (Unterordner und Dateien) kopieren, ohne den Hauptordner selbst
-        for item in os.listdir(update_folder):
-            s = os.path.join(update_folder, item)
-            d = os.path.join(TARGET_DIR, item)
-            if os.path.isdir(s):
-                shutil.copytree(s, d, dirs_exist_ok=True)  # Unterordner rekursiv kopieren
-            else:
-                shutil.copy2(s, d)  # einzelne Dateien kopieren
-
-        self['status'].setText(_("Update completed successfully."))
-        self.session.openWithCallback(
-            self.restartGUI,
-            MessageBox,
-            _("Update complete. Do you want to restart the GUI?"),
-            MessageBox.TYPE_YESNO
-        )
-
-    except Exception as e:
-        print("Finish update error:", str(e))
-        self['status'].setText(_("Failed to complete update."))
-
-
-def check_update(self):
-    if not requests:
-        self['status'].setText(_("Requests module missing"))
-        return
-    self['status'].setText(_("Checking for updates..."))
-    try:
-        r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
-        if r.status_code == 200:
-            remote_version = r.text.strip()
-            if remote_version > version:
-                self['status'].setText(_("Update available"))
-            else:
-                self['status'].setText(_("No update available"))
-        else:
-            self['status'].setText(_("No update available"))
-    except Exception as e:
-        print("Check update error:", str(e))
-        self['status'].setText(_("Update check failed."))
-
-
-def start_update(self):
-    if not requests:
-        self['status'].setText(_("Requests module missing"))
-        return
-    self['status'].setText(_("Downloading update..."))
-    try:
-        r = requests.get(UPDATE_URL, stream=True, timeout=20)
-        if r.status_code == 200:
-            total_size = int(r.headers.get('Content-Length', 0))
-            self.download_progress = 0
-            with open(DOWNLOAD_PATH, 'wb') as f:
-                for data in r.iter_content(chunk_size=1024):
-                    if data:
-                        f.write(data)
-                        self.download_progress += len(data) * 100 // max(total_size, 1)
-                        self._update_gui()
-            with zipfile.ZipFile(DOWNLOAD_PATH, 'r') as zip_ref:
-                zip_ref.extractall(EXTRACT_DIR)
-            self._finish_update()
-        else:
-            self['status'].setText(_("Download failed"))
-    except Exception as e:
-        print("Download error:", str(e))
-        self['status'].setText(_("Download failed"))
-
-
-def cancel(self):
-    self['status'].setText(_("Update canceled"))
-    self.close()
-
-
-def restartGUI(self, answer):
-    if answer:
-        self.session.open(TryQuitMainloop, 3)
-    else:
+    # --- Beenden ---
+    def exit(self):
         self.close()
+
+    # --- Update abschließen ---
+    def _finish_update(self):
+        try:
+            update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
+            if not os.path.isdir(update_folder):
+                self['status'].setText(_("Fehler: Ordner speedyServiceScanUpdates nicht gefunden."))
+                return
+
+            if not os.path.isdir(TARGET_DIR):
+                os.makedirs(TARGET_DIR)
+
+            # Dateien und Unterordner kopieren
+            for item in os.listdir(update_folder):
+                s = os.path.join(update_folder, item)
+                d = os.path.join(TARGET_DIR, item)
+                if os.path.isdir(s):
+                    shutil.copytree(s, d, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(s, d)
+
+            self['status'].setText(_("Update erfolgreich abgeschlossen."))
+            self.session.openWithCallback(
+                self.restartGUI,
+                MessageBox,
+                _("Update abgeschlossen. GUI neu starten?"),
+                MessageBox.TYPE_YESNO
+            )
+
+        except Exception as e:
+            print("Fehler beim Abschluss des Updates:", str(e))
+            self['status'].setText(_("Update konnte nicht abgeschlossen werden."))
+
+    # --- Update prüfen ---
+    def check_update(self):
+        if not requests:
+            self['status'].setText(_("Requests-Modul fehlt"))
+            return
+        self['status'].setText(_("Prüfe auf Updates..."))
+        try:
+            r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
+            if r.status_code == 200:
+                remote_version = r.text.strip()
+                if remote_version > version:
+                    self['status'].setText(_("Update verfügbar"))
+                else:
+                    self['status'].setText(_("Kein Update verfügbar"))
+            else:
+                self['status'].setText(_("Kein Update verfügbar"))
+        except Exception as e:
+            print("Fehler beim Update-Check:", str(e))
+            self['status'].setText(_("Update-Check fehlgeschlagen."))
+
+    # --- Update starten ---
+    def start_update(self):
+        if not requests:
+            self['status'].setText(_("Requests-Modul fehlt"))
+            return
+        self['status'].setText(_("Update wird heruntergeladen..."))
+        try:
+            r = requests.get(UPDATE_URL, stream=True, timeout=20)
+            if r.status_code == 200:
+                total_size = int(r.headers.get('Content-Length', 0))
+                self.download_progress = 0
+                with open(DOWNLOAD_PATH, 'wb') as f:
+                    for data in r.iter_content(chunk_size=1024):
+                        if data:
+                            f.write(data)
+                            self.download_progress += len(data) * 100 // max(total_size, 1)
+                            self._update_gui()
+                with zipfile.ZipFile(DOWNLOAD_PATH, 'r') as zip_ref:
+                    zip_ref.extractall(EXTRACT_DIR)
+                self._finish_update()
+            else:
+                self['status'].setText(_("Download fehlgeschlagen"))
+        except Exception as e:
+            print("Fehler beim Download:", str(e))
+            self['status'].setText(_("Download fehlgeschlagen"))
+
+    # --- Update abbrechen ---
+    def cancel(self):
+        self['status'].setText(_("Update abgebrochen"))
+        self.close()
+
+    # --- GUI neu starten ---
+    def restartGUI(self, answer):
+        if answer:
+            self.session.open(TryQuitMainloop, 3)
+        else:
+            self.close()
+
 
