@@ -223,15 +223,15 @@ def download_and_install_update(session):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
+        # Unterordner speedyServiceScanUpdates im entpackten Verzeichnis finden
         extracted_root = None
         for name in os.listdir(tmp_dir):
-            if name.startswith("speedyServiceScanUpdates"):
-                candidate = os.path.join(tmp_dir, name,
-                                         "usr", "lib", "enigma2", "python", "Plugins", "Extensions",
-                                         "speedyServiceScanUpdates")
-                if os.path.exists(candidate):
-                    extracted_root = candidate
-                    break
+            candidate = os.path.join(tmp_dir, name,
+                                     "usr", "lib", "enigma2", "python", "Plugins", "Extensions",
+                                     "speedyServiceScanUpdates")
+            if os.path.exists(candidate):
+                extracted_root = candidate
+                break
 
         if not extracted_root or not os.path.exists(extracted_root):
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
@@ -242,9 +242,16 @@ def download_and_install_update(session):
             d = os.path.join(PLUGIN_PATH, item)
             try:
                 if os.path.isdir(s):
-                    if os.path.exists(d):
-                        shutil.rmtree(d)
-                    shutil.copytree(s, d)
+                    if not os.path.exists(d):
+                        os.makedirs(d)
+                    # Inhalte rekursiv kopieren
+                    for root, dirs, files in os.walk(s):
+                        rel_path = os.path.relpath(root, s)
+                        dest_dir = os.path.join(d, rel_path)
+                        if not os.path.exists(dest_dir):
+                            os.makedirs(dest_dir)
+                        for file in files:
+                            shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
                 else:
                     shutil.copy2(s, d)
             except Exception as e:
@@ -289,6 +296,7 @@ def download_and_install_update(session):
             session.open(MessageBox, "Fehler beim Update:\n%s" % str(e), MessageBox.TYPE_ERROR)
         except Exception:
             pass
+
 
 def check_for_update(session):
     current_version = get_current_version()
