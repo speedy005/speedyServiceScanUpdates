@@ -237,25 +237,19 @@ def download_and_install_update(session):
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
 
         log("[speedyServiceScanUpdates] Kopiere Dateien nach: %s" % PLUGIN_PATH)
+        # Nur Inhalt des Ordners kopieren, nicht den Ordner selbst
         for item in os.listdir(extracted_root):
             s = os.path.join(extracted_root, item)
-            d = os.path.join(PLUGIN_PATH, item)
-            try:
-                if os.path.isdir(s):
-                    if not os.path.exists(d):
-                        os.makedirs(d)
-                    # Inhalte rekursiv kopieren
-                    for root, dirs, files in os.walk(s):
-                        rel_path = os.path.relpath(root, s)
-                        dest_dir = os.path.join(d, rel_path)
-                        if not os.path.exists(dest_dir):
-                            os.makedirs(dest_dir)
-                        for file in files:
-                            shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
-                else:
-                    shutil.copy2(s, d)
-            except Exception as e:
-                log("[speedyServiceScanUpdates] Fehler beim Kopieren %s -> %s : %s" % (s, d, e))
+            if os.path.isdir(s):
+                for root, dirs, files in os.walk(s):
+                    rel_path = os.path.relpath(root, s)
+                    dest_dir = os.path.join(PLUGIN_PATH, rel_path)
+                    if not os.path.exists(dest_dir):
+                        os.makedirs(dest_dir)
+                    for file in files:
+                        shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
+            else:
+                shutil.copy2(s, os.path.join(PLUGIN_PATH, item))
 
         # Version.txt aktualisieren
         remote_version = get_remote_version()
@@ -296,6 +290,13 @@ def download_and_install_update(session):
             session.open(MessageBox, "Fehler beim Update:\n%s" % str(e), MessageBox.TYPE_ERROR)
         except Exception:
             pass
+    finally:
+        # Temporären Ordner aufräumen
+        try:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
 
 
 def check_for_update(session):

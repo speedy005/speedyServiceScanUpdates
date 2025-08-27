@@ -95,12 +95,12 @@ class SSUUpdateScreen(Screen):
                 <widget name="key_yellow" foregroundColor="yellow" position="609,3" size="300,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_blue" foregroundColor="blue" position="917,4" size="295,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" />
-				<eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
-<ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
-<ePixmap pixmap="skin_default/buttons/blue.png" position="909,5" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/yellow.png" position="601,4" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/green.png" position="300,5" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
+                <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
+                <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+                <ePixmap pixmap="skin_default/buttons/blue.png" position="909,5" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/yellow.png" position="601,4" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/green.png" position="300,5" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
         else:
             self.skin = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
@@ -112,12 +112,12 @@ class SSUUpdateScreen(Screen):
                 <widget name="key_yellow" foregroundColor="yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_blue" position="798,5" foregroundColor="blue" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="version" position="364,752" size="300,50" font="Regular;30" valign="center" halign="center" />
-				<eLabel text="HELP" position="930,761" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
-<ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="841,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
-<ePixmap pixmap="skin_default/buttons/blue.png" position="791,5" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/yellow.png" position="529,2" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/green.png" position="269,2" size="5,70" scale="stretch" alphatest="on" />
-<ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
+                <eLabel text="HELP" position="930,761" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
+                <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="841,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+                <ePixmap pixmap="skin_default/buttons/blue.png" position="791,5" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/yellow.png" position="529,2" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/green.png" position="269,2" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
 
         self['status'] = Label(_("Ready"))
@@ -150,6 +150,7 @@ class SSUUpdateScreen(Screen):
     def exit(self):
         self.close()
 
+    # ===== NEUE FINISH_UPDATE METHODEN =====
     def _finish_update(self):
         try:
             update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
@@ -159,18 +160,27 @@ class SSUUpdateScreen(Screen):
             if not os.path.isdir(TARGET_DIR):
                 os.makedirs(TARGET_DIR)
 
+            # Nur Inhalt kopieren
             for item in os.listdir(update_folder):
                 s = os.path.join(update_folder, item)
-                d = os.path.join(TARGET_DIR, item)
                 if os.path.isdir(s):
-                    if os.path.exists(d):
-                        shutil.rmtree(d)
-                    shutil.copytree(s, d)
+                    for root, dirs, files in os.walk(s):
+                        rel_path = os.path.relpath(root, s)
+                        dest_dir = os.path.join(TARGET_DIR, rel_path)
+                        if not os.path.exists(dest_dir):
+                            os.makedirs(dest_dir)
+                        for file in files:
+                            shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
                 else:
-                    shutil.copy2(s, d)
+                    shutil.copy2(s, os.path.join(TARGET_DIR, item))
 
             self['status'].setText(_("Update completed successfully."))
-            self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
+            self.session.openWithCallback(
+                self.restartGUI,
+                MessageBox,
+                _("Update complete. Do you want to restart the GUI?"),
+                MessageBox.TYPE_YESNO
+            )
         except Exception as e:
             print("Finish update error:", str(e))
             self['status'].setText(_("Failed to complete update."))
