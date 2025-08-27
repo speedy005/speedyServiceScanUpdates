@@ -208,7 +208,98 @@ def get_remote_version():
         log("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version: %s" % e)
         return None
 
+def download_and_install_update(session):
+    try:
+        tmp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(tmp_dir, "plugin_update.zip")
 
+        log("[speedyServiceScanUpdates] Lade Update herunter...")
+        req = urllib_request.urlopen(GITHUB_ZIP_URL)
+        with open(zip_path, "wb") as f:
+            f.write(req.read())
+        log("[speedyServiceScanUpdates] Download abgeschlossen: %s" % zip_path)
+
+        log("[speedyServiceScanUpdates] Entpacke Update...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(tmp_dir)
+
+        # Unterordner speedyServiceScanUpdates im entpackten Verzeichnis finden
+        extracted_root = None
+        for name in os.listdir(tmp_dir):
+            candidate = os.path.join(tmp_dir, name,
+                                     "usr", "lib", "enigma2", "python", "Plugins", "Extensions",
+                                     "speedyServiceScanUpdates")
+            if os.path.exists(candidate):
+                extracted_root = candidate
+                break
+
+        if not extracted_root or not os.path.exists(extracted_root):
+            raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
+
+        log("[speedyServiceScanUpdates] Kopiere Dateien nach: %s" % PLUGIN_PATH)
+
+        # --- Nur den Inhalt kopieren, nicht den Hauptordner ---
+        for item in os.listdir(extracted_root):
+            src_path = os.path.join(extracted_root, item)
+            dest_path = os.path.join(PLUGIN_PATH, item)
+
+            if os.path.isdir(src_path):
+                # Rekursiv kopieren, auch Unterordner und versteckte Dateien
+                for root, dirs, files in os.walk(src_path):
+                    rel_path = os.path.relpath(root, src_path)
+                    target_dir = os.path.join(dest_path, rel_path)
+                    os.makedirs(target_dir, exist_ok=True)
+                    for file in files:
+                        shutil.copy2(os.path.join(root, file), os.path.join(target_dir, file))
+            else:
+                # Einzelne Dateien kopieren
+                shutil.copy2(src_path, dest_path)
+
+        # Version.txt aktualisieren
+        remote_version = get_remote_version()
+        if remote_version:
+            try:
+                with open(VERSION_FILE, "w") as vf:
+                    vf.write(remote_version + "\n")
+                log("[speedyServiceScanUpdates] Lokale version.txt aktualisiert auf %s" % remote_version)
+            except Exception as e:
+                log("[speedyServiceScanUpdates] Konnte version.txt nicht schreiben: %s" % e)
+
+        log("[speedyServiceScanUpdates] Update erfolgreich installiert!")
+
+        # GUI-Neustart anbieten
+        def restartGUI(answer):
+            try:
+                if answer:
+                    log("[speedyServiceScanUpdates] Starte GUI neu...")
+                    session.open(TryQuitMainloop, 3)
+                else:
+                    log("[speedyServiceScanUpdates] Benutzer möchte GUI nicht neustarten.")
+            except Exception as e:
+                log("[speedyServiceScanUpdates] Fehler beim Neustart-Aufruf: %s" % e)
+
+        try:
+            session.openWithCallback(
+                restartGUI, MessageBox,
+                "Update erfolgreich installiert!\nSoll die GUI jetzt neu gestartet werden?",
+                MessageBox.TYPE_YESNO
+            )
+        except Exception as e:
+            log("[speedyServiceScanUpdates] Konnte Restart-MessageBox nicht öffnen: %s" % e)
+
+    except Exception as e:
+        log("[speedyServiceScanUpdates] Fehler beim Update: %s" % e)
+        traceback.print_exc()
+        try:
+            session.open(MessageBox, "Fehler beim Update:\n%s" % str(e), MessageBox.TYPE_ERROR)
+        except Exception:
+            pass
+    finally:
+        # Temporären Ordner aufräumen
+        try:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
 
 def check_for_update(session):
     current_version = get_current_version()
@@ -251,7 +342,6 @@ def check_for_update(session):
         log("[speedyServiceScanUpdates] Fehler beim Vergleich der Versionen: %s" % e)
         return False
 
-
 # --- Autostart Hook ---
 def autostart(reason, **kwargs):
     if reason == 0 and "session" in kwargs:
@@ -269,22 +359,15 @@ def autostart(reason, **kwargs):
 
         log("[speedyServiceScanUpdates] Autostart: ServiceScan Wrapper aktiv, Updateprüfung entfällt beim Start.")
 
-
 # --- Menü & Setup ---
 def SSUMain(session, **kwargs):
     from .SSUSetupScreen import SSUSetupScreen
-
     try:
         session.open(SSUSetupScreen)
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Öffnen des SetupScreens: %s" % e)
 
-
 def precheck_update_and_open(session, **kwargs):
-    """
-    Updateprüfung vor Öffnen des SetupScreens.
-    MessageBox erscheint sofort über dem vorherigen Screen.
-    """
     from .SSUSetupScreen import SSUSetupScreen
 
     def open_plugin():
@@ -320,19 +403,16 @@ def precheck_update_and_open(session, **kwargs):
         log("[speedyServiceScanUpdates] Fehler bei Updateprüfung: %s" % e)
         open_plugin()
 
-
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
         return [("speedy ServiceScanUpdates " + _("Setup"), precheck_update_and_open, "servicescanupdates", None)]
     return []
-
 
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
         return [(_("speedyServiceScanUpdates") + " " + _("Setup"), precheck_update_and_open,
                  "speedyservicescanupdates_mainmenu", 50)]
     return []
-
 
 # --- Plugin Descriptor ---
 def Plugins(**kwargs):
@@ -352,6 +432,3 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
-
-
-
