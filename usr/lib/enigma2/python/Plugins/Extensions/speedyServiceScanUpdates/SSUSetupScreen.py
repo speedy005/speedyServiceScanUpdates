@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
-import zipfile
 import shutil
-import traceback
-import time
+import zipfile
 
-# optional dependency
 try:
     import requests
-except Exception:
+except ImportError:
     requests = None
 
-# --- Plugin-Pfad dynamisch ermitteln (Extensions oder SystemPlugins) ---
+# --- Plugin-Pfad dynamisch ermitteln ---
 plugin_path = None
 for base in (
     "/usr/lib/enigma2/python/Plugins/Extensions",
@@ -24,7 +20,7 @@ for base in (
         break
 
 # --- Enigma2 imports ---
-from enigma import ePixmap, eLabel, getDesktop, eTimer
+from enigma import ePixmap, getDesktop, eTimer
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
@@ -35,9 +31,8 @@ from Components.Label import Label
 from Components.ProgressBar import ProgressBar
 from Components.config import config, ConfigSubsection, ConfigYesNo, getConfigListEntry
 from Plugins.Plugin import PluginDescriptor
-from Tools.Directories import resolveFilename, SCOPE_CONFIG, fileExists
+from Tools.Directories import resolveFilename, SCOPE_CONFIG
 
-# Local translations
 from . import _
 
 # ===== Constants / Paths =====
@@ -72,12 +67,6 @@ def _safe_msg(session, text, mtype=MessageBox.TYPE_INFO, timeout=5):
     except Exception:
         pass
 
-def _exists(path):
-    try:
-        return os.path.exists(path)
-    except Exception:
-        return False
-
 # ===== ServiceScan Import =====
 ServiceScan = None
 try:
@@ -88,20 +77,16 @@ except ImportError:
     except ImportError:
         pass
 
-# ===== SSUUpdateScreen Class =====
+# ===== SSUUpdateScreen =====
 class SSUUpdateScreen(Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         self.session = session
-
-        # Bildschirmauflösung
         desktop = getDesktop(0)
         width = desktop.size().width()
-        height = desktop.size().height()
 
         if width >= 1920:
-            self.skin = """
-            <screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
+            self.skin = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1180,50" />
                 <widget name="status" position="12,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
                 <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
@@ -110,11 +95,9 @@ class SSUUpdateScreen(Screen):
                 <widget name="key_yellow" foregroundColor="yellow" position="604,5" size="300,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_blue" foregroundColor="blue" position="916,6" size="295,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" />
-            </screen>
-            """
+            </screen>"""
         else:
-            self.skin = """
-            <screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
+            self.skin = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1050,50" />
                 <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
                 <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
@@ -123,10 +106,9 @@ class SSUUpdateScreen(Screen):
                 <widget name="key_yellow" foregroundColor="yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_blue" position="798,5" foregroundColor="blue" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="version" position="364,752" size="300,50" font="Regular;30" valign="center" halign="center" />
-            </screen>
-            """
+            </screen>"""
 
-        self['status'] = Label(_("Checking for updates..."))
+        self['status'] = Label(_("Ready"))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
         self['key_red'] = Button(_("Exit"))
@@ -150,8 +132,8 @@ class SSUUpdateScreen(Screen):
         self.timer.start(100, True)
 
     def _update_gui(self):
-        self['progress'].setValue(self.download_progress)
-        self['progresstext'].setText(f"{self.download_progress}%")
+        self['progress'].setValue(min(self.download_progress, 100))
+        self['progresstext'].setText(f"{min(self.download_progress, 100)}%")
 
     def exit(self):
         self.close()
@@ -164,19 +146,20 @@ class SSUUpdateScreen(Screen):
             if not os.path.isdir(TARGET_DIR):
                 os.makedirs(TARGET_DIR)
 
-            update_folder = os.path.join(EXTRACT_DIR, "usr", "lib", "enigma2", "python", "Plugins", "Extensions", "speedyServiceScanUpdates")
-            for item in os.listdir(update_folder):
-                s = os.path.join(update_folder, item)
-                d = os.path.join(TARGET_DIR, item)
-                try:
-                    if os.path.isdir(s):
-                        if os.path.exists(d):
-                            shutil.rmtree(d)
-                        shutil.copytree(s, d)
-                    else:
-                        shutil.copy2(s, d)
-                except Exception:
-                    pass
+            update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main")
+            for root, dirs, files in os.walk(update_folder):
+                for d in dirs:
+                    s = os.path.join(root, d)
+                    rel = os.path.relpath(s, update_folder)
+                    d_target = os.path.join(TARGET_DIR, rel)
+                    if os.path.exists(d_target):
+                        shutil.rmtree(d_target)
+                    shutil.copytree(s, d_target)
+                for f in files:
+                    s = os.path.join(root, f)
+                    rel = os.path.relpath(s, update_folder)
+                    d_target = os.path.join(TARGET_DIR, rel)
+                    shutil.copy2(s, d_target)
 
             self['status'].setText(_("Update completed successfully."))
             self.session.openWithCallback(self.restartGUI, MessageBox, _("Update complete. Do you want to restart the GUI?"), MessageBox.TYPE_YESNO)
@@ -213,8 +196,10 @@ class SSUUpdateScreen(Screen):
                     for data in r.iter_content(chunk_size=1024):
                         if data:
                             f.write(data)
-                            self.download_progress += len(data) * 100 // total_size
+                            self.download_progress += len(data) * 100 // max(total_size, 1)
                             self._update_gui()
+                with zipfile.ZipFile(DOWNLOAD_PATH, 'r') as zip_ref:
+                    zip_ref.extractall(EXTRACT_DIR)
                 self._finish_update()
             else:
                 self['status'].setText(_("Download failed"))
@@ -232,16 +217,17 @@ class SSUUpdateScreen(Screen):
         else:
             self.close()
 
-# ===== Setup Screen =====
+
+# ===== SSUSetupScreen =====
 class SSUSetupScreen(ConfigListScreen, Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         ConfigListScreen.__init__(self, [], session=session)
         self.session = session
-        w, h = getDesktop(0).size().width(), getDesktop(0).size().height()
+        w = getDesktop(0).size().width()
 
-        self.skin = """
-         <screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Setup" backgroundColor="black">
+        if w >= 1920:
+            self.skin = """<screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Setup" backgroundColor="black">
                 <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/green.png" position="314,5" size="5,70" scale="stretch" alphatest="on" />
                 <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
@@ -258,8 +244,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
             </screen>"""
         else:
-            self.skin = """
-            <screen name="SSUSetupScreen" position="center,120" size="900,530" title="speedy Service Scan Setup">
+            self.skin = """<screen name="SSUSetupScreen" position="center,120" size="900,530" title="speedy Service Scan Setup">
                 <ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,40" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/green.png" position="200,0" size="5,40" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/yellow.png" position="405,0" size="5,40" scale="stretch" alphatest="on" />
@@ -316,7 +301,8 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self.session.open(MessageBox, _("Changes saved!"), MessageBox.TYPE_INFO, 3)
         self.close()
 
-# ===== ServiceScan hooks for automatic bouquet insertion =====
+
+# ===== ServiceScan Hooks / Autostart =====
 _base_execBegin = None
 _base_execEnd = None
 _preScanDB = None
@@ -337,95 +323,75 @@ def _has(d, k):
 
 def ServiceScan_execBegin_hook(self, *args, **kwargs):
     global _preScanDB
-    try:
-        if SSULameDBParser and not _preScanDB:
-            add_tv = getattr(config.plugins.speedyservicescanupdates.add_new_tv_services, "value", False)
-            add_radio = getattr(config.plugins.speedyservicescanupdates.add_new_radio_services, "value", False)
-            if add_tv or add_radio:
-                try:
-                    _preScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
-                except Exception:
-                    _preScanDB = None
-    except Exception:
-        pass
-    if _base_execBegin:
-        try:
-            _base_execBegin(self, *args, **kwargs)
-        except TypeError:
+    if SSULameDBParser and not _preScanDB:
+        add_tv = getattr(config.plugins.speedyservicescanupdates.add_new_tv_services, "value", False)
+        add_radio = getattr(config.plugins.speedyservicescanupdates.add_new_radio_services, "value", False)
+        if add_tv or add_radio:
             try:
-                _base_execBegin(self)
+                _preScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
             except Exception:
-                pass
+                _preScanDB = None
+    if _base_execBegin:
+        _base_execBegin(self, *args, **kwargs)
 
 def ServiceScan_execEnd_hook(self, *args, **kwargs):
     global _preScanDB
     if _base_execEnd:
-        try:
-            _base_execEnd(self, *args, **kwargs)
-        except TypeError:
-            try:
-                _base_execEnd(self)
-            except Exception:
-                pass
-    try:
-        if not SSULameDBParser:
+        _base_execEnd(self, *args, **kwargs)
+    if not SSULameDBParser:
+        return
+    add_tv = getattr(config.plugins.speedyservicescanupdates.add_new_tv_services, "value", False)
+    add_radio = getattr(config.plugins.speedyservicescanupdates.add_new_radio_services, "value", False)
+    if not (add_tv or add_radio):
+        return
+    if not _preScanDB:
+        return
+    postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
+    postServices = postScanDB.getServices()
+    preServices = _preScanDB.getServices()
+    newTV, newRadio = [], []
+    for sref in postServices.keys():
+        if not _has(preServices, sref):
+            if SSULameDBParser.isVideoService(sref):
+                newTV.append(sref)
+            elif SSULameDBParser.isRadioService(sref):
+                newRadio.append(sref)
+    if (not newTV) and (not newRadio):
+        return
+    from .SSUBouquetHandler import SSUBouquetHandler
+    bh = SSUBouquetHandler()
+    def _apply(side, items):
+        if not items:
             return
-        add_tv = getattr(config.plugins.speedyservicescanupdates.add_new_tv_services, "value", False)
-        add_radio = getattr(config.plugins.speedyservicescanupdates.add_new_radio_services, "value", False)
-        if not (add_tv or add_radio):
-            return
-        if not _preScanDB:
-            return
-        postScanDB = SSULameDBParser(resolveFilename(SCOPE_CONFIG) + "/lamedb")
-        postServices = postScanDB.getServices()
-        preServices = _preScanDB.getServices()
-        newTV, newRadio = [], []
-        for sref in postServices.keys():
-            if not _has(preServices, sref):
-                if SSULameDBParser.isVideoService(sref):
-                    newTV.append(sref)
-                elif SSULameDBParser.isRadioService(sref):
-                    newRadio.append(sref)
-        if (not newTV) and (not newRadio):
-            return
-        from .SSUBouquetHandler import SSUBouquetHandler
-        bh = SSUBouquetHandler()
-        def _apply(side, items):
-            if not items:
-                return
-            bh.addToIndexBouquet(side)
-            if config.plugins.speedyservicescanupdates.clear_bouquet.value:
-                bh.createSSUBouquet(items, side)
+        bh.addToIndexBouquet(side)
+        if config.plugins.speedyservicescanupdates.clear_bouquet.value:
+            bh.createSSUBouquet(items, side)
+        else:
+            if bh.doesSSUBouquetFileExists(side):
+                bh.appendToSSUBouquet(items, side)
             else:
-                if bh.doesSSUBouquetFileExists(side):
-                    bh.appendToSSUBouquet(items, side)
-                else:
-                    bh.createSSUBouquet(items, side)
-        if add_tv:
-            _apply("tv", newTV)
-        if add_radio:
-            _apply("radio", newRadio)
-        try:
-            bh.reloadBouquets()
-        except Exception:
-            pass
-    finally:
-        _preScanDB = None
+                bh.createSSUBouquet(items, side)
+    if add_tv:
+        _apply("tv", newTV)
+    if add_radio:
+        _apply("radio", newRadio)
+    try:
+        bh.reloadBouquets()
+    except Exception:
+        pass
+    _preScanDB = None
 
 def _autostart(reason, **kwargs):
     global _base_execBegin, _base_execEnd
-    try:
-        if reason == 0 and "session" in kwargs:
-            if ServiceScan is None:
-                return
-            if _base_execBegin is None and hasattr(ServiceScan, "execBegin"):
-                _base_execBegin = ServiceScan.execBegin
-                ServiceScan.execBegin = ServiceScan_execBegin_hook
-            if _base_execEnd is None and hasattr(ServiceScan, "execEnd"):
-                _base_execEnd = ServiceScan.execEnd
-                ServiceScan.execEnd = ServiceScan_execEnd_hook
-    except Exception:
-        pass
+    if reason == 0 and "session" in kwargs:
+        if ServiceScan is None:
+            return
+        if _base_execBegin is None and hasattr(ServiceScan, "execBegin"):
+            _base_execBegin = ServiceScan.execBegin
+            ServiceScan.execBegin = ServiceScan_execBegin_hook
+        if _base_execEnd is None and hasattr(ServiceScan, "execEnd"):
+            _base_execEnd = ServiceScan.execEnd
+            ServiceScan.execEnd = ServiceScan_execEnd_hook
 
 # ===== Menu openers =====
 def openUpdate(session, **kwargs):
