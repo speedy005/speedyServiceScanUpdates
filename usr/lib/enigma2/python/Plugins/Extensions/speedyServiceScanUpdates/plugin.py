@@ -57,7 +57,6 @@ def log(msg):
         with open(LOGFILE, "a") as f:
             f.write(msg + "\n")
     except Exception:
-        # Falls /tmp nicht beschreibbar, wenigstens print
         pass
     try:
         print(msg)
@@ -180,10 +179,6 @@ def get_current_version():
         return "0.0"
 
 def parse_version(version):
-    """
-    Robuster Parser: akzeptiert 'v1.2.3', '1.2', '1.2.3-beta' usw.
-    Liefert ein Tuple (major, minor, patch)
-    """
     if not version:
         return (0, 0, 0)
     try:
@@ -205,7 +200,6 @@ def get_remote_version():
             try:
                 response = response.decode("utf-8")
             except Exception:
-                # in PY2 or if already str, ignore
                 pass
         remote_ver = response.strip().split()[0]
         log("[speedyServiceScanUpdates] Remote-Version vom GitHub: %s" % remote_ver)
@@ -229,7 +223,6 @@ def download_and_install_update(session):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # dynamisch den entpackten GitHub-Ordner finden (z.B. speedyServiceScanUpdates-main oder speedyServiceScanUpdates-main-1.3.0)
         extracted_root = None
         for name in os.listdir(tmp_dir):
             if name.startswith("speedyServiceScanUpdates"):
@@ -257,7 +250,7 @@ def download_and_install_update(session):
             except Exception as e:
                 log("[speedyServiceScanUpdates] Fehler beim Kopieren %s -> %s : %s" % (s, d, e))
 
-        # --- Version.txt aktualisieren ---
+        # Version.txt aktualisieren
         remote_version = get_remote_version()
         if remote_version:
             try:
@@ -331,18 +324,8 @@ def check_for_update(session):
                 except Exception as e:
                     log("[speedyServiceScanUpdates] Konnte Update-MessageBox nicht öffnen: %s" % e)
 
-            # verzögert starten, damit Session sicher da ist und MessageBox nicht "verschluckt" wird
-            if eTimer is not None:
-                try:
-                    timer = eTimer()
-                    timer.callback.append(ask_update)
-                    timer.start(2000, True)  # 2000ms = 2s
-                except Exception as e:
-                    log("[speedyServiceScanUpdates] eTimer-Fehler, öffne direkt: %s" % e)
-                    ask_update()
-            else:
-                # fallback: sofort aufrufen
-                ask_update()
+            # sofort ausführen
+            ask_update()
         else:
             log("[speedyServiceScanUpdates] Kein Update verfügbar.")
     except Exception as e:
@@ -354,6 +337,7 @@ def autostart(reason, **kwargs):
         global baseServiceScan_execBegin, baseServiceScan_execEnd
         session = kwargs["session"]
 
+        # ServiceScan Wrapping bleibt aktiv
         if baseServiceScan_execBegin is None:
             baseServiceScan_execBegin = ServiceScan.execBegin
         ServiceScan.execBegin = ServiceScan_execBegin
@@ -362,16 +346,18 @@ def autostart(reason, **kwargs):
             baseServiceScan_execEnd = ServiceScan.execEnd
         ServiceScan.execEnd = ServiceScan_execEnd
 
-        # Updateprüfung beim Start
-        log("[speedyServiceScanUpdates] Starte Updateprüfung beim Plugin-Start...")
-        try:
-            check_for_update(session)
-        except Exception as e:
-            log("[speedyServiceScanUpdates] Fehler in check_for_update beim Autostart: %s" % e)
+        log("[speedyServiceScanUpdates] Autostart: ServiceScan Wrapper aktiv, Updateprüfung entfällt beim Start.")
 
 # --- Menü & Setup ---
 def SSUMain(session, **kwargs):
     from .SSUSetupScreen import SSUSetupScreen
+
+    # Updateprüfung beim Öffnen des Plugins
+    try:
+        check_for_update(session)
+    except Exception as e:
+        log("[speedyServiceScanUpdates] Fehler bei Updateprüfung beim Öffnen: %s" % e)
+
     session.open(SSUSetupScreen)
 
 def SSUMenuItem(menuid, **kwargs):
