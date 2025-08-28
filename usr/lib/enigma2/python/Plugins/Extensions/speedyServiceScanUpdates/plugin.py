@@ -6,13 +6,16 @@ import sys
 import zipfile
 import shutil
 import tempfile
+import importlib
 import re
 import traceback
 
-# Python 2/3 kompatibles urllib
+version = "3.5"
+
+# Python 2 kompatible urllib
 try:
     import urllib2 as urllib_request
-except ImportError:
+except Exception:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
@@ -25,13 +28,13 @@ from Components.ConfigList import ConfigListScreen
 # Compatible import for ServiceScan
 try:
     from Screens.ServiceScan import ServiceScan  # Python 3
-except ImportError:
+except Exception:
     from Components.ServiceScan import ServiceScan  # Python 2
 
 # enigma timer (für verzögertes Öffnen der MessageBox)
 try:
     from enigma import eTimer
-except ImportError:
+except Exception:
     eTimer = None
 
 from . import _
@@ -49,6 +52,7 @@ preScanDB = None
 LOGFILE = "/tmp/speedyServiceScanUpdates.log"
 
 def log(msg):
+    """Schreibt Debug-Logs nach /tmp/speedyServiceScanUpdates.log und auf die Konsole."""
     try:
         with open(LOGFILE, "a") as f:
             f.write(msg + "\n")
@@ -192,8 +196,11 @@ def parse_version(version):
 def get_remote_version():
     try:
         response = urllib_request.urlopen(GITHUB_VERSION_URL).read()
-        if PY3 and isinstance(response, bytes):
-            response = response.decode("utf-8")
+        if PY3:
+            try:
+                response = response.decode("utf-8")
+            except Exception:
+                pass
         remote_ver = response.strip().split()[0]
         log("[speedyServiceScanUpdates] Remote-Version vom GitHub: %s" % remote_ver)
         return remote_ver
@@ -301,6 +308,8 @@ def download_and_install_update(session):
                 pass
 
 
+
+
 def check_for_update(session):
     current_version = get_current_version()
     remote_version = get_remote_version()
@@ -341,7 +350,6 @@ def check_for_update(session):
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Vergleich der Versionen: %s" % e)
         return False
-
 
 
 # --- Autostart Hook ---
