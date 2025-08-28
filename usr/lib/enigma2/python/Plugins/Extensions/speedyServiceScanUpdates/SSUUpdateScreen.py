@@ -89,25 +89,25 @@ class SSUUpdateScreen(Screen):
         if width >= 1920:
             self.skin = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1180,50" />
-                <widget name="status" position="12,160" size="1180,50" font="Regular;30" valign="center" halign="center" />
-                <widget name="progresstext" position="10,220" size="1180,50" font="Regular;30" valign="center" halign="center" />
+                <widget name="status" position="12,160" size="1180,250" font="Regular;30" valign="center" halign="center" zPosition="1" />
+                <widget name="progresstext" position="12,415" size="1180,350" font="Regular;30" valign="center" halign="center" />
                 <widget name="key_red" position="3,4" size="295,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_green" foregroundColor="green" position="305,3" size="300,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_yellow" foregroundColor="yellow" position="609,3" size="300,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_blue" foregroundColor="blue" position="917,4" size="295,70" font="Regular;30" halign="center" valign="center" />
-                <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" />
+                <widget name="version" position="488,769" size="200,30" font="Regular;30" valign="center" halign="center" zPosition="1" />
                 <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
                 <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
-                <ePixmap pixmap="skin_default/buttons/blue.png" position="909,5" size="5,70" scale="stretch" alphatest="on" />
-                <ePixmap pixmap="skin_default/buttons/yellow.png" position="601,4" size="5,70" scale="stretch" alphatest="on" />
-                <ePixmap pixmap="skin_default/buttons/green.png" position="300,5" size="5,70" scale="stretch" alphatest="on" />
-                <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
+                <ePixmap pixmap="skin_default/buttons/blue.png" position="909,5" size="5,70" scale="stretch" alphatest="on" zPosition="1" />
+                <ePixmap pixmap="skin_default/buttons/yellow.png" position="601,4" size="5,70" scale="stretch" alphatest="on" zPosition="1" />
+                <ePixmap pixmap="skin_default/buttons/green.png" position="300,5" size="5,70" scale="stretch" alphatest="on" zPosition="1" />
+                <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" zPosition="1" />
             </screen>"""
         else:
             self.skin = """<screen name="SSUUpdateScreen" position="410,170" size="1100,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1050,50" />
-                <widget name="status" position="10,160" size="1050,50" font="Regular;30" valign="center" halign="center" />
-                <widget name="progresstext" position="10,220" size="1050,50" font="Regular;30" valign="center" halign="center" />
+                <widget name="status" position="10,160" size="1050,200" font="Regular;30" valign="center" halign="center" />
+                <widget name="progresstext" position="11,373" size="1050,297" font="Regular;30" valign="center" halign="center" />
                 <widget name="key_red" position="13,2" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_green" foregroundColor="green" position="277,3" size="250,70" font="Regular;30" halign="center" valign="center" />
                 <widget name="key_yellow" foregroundColor="yellow" position="538,4" size="250,70" font="Regular;30" halign="center" valign="center" />
