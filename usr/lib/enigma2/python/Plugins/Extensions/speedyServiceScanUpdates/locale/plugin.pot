@@ -1,0 +1,260 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-28 07:48+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: C:\Plugin\plugin.py:214
+msgid "Lade Update herunter..."
+msgstr ""
+
+#: C:\Plugin\plugin.py:218
+#, python-format
+msgid "Download abgeschlossen: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:220
+msgid "Entpacke Update..."
+msgstr ""
+
+#: C:\Plugin\plugin.py:234
+msgid "Entpacktes Plugin-Verzeichnis nicht gefunden!"
+msgstr ""
+
+#: C:\Plugin\plugin.py:236
+#, python-format
+msgid "Kopiere Dateien nach: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:252
+#, python-format
+msgid "Lokale version.txt aktualisiert auf %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:254
+#, python-format
+msgid "Konnte version.txt nicht schreiben: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:256
+msgid "Update erfolgreich installiert!"
+msgstr ""
+
+#: C:\Plugin\plugin.py:261
+msgid "Starte GUI neu..."
+msgstr ""
+
+#: C:\Plugin\plugin.py:264
+msgid "Benutzer möchte GUI nicht neustarten."
+msgstr ""
+
+#: C:\Plugin\plugin.py:266
+#, python-format
+msgid "Fehler beim Neustart-Aufruf: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:271
+msgid ""
+"Update erfolgreich installiert!\n"
+"Soll die GUI jetzt neu gestartet werden?"
+msgstr ""
+
+#: C:\Plugin\plugin.py:275
+#, python-format
+msgid "Konnte Restart-MessageBox nicht öffnen: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:278
+#, python-format
+msgid "Fehler beim Update: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:281
+#, python-format
+msgid ""
+"Fehler beim Update:\n"
+"%s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:304
+msgid "Autostart: ServiceScan Wrapper aktiv."
+msgstr ""
+
+#: C:\Plugin\plugin.py:314
+#, python-format
+msgid "Fehler beim Öffnen des SetupScreens: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:323
+msgid "Benutzer bestätigt Update → starte Download"
+msgstr ""
+
+#: C:\Plugin\plugin.py:326
+msgid "Benutzer hat Update abgelehnt."
+msgstr ""
+
+#: C:\Plugin\plugin.py:331
+#, python-format
+msgid ""
+"Eine neue Version %s ist verfügbar.\n"
+"Möchten Sie das Update installieren?"
+msgstr ""
+
+#: C:\Plugin\plugin.py:338
+#, python-format
+msgid "Fehler bei Updateprüfung: %s"
+msgstr ""
+
+#: C:\Plugin\plugin.py:343 C:\Plugin\plugin.py:357 C:\Plugin\plugin.py:362
+msgid "speedy ServiceScanUpdates Setup"
+msgstr ""
+
+#: C:\Plugin\plugin.py:348
+msgid "speedyServiceScanUpdates"
+msgstr ""
+
+#: C:\Plugin\plugin.py:348
+msgid "Setup"
+msgstr ""
+
+#: C:\Plugin\plugin.py:358 C:\Plugin\plugin.py:363
+msgid "Updates during service scan"
+msgstr ""
+
+#: C:\Plugin\SSUBouquetHandler.py:37
+#, python-format
+msgid "[speedyServiceScanUpdates] Add SSU bouquet to index file [%s]"
+msgstr ""
+
+#: C:\Plugin\SSUBouquetHandler.py:40
+#, python-format
+msgid "[speedyServiceScanUpdates] Index file not found: %s"
+msgstr ""
+
+#: C:\Plugin\SSUBouquetHandler.py:59
+#, python-format
+msgid "[speedyServiceScanUpdates] Create SSU bouquet [%s]"
+msgstr ""
+
+#: C:\Plugin\SSUBouquetHandler.py:62
+msgid "#NAME Service Scan Updates\n"
+msgstr ""
+
+#: C:\Plugin\SSUBouquetHandler.py:75
+#, python-format
+msgid "[speedyServiceScanUpdates] Append to SSU bouquet [%s]"
+msgstr ""
+
+#: C:\Plugin\SSUBouquetHandler.py:78
+#, python-format
+msgid "[speedyServiceScanUpdates] SSU bouquet file not found: %s"
+msgstr ""
+
+#: C:\Plugin\SSULameDBParser.py:26
+msgid "[ServiceScanUpdates] Reading file: "
+msgstr ""
+
+#: C:\Plugin\SSULameDBParser.py:35
+msgid "[ServiceScanUpdates] Unsupported lamedb version"
+msgstr ""
+
+#: C:\Plugin\SSULameDBParser.py:39
+msgid "[ServiceScanUpdates] Exception reading lamedb: "
+msgstr ""
+
+#: C:\Plugin\SSULameDBParser.py:52
+msgid "[ServiceScanUpdates] Parsing content of file: "
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:141 C:\Plugin\SSUUpdateScreen.py:141
+#, python-format
+msgid "v %s"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:142 C:\Plugin\SSUUpdateScreen.py:142
+msgid "Cancel"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:143 C:\Plugin\SSUUpdateScreen.py:143
+msgid "Save"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:144 C:\Plugin\SSUUpdateScreen.py:144
+msgid "Restore Default"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:145 C:\Plugin\SSUUpdateScreen.py:145
+msgid "Update"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:146 C:\Plugin\SSUSetupScreen.py:208
+#: C:\Plugin\SSUUpdateScreen.py:146 C:\Plugin\SSUUpdateScreen.py:208
+msgid "Configure the update options."
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:171 C:\Plugin\SSUUpdateScreen.py:171
+msgid "Add new TV services"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:173 C:\Plugin\SSUUpdateScreen.py:173
+msgid "Create 'Service Scan Updates' bouquet for new TV services?"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:176 C:\Plugin\SSUUpdateScreen.py:176
+msgid "Add new radio services"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:178 C:\Plugin\SSUUpdateScreen.py:178
+msgid "Create 'Service Scan Updates' bouquet for new radio services?"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:181 C:\Plugin\SSUUpdateScreen.py:181
+msgid "Clear bouquet at each search"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:183 C:\Plugin\SSUUpdateScreen.py:183
+msgid ""
+"Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new "
+"services will be appended?"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:191 C:\Plugin\SSUUpdateScreen.py:191
+msgid "Default settings restored!"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:198 C:\Plugin\SSUSetupScreen.py:218
+#: C:\Plugin\SSUSetupScreen.py:313 C:\Plugin\SSUUpdateScreen.py:198
+#: C:\Plugin\SSUUpdateScreen.py:218 C:\Plugin\SSUUpdateScreen.py:313
+msgid "Update screen not available."
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:204 C:\Plugin\SSUUpdateScreen.py:204
+msgid "Changes saved!"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:320 C:\Plugin\SSUUpdateScreen.py:320
+msgid "ServiceScanUpdates"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:328 C:\Plugin\SSUSetupScreen.py:333
+#: C:\Plugin\SSUUpdateScreen.py:328 C:\Plugin\SSUUpdateScreen.py:333
+msgid "Download and install Service Scan Updates"
+msgstr ""
+
+#: C:\Plugin\SSUSetupScreen.py:338 C:\Plugin\SSUSetupScreen.py:343
+#: C:\Plugin\SSUUpdateScreen.py:338 C:\Plugin\SSUUpdateScreen.py:343
+msgid "Configure Service Scan Updates"
+msgstr ""

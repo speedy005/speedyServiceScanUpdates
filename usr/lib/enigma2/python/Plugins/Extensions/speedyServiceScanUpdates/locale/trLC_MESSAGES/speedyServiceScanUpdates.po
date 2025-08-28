@@ -1,0 +1,189 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-28 07:48+0200\n"
+"PO-Revision-Date: 2025-08-28 07:48+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Lade Update herunter..."
+msgstr "Load update down ..."
+
+msgid "Download abgeschlossen: %s"
+msgstr "Download completed: %S"
+
+msgid "Entpacke Update..."
+msgstr "Unpack update ..."
+
+msgid "Entpacktes Plugin-Verzeichnis nicht gefunden!"
+msgstr "Unpacked plugin directory not found!"
+
+msgid "Kopiere Dateien nach: %s"
+msgstr "Copy files to: %S"
+
+msgid "Lokale version.txt aktualisiert auf %s"
+msgstr "Local version.txt updated to %s"
+
+msgid "Konnte version.txt nicht schreiben: %s"
+msgstr "Could not write version.txt: %s"
+
+msgid "Update erfolgreich installiert!"
+msgstr "Update successfully installed!"
+
+msgid "Starte GUI neu..."
+msgstr "Start Gui Neu ..."
+
+msgid "Benutzer möchte GUI nicht neustarten."
+msgstr "User does not want to restart GUI."
+
+msgid "Fehler beim Neustart-Aufruf: %s"
+msgstr "Error's restart call: %S"
+
+msgid ""
+"Update erfolgreich installiert!\n"
+"Soll die GUI jetzt neu gestartet werden?"
+msgstr ""
+"Update successfully installed!\n"
+"Should the GUI be restarted now?"
+
+msgid "Konnte Restart-MessageBox nicht öffnen: %s"
+msgstr "Couldn't open the restart-measuring box: %S"
+
+msgid "Fehler beim Update: %s"
+msgstr "Update error: %s"
+
+msgid ""
+"Fehler beim Update:\n"
+"%s"
+msgstr ""
+"Update error:\n"
+"%s"
+
+msgid "Autostart: ServiceScan Wrapper aktiv."
+msgstr "Autostart: Servicescan Wrapper Active."
+
+msgid "Fehler beim Öffnen des SetupScreens: %s"
+msgstr "Error when opening the setup screens: %S"
+
+msgid "Benutzer bestätigt Update → starte Download"
+msgstr "User confirms update → Start download"
+
+msgid "Benutzer hat Update abgelehnt."
+msgstr "User rejected update."
+
+msgid ""
+"Eine neue Version %s ist verfügbar.\n"
+"Möchten Sie das Update installieren?"
+msgstr ""
+"A new version %s is available.\n"
+"Would you like to install the update?"
+
+msgid "Fehler bei Updateprüfung: %s"
+msgstr "Error with update test: %S"
+
+msgid "speedy ServiceScanUpdates Setup"
+msgstr "speedy ServiceScanUpdates Setup"
+
+msgid "speedyServiceScanUpdates"
+msgstr "speedyServiceScanUpdates"
+
+msgid "Setup"
+msgstr "Setup"
+
+msgid "Updates during service scan"
+msgstr "Updates during service scan"
+
+msgid "[speedyServiceScanUpdates] Add SSU bouquet to index file [%s]"
+msgstr "[speedyServiceScanUpdates] Add SSU bouquet to index file [%s]"
+
+msgid "[speedyServiceScanUpdates] Index file not found: %s"
+msgstr "[speedyServiceScanUpdates] Index file not found: %s"
+
+msgid "[speedyServiceScanUpdates] Create SSU bouquet [%s]"
+msgstr "[speedyServiceScanUpdates] Create SSU bouquet [%s]"
+
+msgid "#NAME Service Scan Updates\n"
+msgstr "#NAME Service Scan Updates"
+
+msgid "[speedyServiceScanUpdates] Append to SSU bouquet [%s]"
+msgstr "[speedyServiceScanUpdates] Append to SSU bouquet [%s]"
+
+msgid "[speedyServiceScanUpdates] SSU bouquet file not found: %s"
+msgstr "[speedyServiceScanUpdates] SSU bouquet file not found: %s"
+
+msgid "[ServiceScanUpdates] Reading file: "
+msgstr "[ServiceScanUpdates] Reading file:"
+
+msgid "[ServiceScanUpdates] Unsupported lamedb version"
+msgstr "[ServiceScanUpdates] Unsupported lamedb version"
+
+msgid "[ServiceScanUpdates] Exception reading lamedb: "
+msgstr "[ServiceScanUpdates] Exception reading lamedb:"
+
+msgid "[ServiceScanUpdates] Parsing content of file: "
+msgstr "[ServiceScanUpdates] Parsing content of file:"
+
+msgid "v %s"
+msgstr "v %s"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Restore Default"
+msgstr "Restore Default"
+
+msgid "Update"
+msgstr "Update"
+
+msgid "Configure the update options."
+msgstr "Configure the update options."
+
+msgid "Add new TV services"
+msgstr "Add new TV services"
+
+msgid "Create 'Service Scan Updates' bouquet for new TV services?"
+msgstr "Create 'Service Scan Updates' bouquet for new TV services?"
+
+msgid "Add new radio services"
+msgstr "Add new radio services"
+
+msgid "Create 'Service Scan Updates' bouquet for new radio services?"
+msgstr "Create 'Service Scan Updates' bouquet for new radio services?"
+
+msgid "Clear bouquet at each search"
+msgstr "Clear bouquet at each search"
+
+msgid ""
+"Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new "
+"services will be appended?"
+msgstr ""
+"Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new "
+"services will be appended?"
+
+msgid "Default settings restored!"
+msgstr "Default settings restored!"
+
+msgid "Update screen not available."
+msgstr "Update screen not available."
+
+msgid "Changes saved!"
+msgstr "Changes saved!"
+
+msgid "ServiceScanUpdates"
+msgstr "ServiceScanUpdates"
+
+msgid "Download and install Service Scan Updates"
+msgstr "Download and install Service Scan Updates"
+
+msgid "Configure Service Scan Updates"
+msgstr "Configure Service Scan Updates"
