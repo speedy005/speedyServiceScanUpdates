@@ -221,9 +221,11 @@ def download_and_install_update(session):
         # Pfad zum Plugin-Ordner finden
         extracted_root = None
         for name in os.listdir(tmp_dir):
-            candidate = os.path.join(tmp_dir, name,
-                                     "usr", "lib", "enigma2", "python", "Plugins", "Extensions",
-                                     "speedyServiceScanUpdates")
+            candidate = os.path.join(
+                tmp_dir, name,
+                "usr", "lib", "enigma2", "python", "Plugins", "Extensions",
+                "speedyServiceScanUpdates"
+            )
             if os.path.exists(candidate):
                 extracted_root = candidate
                 break
@@ -299,7 +301,6 @@ def download_and_install_update(session):
                 pass
 
 
-
 def check_for_update(session):
     current_version = get_current_version()
     remote_version = get_remote_version()
@@ -340,6 +341,7 @@ def check_for_update(session):
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Vergleich der Versionen: %s" % e)
         return False
+
 
 
 # --- Autostart Hook ---
