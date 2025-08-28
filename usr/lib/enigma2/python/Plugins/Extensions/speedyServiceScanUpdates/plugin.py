@@ -9,12 +9,10 @@ import tempfile
 import re
 import traceback
 
-version = "3.5"
-
-# Python 2 kompatible urllib
+# Python 2/3 kompatibles urllib
 try:
     import urllib2 as urllib_request
-except Exception:
+except ImportError:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
@@ -22,28 +20,33 @@ from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
+from Components.ConfigList import ConfigListScreen
 
 # Compatible import for ServiceScan
 try:
     from Screens.ServiceScan import ServiceScan  # Python 3
-except Exception:
+except ImportError:
     from Components.ServiceScan import ServiceScan  # Python 2
+
+# enigma timer (für verzögertes Öffnen der MessageBox)
+try:
+    from enigma import eTimer
+except ImportError:
+    eTimer = None
 
 from . import _
 from .SSULameDBParser import SSULameDBParser
 
 PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
 
 # Globale Variablen
 baseServiceScan_execBegin = None
 baseServiceScan_execEnd = None
 preScanDB = None
 
+# --- Logging ---
 LOGFILE = "/tmp/speedyServiceScanUpdates.log"
-VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
-GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
-GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
-PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/"
 
 def log(msg):
     try:
@@ -56,8 +59,12 @@ def log(msg):
     except Exception:
         pass
 
+# --- Funktionen für ServiceScan Wrapper ---
 def dictHasKey(dictionary, key):
-    return key in dictionary if not PY2 else dictionary.has_key(key)
+    if PY2:
+        return dictionary.has_key(key)
+    else:
+        return key in dictionary
 
 def safeClose(db):
     if hasattr(db, "close"):
@@ -66,12 +73,11 @@ def safeClose(db):
         except Exception:
             pass
 
-# --- ServiceScan Wrapper ---
 def ServiceScan_execBegin(self):
     flags = None
     try:
         flags = self.scanList[self.run]["flags"]
-    except Exception:
+    except (AttributeError, KeyError, IndexError, TypeError):
         flags = "N/A"
     log("[speedyServiceScanUpdates] ServiceScan_execBegin [%s]" % str(flags))
 
@@ -91,7 +97,7 @@ def ServiceScan_execEnd(self, onClose=True):
     flags = None
     try:
         flags = self.scanList[self.run]["flags"]
-    except Exception:
+    except (AttributeError, KeyError, IndexError, TypeError):
         flags = "N/A"
 
     state_val = getattr(self, "state", -1)
@@ -153,6 +159,11 @@ def ServiceScan_execEnd(self, onClose=True):
         log("[speedyServiceScanUpdates] Fehler beim Aufruf baseServiceScan_execEnd: %s" % e)
 
 # --- Update-Funktionen ---
+VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
+GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
+PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/"
+
 def get_current_version():
     try:
         with open(VERSION_FILE, 'r') as f:
@@ -181,7 +192,7 @@ def parse_version(version):
 def get_remote_version():
     try:
         response = urllib_request.urlopen(GITHUB_VERSION_URL).read()
-        if not PY2:
+        if PY3 and isinstance(response, bytes):
             response = response.decode("utf-8")
         remote_ver = response.strip().split()[0]
         log("[speedyServiceScanUpdates] Remote-Version vom GitHub: %s" % remote_ver)
@@ -197,15 +208,15 @@ def download_and_install_update(session):
 
         log("[speedyServiceScanUpdates] Lade Update herunter...")
         req = urllib_request.urlopen(GITHUB_ZIP_URL)
+        data = req.read()
         with open(zip_path, "wb") as f:
-            f.write(req.read())
+            f.write(data)
         log("[speedyServiceScanUpdates] Download abgeschlossen: %s" % zip_path)
 
         log("[speedyServiceScanUpdates] Entpacke Update...")
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # Unterordner speedyServiceScanUpdates im entpackten Verzeichnis finden
         extracted_root = None
         for name in os.listdir(tmp_dir):
             candidate = os.path.join(tmp_dir, name,
@@ -215,22 +226,24 @@ def download_and_install_update(session):
                 extracted_root = candidate
                 break
 
-        if not extracted_root or not os.path.exists(extracted_root):
+        if not extracted_root:
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
 
         log("[speedyServiceScanUpdates] Kopiere Dateien nach: %s" % PLUGIN_PATH)
 
-        # --- Alle Dateien und Unterordner so kopieren, wie sie im Ordner liegen ---
-        for item in os.listdir(extracted_root):
-            src_path = os.path.join(extracted_root, item)
-            dest_path = os.path.join(PLUGIN_PATH, item)
+        def copytree_py2_py3(src, dst):
+            if not os.path.exists(dst):
+                os.makedirs(dst)
+            for item in os.listdir(src):
+                s = os.path.join(src, item)
+                d = os.path.join(dst, item)
+                if os.path.isdir(s):
+                    copytree_py2_py3(s, d)
+                else:
+                    shutil.copy2(s, d)
 
-            if os.path.isdir(src_path):
-                shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
-            else:
-                shutil.copy2(src_path, dest_path)
+        copytree_py2_py3(extracted_root, PLUGIN_PATH)
 
-        # Version.txt aktualisieren
         remote_version = get_remote_version()
         if remote_version:
             try:
@@ -242,7 +255,6 @@ def download_and_install_update(session):
 
         log("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
-        # GUI-Neustart anbieten
         def restartGUI(answer):
             try:
                 if answer:
@@ -275,12 +287,58 @@ def download_and_install_update(session):
         except Exception:
             pass
 
+
+
+    
+def check_for_update(session):
+    current_version = get_current_version()
+    remote_version = get_remote_version()
+
+    if not remote_version:
+        log("[speedyServiceScanUpdates] Keine Remote-Version gefunden.")
+        return False
+
+    log("[speedyServiceScanUpdates] Lokale Version: %s" % current_version)
+    log("[speedyServiceScanUpdates] Remote Version: %s" % remote_version)
+
+    try:
+        if parse_version(remote_version) > parse_version(current_version):
+            log("[speedyServiceScanUpdates] Update verfügbar: %s" % remote_version)
+
+            def ask_update():
+                def callback(choice):
+                    if choice:
+                        log("[speedyServiceScanUpdates] Benutzer bestätigt Update → starte Download")
+                        download_and_install_update(session)
+                    else:
+                        log("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
+
+                try:
+                    session.openWithCallback(
+                        callback, MessageBox,
+                        "Eine neue Version %s ist verfügbar.\nMöchten Sie das Update installieren?" % remote_version,
+                        MessageBox.TYPE_YESNO
+                    )
+                except Exception as e:
+                    log("[speedyServiceScanUpdates] Konnte Update-MessageBox nicht öffnen: %s" % e)
+
+            ask_update()
+            return True  # Update vorhanden
+        else:
+            log("[speedyServiceScanUpdates] Kein Update verfügbar.")
+            return False
+    except Exception as e:
+        log("[speedyServiceScanUpdates] Fehler beim Vergleich der Versionen: %s" % e)
+        return False
+
+
 # --- Autostart Hook ---
 def autostart(reason, **kwargs):
     if reason == 0 and "session" in kwargs:
         global baseServiceScan_execBegin, baseServiceScan_execEnd
         session = kwargs["session"]
 
+        # ServiceScan Wrapping bleibt aktiv
         if baseServiceScan_execBegin is None:
             baseServiceScan_execBegin = ServiceScan.execBegin
         ServiceScan.execBegin = ServiceScan_execBegin
@@ -289,10 +347,24 @@ def autostart(reason, **kwargs):
             baseServiceScan_execEnd = ServiceScan.execEnd
         ServiceScan.execEnd = ServiceScan_execEnd
 
-        log("[speedyServiceScanUpdates] Autostart: ServiceScan Wrapper aktiv.")
+        log("[speedyServiceScanUpdates] Autostart: ServiceScan Wrapper aktiv, Updateprüfung entfällt beim Start.")
+
 
 # --- Menü & Setup ---
+def SSUMain(session, **kwargs):
+    from .SSUSetupScreen import SSUSetupScreen
+
+    try:
+        session.open(SSUSetupScreen)
+    except Exception as e:
+        log("[speedyServiceScanUpdates] Fehler beim Öffnen des SetupScreens: %s" % e)
+
+
 def precheck_update_and_open(session, **kwargs):
+    """
+    Updateprüfung vor Öffnen des SetupScreens.
+    MessageBox erscheint sofort über dem vorherigen Screen.
+    """
     from .SSUSetupScreen import SSUSetupScreen
 
     def open_plugin():
@@ -306,13 +378,14 @@ def precheck_update_and_open(session, **kwargs):
         remote_version = get_remote_version()
 
         if remote_version and parse_version(remote_version) > parse_version(current_version):
+            # Update verfügbar → MessageBox anzeigen
             def callback(choice):
                 if choice:
                     log("[speedyServiceScanUpdates] Benutzer bestätigt Update → starte Download")
                     download_and_install_update(session)
                 else:
                     log("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
-                    open_plugin()
+                    open_plugin()  # Plugin trotzdem öffnen
 
             session.openWithCallback(
                 callback, MessageBox,
@@ -320,22 +393,26 @@ def precheck_update_and_open(session, **kwargs):
                 MessageBox.TYPE_YESNO
             )
         else:
+            # Kein Update → Plugin sofort öffnen
             open_plugin()
 
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler bei Updateprüfung: %s" % e)
         open_plugin()
 
+
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
         return [("speedy ServiceScanUpdates " + _("Setup"), precheck_update_and_open, "servicescanupdates", None)]
     return []
+
 
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
         return [(_("speedyServiceScanUpdates") + " " + _("Setup"), precheck_update_and_open,
                  "speedyservicescanupdates_mainmenu", 50)]
     return []
+
 
 # --- Plugin Descriptor ---
 def Plugins(**kwargs):
@@ -355,3 +432,6 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
+
+

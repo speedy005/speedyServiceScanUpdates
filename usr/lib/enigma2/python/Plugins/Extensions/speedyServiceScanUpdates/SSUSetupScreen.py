@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
 import os
 import sys
 import zipfile
@@ -10,6 +11,12 @@ try:
     import requests
 except ImportError:
     requests = None
+
+try:
+    import io
+    open_file = io.open
+except ImportError:
+    open_file = open
 
 # --- Plugin-Pfad dynamisch ermitteln ---
 plugin_path = None
@@ -33,7 +40,6 @@ from Components.config import config, ConfigSubsection, ConfigYesNo, getConfigLi
 from Plugins.Plugin import PluginDescriptor
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Components.Button import Button
-# Local translations
 from . import _
 
 # ===== Version =====
@@ -42,7 +48,7 @@ def read_version():
         return "Unknown version"
     vf = os.path.join(plugin_path, "version.txt")
     try:
-        with open(vf, "r", encoding="utf-8") as f:
+        with open_file(vf, "r", encoding="utf-8") as f:
             return f.read().strip()
     except Exception:
         return "Unknown version"
@@ -78,6 +84,19 @@ config.plugins.speedyservicescanupdates.add_new_tv_services = ConfigYesNo(defaul
 config.plugins.speedyservicescanupdates.add_new_radio_services = ConfigYesNo(default=True)
 config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=False)
 
+# ===== Python2/3 dict helper =====
+def iteritems(d):
+    try:
+        return d.iteritems()
+    except AttributeError:
+        return d.items()
+
+def _has(d, k):
+    try:
+        return k in d
+    except Exception:
+        return False
+
 # ===== SSUSetupScreen =====
 class SSUSetupScreen(ConfigListScreen, Screen):
     def __init__(self, session):
@@ -98,7 +117,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <ePixmap pixmap="skin_default/div-h.png" position="10,650" zPosition="2" size="1180,2" />
                 <ePixmap pixmap="skin_default/buttons/yellow.png" position="630,7" size="5,70" scale="stretch" alphatest="on" />
                 <widget name="key_yellow" position="638,6" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="yellow" />
-                <widget name="version" position="1040,600" size="150,50" font="Regular;30" valign="center" halign="left" />
+                <widget name="version" position="444,593" size="150,50" font="Regular;30" valign="center" halign="left" />
                 <ePixmap pixmap="skin_default/buttons/blue.png" position="945,7" size="5,70" scale="stretch" alphatest="on" />
                 <widget name="key_blue" position="954,8" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="blue" />
                 <widget name="help" position="10,655" size="1180,140" font="Regular;32" />
@@ -116,10 +135,8 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <widget name="key_blue" position="618,1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="blue" />
                 <widget name="config" position="5,50" itemHeight="30" size="900,390" enableWrapAround="1" scrollbarMode="showOnDemand" />
                 <ePixmap pixmap="skin_default/div-h.png" position="0,445" zPosition="2" size="900,2" />
-                <widget name="version" position="708,408" size="200,30" font="Regular;22" valign="center" halign="left" zPosition="1" />
-                <widget name="help" position="7,450" size="888,65" font="Regular;22" />
-<eLabel text="HELP" position="828,6" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
-<ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="857,482" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
+                <widget name="version" position="5,450" size="200,30" font="Regular;22" valign="center" halign="left" />
+                <widget name="help" position="210,450" size="685,65" font="Regular;22" />
             </screen>"""
 
         # --- Widgets ---
@@ -146,11 +163,9 @@ class SSUSetupScreen(ConfigListScreen, Screen):
             -1
         )
 
-        # ConfigList initialisieren
         self.onLayoutFinish.append(self.populateList)
         self["config"].onSelectionChanged.append(self.updateHelp)
 
-    # ===== Methoden =====
     def populateList(self):
         self.list = [
             getConfigListEntry(
@@ -172,7 +187,6 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         for entry in self.list:
             entry[1].helpText = entry[2]
         self["config"].list = self.list
-        
 
     def restore_default(self):
         self.session.open(MessageBox, _("Default settings restored!"), MessageBox.TYPE_INFO, 3)
@@ -195,17 +209,8 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self.session.open(MessageBox, _("Configure the update options."), MessageBox.TYPE_INFO, 5)
 
     def updateHelp(self):
-        # Bei ConfigList-Auswahl die Hilfe aktualisieren
         if self["config"].getCurrent():
             self["help"].setText(self["config"].getCurrent()[1].helpText)
-
-
-    def checkUpdate(self):
-        if SSUUpdateScreen:
-            self.session.open(SSUUpdateScreen, show_only=True)
-        else:
-            _safe_msg(self.session, _("Update screen not available."), MessageBox.TYPE_ERROR, 5)
-
 
 # ===== ServiceScan Hooks / Autostart =====
 _base_execBegin = None
@@ -217,13 +222,6 @@ try:
 except Exception:
     SSULameDBParser = None
 
-def _has(d, k):
-    try:
-        return k in d
-    except Exception:
-        return False
-
-# Hooks bleiben größtenteils gleich, nur Python 3 kompatibel
 def ServiceScan_execBegin_hook(self, *args, **kwargs):
     global _preScanDB
     if SSULameDBParser and not _preScanDB:
@@ -253,13 +251,13 @@ def ServiceScan_execEnd_hook(self, *args, **kwargs):
     postServices = postScanDB.getServices()
     preServices = _preScanDB.getServices()
     newTV, newRadio = [], []
-    for sref in postServices.keys():
+    for sref in iteritems(postServices):
         if not _has(preServices, sref):
             if SSULameDBParser.isVideoService(sref):
                 newTV.append(sref)
             elif SSULameDBParser.isRadioService(sref):
                 newRadio.append(sref)
-    if (not newTV) and (not newRadio):
+    if not (newTV or newRadio):
         return
     from .SSUBouquetHandler import SSUBouquetHandler
     bh = SSUBouquetHandler()
@@ -338,4 +336,3 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menuHook)
     ]
     return items
-
