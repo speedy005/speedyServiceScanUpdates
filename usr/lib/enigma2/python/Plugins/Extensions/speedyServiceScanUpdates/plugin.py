@@ -19,7 +19,6 @@ except Exception:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
-from distutils.dir_util import copy_tree
 from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
@@ -245,12 +244,9 @@ def download_and_install_update(session):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Den neuen Plugin-Ordner kopieren (eins zu eins)
-        extensions_path = os.path.dirname(PLUGIN_PATH)  # .../Extensions
-        source_plugin_folder = os.path.dirname(new_plugin_folder)  # eine Ebene höher
-        log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % extensions_path)
-        copy_tree(os.path.join(source_plugin_folder, "speedyServiceScanUpdates"),
-                  os.path.join(extensions_path, "speedyServiceScanUpdates"))
+        # Den gesamten Inhalt des gefundenen Plugin-Ordners kopieren
+        log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % PLUGIN_PATH)
+        copy_tree(new_plugin_folder, PLUGIN_PATH)
 
         # Version aktualisieren
         remote_version = get_remote_version()
