@@ -225,8 +225,8 @@ def download_and_install_update(session):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # Pfad zum Plugin-Ordner finden
-        extracted_root = None
+        # Pfad zum entpackten Plugin-Ordner finden
+        new_plugin_folder = None
         for name in os.listdir(tmp_dir):
             candidate = os.path.join(
                 tmp_dir, name,
@@ -234,26 +234,20 @@ def download_and_install_update(session):
                 "speedyServiceScanUpdates"
             )
             if os.path.exists(candidate):
-                extracted_root = candidate
+                new_plugin_folder = candidate
                 break
 
-        if not extracted_root:
+        if not new_plugin_folder:
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
 
-        log("[speedyServiceScanUpdates] Alte Plugin-Dateien werden gelöscht...")
+        # Alten Plugin-Ordner löschen
         if os.path.exists(PLUGIN_PATH):
+            log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner...")
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
-        os.makedirs(PLUGIN_PATH, exist_ok=True)
 
-        log("[speedyServiceScanUpdates] Kopiere neue Plugin-Dateien nach: %s" % PLUGIN_PATH)
-        # Inhalte des entpackten Plugins kopieren
-        for item in os.listdir(extracted_root):
-            s = os.path.join(extracted_root, item)
-            d = os.path.join(PLUGIN_PATH, item)
-            if os.path.isdir(s):
-                shutil.copytree(s, d, dirs_exist_ok=True)
-            else:
-                shutil.copy2(s, d)
+        # Entpackten Plugin-Ordner nach Extensions kopieren
+        log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach /usr/lib/enigma2/python/Plugins/Extensions/ ...")
+        shutil.copytree(new_plugin_folder, PLUGIN_PATH)
 
         # Version aktualisieren
         remote_version = get_remote_version()
@@ -302,6 +296,7 @@ def download_and_install_update(session):
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 
