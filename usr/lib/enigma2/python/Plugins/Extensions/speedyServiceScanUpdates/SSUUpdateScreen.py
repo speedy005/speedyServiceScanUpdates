@@ -23,14 +23,13 @@ from Components.ProgressBar import ProgressBar
 from Components.config import config, ConfigSubsection, ConfigYesNo, getConfigListEntry
 from Plugins.Plugin import PluginDescriptor
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
+from distutils.dir_util import copy_tree
 from . import _
 
 # ===== Plugin-Pfade =====
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
 UPDATE_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 VERSION_FILE = os.path.join(PLUGIN_PATH, "version.txt")
-DOWNLOAD_PATH = "/tmp/ServiceScanUpdates-main.zip"
-EXTRACT_DIR = "/tmp/ServiceScanUpdates"
 
 # ===== Config =====
 config.plugins.speedyservicescanupdates = ConfigSubsection()
@@ -55,28 +54,29 @@ def _safe_msg(session, text, mtype=None, timeout=5):
     except Exception:
         pass
 
-def copytree(src, dst):
-    if not os.path.exists(dst):
-        os.makedirs(dst)
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            copytree(s, d)
-        else:
-            shutil.copy2(s, d)
-
 def update_progress(gui_label, progress):
     gui_label.setText("{}%".format(min(progress, 100)))
 
 # ===== Update-Funktionen =====
-def finish_update(session):
-    update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
-    if not os.path.isdir(update_folder):
-        _safe_msg(session, "Fehler: Ordner speedyServiceScanUpdates nicht gefunden.")
-        return
-    copytree(update_folder, PLUGIN_PATH)
-    _safe_msg(session, "Update erfolgreich abgeschlossen. GUI neu starten?")
+def finish_update(session, extract_dir):
+    try:
+        # Pfad zum entpackten Plugin
+        extracted_folder = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
+        if not os.path.isdir(extracted_folder):
+            _safe_msg(session, "Fehler: Ordner speedyServiceScanUpdates nicht gefunden.")
+            return
+
+        # Alten Plugin-Ordner komplett löschen
+        if os.path.exists(PLUGIN_PATH):
+            shutil.rmtree(PLUGIN_PATH)
+
+        # Neuen Plugin-Ordner kopieren
+        copy_tree(extracted_folder, PLUGIN_PATH)
+        _safe_msg(session, "Update erfolgreich abgeschlossen. GUI neu starten?")
+
+    except Exception as e:
+        print("Fehler beim Finish-Update:", str(e))
+        _safe_msg(session, "Update konnte nicht abgeschlossen werden.")
 
 def check_update(gui_label):
     if not requests:
@@ -98,30 +98,57 @@ def check_update(gui_label):
         gui_label.setText("Update-Check fehlgeschlagen.")
 
 def start_update(gui_label, session=None):
-    if not requests:
-        gui_label.setText("Requests-Modul fehlt")
-        return
-
-    gui_label.setText("Update wird heruntergeladen...")
+    tmp_dir = None
     try:
+        if not requests:
+            gui_label.setText("Requests-Modul fehlt")
+            return
+
+        gui_label.setText("Update wird heruntergeladen...")
+        tmp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(tmp_dir, "plugin_update.zip")
+
+        # Download
         r = requests.get(UPDATE_URL, stream=True, timeout=20)
-        if r.status_code == 200:
-            total_size = int(r.headers.get('Content-Length', 0))
-            downloaded = 0
-            with open(DOWNLOAD_PATH, 'wb') as f:
-                for data in r.iter_content(chunk_size=1024):
-                    if data:
-                        f.write(data)
-                        downloaded += len(data)
-                        update_progress(gui_label, downloaded * 100 // max(total_size, 1))
-            with zipfile.ZipFile(DOWNLOAD_PATH, 'r') as zip_ref:
-                zip_ref.extractall(EXTRACT_DIR)
-            finish_update(session)
-        else:
+        if r.status_code != 200:
             gui_label.setText("Download fehlgeschlagen")
+            return
+
+        total_size = int(r.headers.get('Content-Length', 0))
+        downloaded = 0
+        with open(zip_path, 'wb') as f:
+            for data in r.iter_content(chunk_size=1024):
+                if data:
+                    f.write(data)
+                    downloaded += len(data)
+                    update_progress(gui_label, downloaded * 100 // max(total_size, 1))
+
+        # Entpacken
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(tmp_dir)
+
+        # Finish Update
+        finish_update(session, tmp_dir)
+
+        # Optional: version.txt aktualisieren
+        remote_version_file = os.path.join(tmp_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates", "version.txt")
+        if os.path.exists(remote_version_file):
+            try:
+                shutil.copy2(remote_version_file, VERSION_FILE)
+            except Exception:
+                pass
+
     except Exception as e:
-        print("Fehler beim Download:", str(e))
-        gui_label.setText("Download fehlgeschlagen")
+        print("Fehler beim Update:", str(e))
+        traceback.print_exc()
+        try:
+            session.open(MessageBox, "Fehler beim Update:\n%s" % str(e), MessageBox.TYPE_ERROR)
+        except Exception:
+            pass
+    finally:
+        # Temporären Ordner aufräumen
+        if tmp_dir and os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 # ===== SSUUpdateScreen =====
 class SSUUpdateScreen(Screen):
@@ -167,7 +194,6 @@ class SSUUpdateScreen(Screen):
                 <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
 
-        # GUI-Komponenten
         self['status'] = Label(_("Bereit"))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
@@ -207,6 +233,7 @@ class SSUUpdateScreen(Screen):
 
     def start_update(self):
         start_update(self['status'], self.session)
+
 
     def _finish_update(self):
         try:
