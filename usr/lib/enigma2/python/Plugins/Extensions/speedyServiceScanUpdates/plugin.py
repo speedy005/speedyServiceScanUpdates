@@ -19,6 +19,7 @@ except Exception:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
+from distutils.dir_util import copy_tree
 from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
