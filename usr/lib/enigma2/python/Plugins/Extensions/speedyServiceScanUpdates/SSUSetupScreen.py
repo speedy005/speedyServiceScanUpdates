@@ -98,7 +98,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <ePixmap pixmap="skin_default/div-h.png" position="10,650" zPosition="2" size="1180,2" />
                 <ePixmap pixmap="skin_default/buttons/yellow.png" position="630,7" size="5,70" scale="stretch" alphatest="on" />
                 <widget name="key_yellow" position="638,6" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="yellow" />
-                <widget name="version" position="444,593" size="150,50" font="Regular;30" valign="center" halign="left" />
+                <widget name="version" position="1040,600" size="150,50" font="Regular;30" valign="center" halign="left" />
                 <ePixmap pixmap="skin_default/buttons/blue.png" position="945,7" size="5,70" scale="stretch" alphatest="on" />
                 <widget name="key_blue" position="954,8" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="blue" />
                 <widget name="help" position="10,655" size="1180,140" font="Regular;32" />
@@ -116,8 +116,10 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <widget name="key_blue" position="618,1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="blue" />
                 <widget name="config" position="5,50" itemHeight="30" size="900,390" enableWrapAround="1" scrollbarMode="showOnDemand" />
                 <ePixmap pixmap="skin_default/div-h.png" position="0,445" zPosition="2" size="900,2" />
-                <widget name="version" position="5,450" size="200,30" font="Regular;22" valign="center" halign="left" />
-                <widget name="help" position="210,450" size="685,65" font="Regular;22" />
+                <widget name="version" position="708,408" size="200,30" font="Regular;22" valign="center" halign="left" zPosition="1" />
+                <widget name="help" position="7,450" size="888,65" font="Regular;22" />
+<eLabel text="HELP" position="828,6" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
+<ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="857,482" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
             </screen>"""
 
         # --- Widgets ---
@@ -336,3 +338,4 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menuHook)
     ]
     return items
+
