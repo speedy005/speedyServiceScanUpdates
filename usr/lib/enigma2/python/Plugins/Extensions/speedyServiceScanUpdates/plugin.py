@@ -225,7 +225,7 @@ def download_and_install_update(session):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # Pfad zum entpackten Plugin-Ordner suchen
+        # Pfad zum Plugin-Ordner im entpackten ZIP suchen
         new_plugin_folder = None
         for root, dirs, files in os.walk(tmp_dir):
             if root.endswith(os.path.join(
@@ -242,10 +242,12 @@ def download_and_install_update(session):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Neuen Plugin-Ordner nach Extensions kopieren
+        # Den kompletten Ordner kopieren
         extensions_path = os.path.dirname(PLUGIN_PATH)  # .../Extensions
+        source_plugin_folder = os.path.dirname(new_plugin_folder)  # eine Ebene höher
         log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % extensions_path)
-        shutil.copytree(new_plugin_folder, os.path.join(extensions_path, "speedyServiceScanUpdates"))
+        shutil.copytree(os.path.join(source_plugin_folder, "speedyServiceScanUpdates"),
+                        os.path.join(extensions_path, "speedyServiceScanUpdates"))
 
         # Version aktualisieren
         remote_version = get_remote_version()
@@ -439,8 +441,3 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
-
-
-
-
-
