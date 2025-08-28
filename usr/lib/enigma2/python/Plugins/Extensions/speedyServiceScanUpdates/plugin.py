@@ -218,7 +218,7 @@ def download_and_install_update(session):
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # Pfad zum entpackten Plugin finden
+        # Pfad zum Plugin-Ordner finden
         extracted_root = None
         for name in os.listdir(tmp_dir):
             candidate = os.path.join(tmp_dir, name,
@@ -231,21 +231,16 @@ def download_and_install_update(session):
         if not extracted_root:
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
 
-        log("[speedyServiceScanUpdates] Kopiere Dateien nach: %s" % PLUGIN_PATH)
+        log("[speedyServiceScanUpdates] Kopiere Plugin-Inhalt nach: %s" % PLUGIN_PATH)
 
-        # Funktion nur den Inhalt kopieren
-        def copytree_content(src, dst):
-            if not os.path.exists(dst):
-                os.makedirs(dst)
-            for item in os.listdir(src):
-                s = os.path.join(src, item)
-                d = os.path.join(dst, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(s, d)
-
-        copytree_content(extracted_root, PLUGIN_PATH)
+        # Nur den Inhalt des Plugin-Ordners kopieren
+        for item in os.listdir(extracted_root):
+            s = os.path.join(extracted_root, item)
+            d = os.path.join(PLUGIN_PATH, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, dirs_exist_ok=True)  # Python 3.8+
+            else:
+                shutil.copy2(s, d)
 
         # Version aktualisieren
         remote_version = get_remote_version()
@@ -296,9 +291,6 @@ def download_and_install_update(session):
                 pass
 
 
-
-
-    
 def check_for_update(session):
     current_version = get_current_version()
     remote_version = get_remote_version()
