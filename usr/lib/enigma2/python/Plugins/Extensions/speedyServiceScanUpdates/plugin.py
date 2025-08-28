@@ -240,22 +240,18 @@ def download_and_install_update(session):
         if not extracted_root:
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
 
-        log("[speedyServiceScanUpdates] Kopiere Plugin-Inhalt nach: %s" % PLUGIN_PATH)
+        log("[speedyServiceScanUpdates] Alte Plugin-Dateien werden gelöscht...")
+        if os.path.exists(PLUGIN_PATH):
+            shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
+        os.makedirs(PLUGIN_PATH, exist_ok=True)
 
-        # Nur den Inhalt des Plugin-Ordners kopieren
+        log("[speedyServiceScanUpdates] Kopiere neue Plugin-Dateien nach: %s" % PLUGIN_PATH)
+        # Inhalte des entpackten Plugins kopieren
         for item in os.listdir(extracted_root):
             s = os.path.join(extracted_root, item)
             d = os.path.join(PLUGIN_PATH, item)
             if os.path.isdir(s):
-                # Inhalte des Unterordners kopieren
-                for sub_item in os.listdir(s):
-                    sub_s = os.path.join(s, sub_item)
-                    sub_d = os.path.join(d, sub_item)
-                    if os.path.isdir(sub_s):
-                        shutil.copytree(sub_s, sub_d, dirs_exist_ok=True)
-                    else:
-                        os.makedirs(os.path.dirname(sub_d), exist_ok=True)
-                        shutil.copy2(sub_s, sub_d)
+                shutil.copytree(s, d, dirs_exist_ok=True)
             else:
                 shutil.copy2(s, d)
 
@@ -306,6 +302,7 @@ def download_and_install_update(session):
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 
