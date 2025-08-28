@@ -299,13 +299,6 @@ def download_and_install_update(session):
                 pass
 
 
-
-
-
-
-
-
-
 def check_for_update(session):
     current_version = get_current_version()
     remote_version = get_remote_version()
@@ -448,6 +441,7 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
 
 
 
