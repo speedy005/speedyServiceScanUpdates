@@ -244,10 +244,17 @@ def download_and_install_update(session):
         if os.path.exists(PLUGIN_PATH):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner...")
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
+        os.makedirs(PLUGIN_PATH, exist_ok=True)
 
-        # Entpackten Plugin-Ordner nach Extensions kopieren
-        log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach /usr/lib/enigma2/python/Plugins/Extensions/ ...")
-        shutil.copytree(new_plugin_folder, PLUGIN_PATH)
+        # Nur Inhalte des entpackten Ordners kopieren
+        log("[speedyServiceScanUpdates] Kopiere neue Plugin-Dateien nach: %s" % PLUGIN_PATH)
+        for item in os.listdir(new_plugin_folder):
+            s = os.path.join(new_plugin_folder, item)
+            d = os.path.join(PLUGIN_PATH, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, dirs_exist_ok=True)
+            else:
+                shutil.copy2(s, d)
 
         # Version aktualisieren
         remote_version = get_remote_version()
@@ -296,6 +303,7 @@ def download_and_install_update(session):
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 
