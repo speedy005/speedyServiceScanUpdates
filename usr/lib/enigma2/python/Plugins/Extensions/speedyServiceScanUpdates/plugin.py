@@ -240,12 +240,12 @@ def download_and_install_update(session):
         if not new_plugin_folder:
             raise Exception("Entpacktes Plugin-Verzeichnis nicht gefunden!")
 
-        # Alten Plugin-Ordner löschen
+        # Alten Plugin-Ordner löschen (falls vorhanden)
         if os.path.exists(PLUGIN_PATH):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Den kompletten entpackten Plugin-Ordner ins Extensions-Verzeichnis kopieren
+        # Den kompletten neuen Plugin-Ordner nach Extensions kopieren
         extensions_path = os.path.dirname(PLUGIN_PATH)  # .../Extensions
         log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % extensions_path)
         shutil.copytree(new_plugin_folder, os.path.join(extensions_path, "speedyServiceScanUpdates"))
@@ -441,6 +441,7 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
 
 
 
