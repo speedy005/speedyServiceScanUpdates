@@ -242,13 +242,13 @@ def download_and_install_update(session):
 
         # Alten Plugin-Ordner löschen
         if os.path.exists(PLUGIN_PATH):
-            log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner...")
+            log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Den kompletten entpackten Ordner ins Extensions-Verzeichnis kopieren
+        # Den kompletten entpackten Plugin-Ordner ins Extensions-Verzeichnis kopieren
         extensions_path = os.path.dirname(PLUGIN_PATH)  # .../Extensions
         log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % extensions_path)
-        shutil.copytree(new_plugin_folder, PLUGIN_PATH)
+        shutil.copytree(new_plugin_folder, os.path.join(extensions_path, "speedyServiceScanUpdates"))
 
         # Version aktualisieren
         remote_version = get_remote_version()
@@ -297,6 +297,7 @@ def download_and_install_update(session):
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 
