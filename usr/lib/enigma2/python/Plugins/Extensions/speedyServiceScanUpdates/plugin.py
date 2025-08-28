@@ -19,6 +19,7 @@ except Exception:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
+from distutils.dir_util import copy_tree
 from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
@@ -208,6 +209,8 @@ def get_remote_version():
         log("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version: %s" % e)
         return None
 
+
+
 def download_and_install_update(session):
     tmp_dir = None
     try:
@@ -242,12 +245,12 @@ def download_and_install_update(session):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Den kompletten Ordner kopieren
+        # Den neuen Plugin-Ordner kopieren (eins zu eins)
         extensions_path = os.path.dirname(PLUGIN_PATH)  # .../Extensions
         source_plugin_folder = os.path.dirname(new_plugin_folder)  # eine Ebene höher
         log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % extensions_path)
-        shutil.copytree(os.path.join(source_plugin_folder, "speedyServiceScanUpdates"),
-                        os.path.join(extensions_path, "speedyServiceScanUpdates"))
+        copy_tree(os.path.join(source_plugin_folder, "speedyServiceScanUpdates"),
+                  os.path.join(extensions_path, "speedyServiceScanUpdates"))
 
         # Version aktualisieren
         remote_version = get_remote_version()
@@ -441,3 +444,8 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
+
+
+
+
+
