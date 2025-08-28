@@ -238,7 +238,15 @@ def download_and_install_update(session):
             s = os.path.join(extracted_root, item)
             d = os.path.join(PLUGIN_PATH, item)
             if os.path.isdir(s):
-                shutil.copytree(s, d, dirs_exist_ok=True)  # Python 3.8+
+                # Inhalte des Unterordners kopieren
+                for sub_item in os.listdir(s):
+                    sub_s = os.path.join(s, sub_item)
+                    sub_d = os.path.join(d, sub_item)
+                    if os.path.isdir(sub_s):
+                        shutil.copytree(sub_s, sub_d, dirs_exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(sub_d), exist_ok=True)
+                        shutil.copy2(sub_s, sub_d)
             else:
                 shutil.copy2(s, d)
 
@@ -289,6 +297,7 @@ def download_and_install_update(session):
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 def check_for_update(session):
