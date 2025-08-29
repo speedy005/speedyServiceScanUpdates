@@ -244,7 +244,7 @@ def download_and_install_update(session):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Neuen Plugin-Ordner kopieren
+        # Den gesamten Inhalt des gefundenen Plugin-Ordners kopieren
         log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % PLUGIN_PATH)
         copy_tree(new_plugin_folder, PLUGIN_PATH)
 
@@ -260,35 +260,44 @@ def download_and_install_update(session):
 
         log("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
-        # Changelog anzeigen
+        # --- Changelog anzeigen und danach GUI-Neustart abfragen ---
         changelog_path = os.path.join(PLUGIN_PATH, "changelog.txt")
+
+        def ask_restart():
+            def restartGUI(answer):
+                try:
+                    if answer:
+                        log("[speedyServiceScanUpdates] Starte GUI neu...")
+                        session.open(TryQuitMainloop, 3)
+                    else:
+                        log("[speedyServiceScanUpdates] Benutzer möchte GUI nicht neustarten.")
+                except Exception as e:
+                    log("[speedyServiceScanUpdates] Fehler beim Neustart-Aufruf: %s" % e)
+
+            try:
+                session.openWithCallback(
+                    restartGUI, MessageBox,
+                    "Update erfolgreich installiert!\nSoll die GUI jetzt neu gestartet werden?",
+                    MessageBox.TYPE_YESNO
+                )
+            except Exception as e:
+                log("[speedyServiceScanUpdates] Konnte Restart-MessageBox nicht öffnen: %s" % e)
+
         if os.path.exists(changelog_path):
             try:
                 with open(changelog_path, "r") as cf:
                     changelog_text = cf.read()
-                session.open(MessageBox, "Changelog:\n\n%s" % changelog_text, MessageBox.TYPE_INFO)
+                session.openWithCallback(
+                    lambda _: ask_restart(),
+                    MessageBox,
+                    "Changelog:\n\n%s" % changelog_text,
+                    MessageBox.TYPE_INFO
+                )
             except Exception as e:
                 log("[speedyServiceScanUpdates] Fehler beim Anzeigen des Changelog: %s" % e)
-
-        # GUI Neustart
-        def restartGUI(answer):
-            try:
-                if answer:
-                    log("[speedyServiceScanUpdates] Starte GUI neu...")
-                    session.open(TryQuitMainloop, 3)
-                else:
-                    log("[speedyServiceScanUpdates] Benutzer möchte GUI nicht neustarten.")
-            except Exception as e:
-                log("[speedyServiceScanUpdates] Fehler beim Neustart-Aufruf: %s" % e)
-
-        try:
-            session.openWithCallback(
-                restartGUI, MessageBox,
-                "Update erfolgreich installiert!\nSoll die GUI jetzt neu gestartet werden?",
-                MessageBox.TYPE_YESNO
-            )
-        except Exception as e:
-            log("[speedyServiceScanUpdates] Konnte Restart-MessageBox nicht öffnen: %s" % e)
+                ask_restart()  # falls Fehler beim Changelog, trotzdem Neustart fragen
+        else:
+            ask_restart()  # falls Changelog nicht vorhanden
 
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Update: %s" % e)
@@ -299,11 +308,13 @@ def download_and_install_update(session):
             pass
 
     finally:
+        # Temporären Ordner aufräumen
         if tmp_dir:
             try:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 def check_for_update(session):
     current_version = get_current_version()
