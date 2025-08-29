@@ -19,6 +19,7 @@ except Exception:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
+from .SSUChangelogScreen import SSUChangelogScreen
 from distutils.dir_util import copy_tree
 from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
@@ -211,7 +212,7 @@ def get_remote_version():
 
 
 
-def download_and_install_update(session):
+def download_and_install_update(session, old_version):
     tmp_dir = None
     try:
         tmp_dir = tempfile.mkdtemp()
@@ -245,7 +246,7 @@ def download_and_install_update(session):
             log("[speedyServiceScanUpdates] Lösche alten Plugin-Ordner: %s" % PLUGIN_PATH)
             shutil.rmtree(PLUGIN_PATH, ignore_errors=True)
 
-        # Den gesamten Inhalt des gefundenen Plugin-Ordners kopieren
+        # Neuen Plugin-Ordner kopieren
         log("[speedyServiceScanUpdates] Kopiere neuen Plugin-Ordner nach: %s" % PLUGIN_PATH)
         copy_tree(new_plugin_folder, PLUGIN_PATH)
 
@@ -259,9 +260,26 @@ def download_and_install_update(session):
             except Exception as e:
                 log("[speedyServiceScanUpdates] Konnte version.txt nicht schreiben: %s" % e)
 
+        # --- Changelog nur anzeigen, wenn Version sich geändert hat ---
+        if parse_version(remote_version) > parse_version(old_version):
+            changelog_path = None
+            for root, dirs, files in os.walk(new_plugin_folder):
+                if "changelog.txt" in files:
+                    changelog_path = os.path.join(root, "changelog.txt")
+                    break
+
+            if changelog_path and os.path.exists(changelog_path):
+                try:
+                    with open(changelog_path, "r") as f:
+                        changelog_content = f.read()
+                    from .SSUChangelogScreen import SSUChangelogScreen
+                    session.open(SSUChangelogScreen, changelog_content)
+                except Exception as e:
+                    log("[speedyServiceScanUpdates] Fehler beim Anzeigen der changelog.txt: %s" % e)
+
         log("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
-        # GUI Neustart
+        # --- GUI Neustart ---
         def restartGUI(answer):
             try:
                 if answer:
@@ -275,7 +293,7 @@ def download_and_install_update(session):
         try:
             session.openWithCallback(
                 restartGUI, MessageBox,
-                "Update erfolgreich installiert!\nSoll die GUI jetzt neu gestartet werden?",
+                "Soll die GUI jetzt neu gestartet werden?",
                 MessageBox.TYPE_YESNO
             )
         except Exception as e:
@@ -290,12 +308,12 @@ def download_and_install_update(session):
             pass
 
     finally:
-        # Temporären Ordner aufräumen
         if tmp_dir:
             try:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 
