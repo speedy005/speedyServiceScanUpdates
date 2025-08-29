@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: speedyServiceScanUpdates\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-29 14:19\n"
-"PO-Revision-Date: \n"
+"POT-Creation-Date: 2025-08-29 16:09\n"
+"PO-Revision-Date: 2025-08-29 16:09\n"
 "Last-Translator: speedy005\n"
 "Language-Team: speedy005\n"
 "Language: de\n"
@@ -18,16 +18,16 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 
 msgid "Setup"
-msgstr "Aufstellen"
+msgstr "Einrichtung"
 
 msgid "speedyServiceScanUpdates"
-msgstr "SpeedyServicesCanupdates"
+msgstr "speedyServiceScanUpdates"
 
 msgid "Updates during service scan"
-msgstr "Aktualisierungen während des Service -Scans"
+msgstr "Updates während des Service-Scans"
 
 msgid "v %s"
-msgstr "V %s"
+msgstr "v %s"
 
 msgid "Cancel"
 msgstr "Beenden"
@@ -36,77 +36,77 @@ msgid "Save"
 msgstr "Speichern"
 
 msgid "Restore Default"
-msgstr "Standardeinstellung wiederherstellen"
+msgstr "Standard wiederherstellen"
 
 msgid "Update"
-msgstr "Aktualisieren"
+msgstr "Aktualisierung"
 
 msgid "Configure the update options."
-msgstr "Konfigurieren Sie die Aktualisierungsoptionen."
+msgstr "Konfigurieren der Online-Update-Optionen"
 
 msgid "Add new TV services"
-msgstr "Fügen Sie neue TV -Dienste hinzu"
+msgstr "Neue Dienste hinzufügen"
 
 msgid "Create 'Service Scan Updates' bouquet for new TV services?"
-msgstr "Erstellen Sie \"Service Scan Updates\" -Bouquet für neue TV -Dienste?"
+msgstr "\"Service Scan Updates\" -Bouquet für neue TV-Dienste erstellen?"
 
 msgid "Add new radio services"
-msgstr "Fügen Sie neue Radiodienste hinzu"
+msgstr "Neue Radiodienste hinzufügen"
 
 msgid "Create 'Service Scan Updates' bouquet for new radio services?"
-msgstr "Erstellen Sie 'Service Scan Updates' Bouquet für neue Radiodienste?"
+msgstr "\"Service Scan Updates\" -Bouquet für neue Radiodienste erstellen?"
 
 msgid "Clear bouquet at each search"
-msgstr "Löschen Sie bei jeder Suche Bouquet"
+msgstr "Blanko-Bouquet bei jeder Suche"
 
 msgid ""
 "Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new "
 "services will be appended?"
 msgstr ""
-"Leeren Sie den Bouquet \"Service Scan Updates\" auf jedem Scan, andernfalls "
+"Leeren Sie den Blumenstrauß \"Service-Scan-Updates\" bei jedem Scan, sonst "
 "werden die neuen Dienste angehängt?"
 
 msgid "Default settings restored!"
-msgstr "Standardeinstellungen wiederhergestellt!"
+msgstr "Standardeinstellungen wiederhergestellt"
 
 msgid "Update screen not available."
-msgstr "Aktualisieren Sie den Bildschirm nicht verfügbar."
+msgstr "Aktualisierungsbildschirm nicht verfügbar."
 
 msgid "Changes saved!"
 msgstr "Änderungen gespeichert!"
 
 msgid "ServiceScanUpdates"
-msgstr "Servicescanupdates"
+msgstr "ServiceScanUpdates"
 
 msgid "Download and install Service Scan Updates"
-msgstr "Download und installieren Sie Service -Scan -Updates"
+msgstr "Service-Scan-Updates herunterladen und installieren"
 
 msgid "Configure Service Scan Updates"
-msgstr "Konfigurieren von Service -Scan -Updates"
+msgstr "Service-Scan-Updates konfigurieren"
 
 msgid "Ready"
-msgstr "Bereit"
+msgstr "Fertig"
 
 msgid "Exit"
-msgstr "Beenden"
+msgstr "Verlassen"
 
 msgid "Start"
 msgstr "Start"
 
 msgid "Check Update"
-msgstr "Überprüfen Sie das Update"
+msgstr "Überprüfen des Updates"
 
 msgid "Update canceled"
-msgstr "Update storniert"
+msgstr "Aktualisierung abgebrochen."
 
 msgid "Error: speedyServiceScanUpdates folder not found."
-msgstr "Fehler: SpeedyServicesCanupdates -Ordner nicht gefunden."
+msgstr "Fehler: speedyServiceScanUpdates-Ordner nicht gefunden."
 
 msgid "Update completed successfully."
 msgstr "Update erfolgreich abgeschlossen."
 
 msgid "Update finished. Restart GUI?"
-msgstr "Update fertig. GUI neu starten?"
+msgstr "Aktualisierung abgeschlossen. GUI neu starten?"
 
 msgid "Update could not be completed."
-msgstr "Update konnte nicht abgeschlossen werden."
+msgstr "Aktualisierung konnte nicht abgeschlossen werden."
