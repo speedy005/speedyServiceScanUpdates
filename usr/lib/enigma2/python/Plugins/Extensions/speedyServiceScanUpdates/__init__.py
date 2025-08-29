@@ -7,7 +7,7 @@ import gettext
 
 PluginLanguageDomain = "speedyServiceScanUpdates"
 
-# Dynamisch den Pfad ermitteln (funktioniert für Extensions und SystemPlugins)
+# Dynamically determine the path (works for Extensions and SystemPlugins)
 plugin_path = resolveFilename(SCOPE_PLUGINS, "Extensions/" + PluginLanguageDomain + "/locale/")
 if not os.path.exists(plugin_path):
     plugin_path = resolveFilename(SCOPE_PLUGINS, "SystemPlugins/" + PluginLanguageDomain + "/locale/")
@@ -39,16 +39,16 @@ def _(txt):
     return t
 
 
-# Direkt bei Pluginstart die Übersetzung initialisieren
+# Initialize translation immediately when plugin starts
 localeInit()
 
-# Callback nur registrieren, wenn es kein DreamOS ist
+# Register callback only if it is not DreamOS
 if not isDreamOS():
     language.addCallback(localeInit)
 
 
 #######################################################
-# Konfiguration initialisieren
+# Initialize configuration
 config.plugins.speedyservicescanupdates = ConfigSubsection()
 config.plugins.speedyservicescanupdates.add_new_tv_services = ConfigYesNo(default=True)
 config.plugins.speedyservicescanupdates.add_new_radio_services = ConfigYesNo(default=True)

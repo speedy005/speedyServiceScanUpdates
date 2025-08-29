@@ -44,7 +44,7 @@ class SSULameDBParser:
         self.transponders.clear()
         self.services.clear()
 
-        print("[ServiceScanUpdates] Parsing content of file: " + self.filename)
+        print("[ServiceScanUpdates] Parsing file content: " + self.filename)
         for line in lines:
             line = line.rstrip('\n')
             if PY2:
@@ -105,15 +105,15 @@ class SSULameDBParser:
                         'service_name': tmp[1]
                     }
 
-                    provdata = []
+                    provider_data = []
                     for tmpdata in line.split(','):
                         psdata = tmpdata.split(':')
                         if psdata[0] == "p":
                             self.services[service_ref]['provider'] = psdata[1]
                         elif len(psdata) > 1:
                             psdata[1] = re.sub("^0+", "", psdata[1])
-                            provdata.append({psdata[0]: psdata[1]})
-                    self.services[service_ref]['provider_data'] = provdata
+                            provider_data.append({psdata[0]: psdata[1]})
+                    self.services[service_ref]['provider_data'] = provider_data
                     tmp = []
                 else:
                     tmp.append(line)
