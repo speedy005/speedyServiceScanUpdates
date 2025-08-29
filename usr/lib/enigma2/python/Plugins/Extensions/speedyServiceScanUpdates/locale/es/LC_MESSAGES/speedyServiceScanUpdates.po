@@ -7,7 +7,7 @@ msgstr ""
 "PO-Revision-Date: \n"
 "Last-Translator: speedy005\n"
 "Language-Team: speedy005\n"
-"Language: de\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -18,95 +18,99 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 
 msgid "Setup"
-msgstr "Einstellungen"
+msgstr "Configuración"
 
 msgid "speedyServiceScanUpdates"
-msgstr "speedyServiceScanUpdates"
+msgstr "SpeedServicescanupdates"
 
 msgid "Updates during service scan"
-msgstr "Aktualisierungen während des Service-Scans"
+msgstr "Actualizaciones durante el escaneo de servicio"
 
 msgid "v %s"
-msgstr "V %s"
+msgstr "V %S"
 
 msgid "Cancel"
-msgstr "Beenden"
+msgstr "Cancelar"
 
 msgid "Save"
-msgstr "Speichern"
+msgstr "Ahorrar"
 
 msgid "Restore Default"
-msgstr "Standart Wiederherstellen"
+msgstr "Restaurar predeterminado"
 
 msgid "Update"
-msgstr "Aktualisieren"
+msgstr "Actualizar"
 
 msgid "Configure the update options."
-msgstr "Konfigurieren Sie die Aktualisierungsoptionen."
+msgstr "Configurar las opciones de actualización."
 
 msgid "Add new TV services"
-msgstr "Fügen Sie neue TV-Dienste hinzu"
+msgstr "Agregar nuevos servicios de TV"
 
 msgid "Create 'Service Scan Updates' bouquet for new TV services?"
-msgstr "Erstellen Sie 'Service Scan Updates'-Bouquet für neue TV-Dienste?"
+msgstr ""
+"¿Crear ramo de 'actualizaciones de escaneo de servicio' para nuevos "
+"servicios de televisión?"
 
 msgid "Add new radio services"
-msgstr "Fügen Sie neue Radiodienste hinzu"
+msgstr "Agregar nuevos servicios de radio"
 
 msgid "Create 'Service Scan Updates' bouquet for new radio services?"
-msgstr "Erstellen Sie 'Service Scan Updates'-Bouquet für neue Radiodienste?"
+msgstr ""
+"¿Crear ramo de 'actualizaciones de escaneo de servicio' para nuevos "
+"servicios de radio?"
 
 msgid "Clear bouquet at each search"
-msgstr "Löschen Sie bei jeder Suche Bouquet"
+msgstr "Borrar Bouquet en cada búsqueda"
 
 msgid ""
 "Empty the 'Service Scan Updates' bouquet on every scan, otherwise new "
 "services will be appended?"
 msgstr ""
-"Leeren Sie den Bouquet \"Service Scan Updates\" auf jedem Scan, ansonsten "
-"werden neue Dienste angehängt?"
+"Vaciar el ramo de 'actualizaciones de escaneo de servicio' en cada escaneo, "
+"de lo contrario, se agregarán nuevos servicios?"
 
 msgid "Default settings restored!"
-msgstr "Standardeinstellungen wiederhergestellt!"
+msgstr "Configuración predeterminada restaurada!"
 
 msgid "Update screen not available."
-msgstr "Aktualisieren Sie den Bildschirm nicht verfügbar."
+msgstr "Actualizar pantalla no disponible."
 
 msgid "Changes saved!"
-msgstr "Änderungen gespeichert!"
+msgstr "Cambios guardados!"
 
 msgid "ServiceScanUpdates"
-msgstr "Servicescanupdates"
+msgstr "Servicios de servicios"
 
 msgid "Download and install Service Scan Updates"
-msgstr "Download und installieren Sie Service-Scan-Updates"
+msgstr "Descargar e instalar actualizaciones de escaneo de servicio"
 
 msgid "Configure Service Scan Updates"
-msgstr "Konfigurieren von Service-Scan-Updates"
+msgstr "Configurar actualizaciones de escaneo de servicio"
 
 msgid "Ready"
-msgstr "Bereit"
+msgstr "Listo"
 
 msgid "Exit"
-msgstr "Beenden"
+msgstr "Salida"
 
 msgid "Start"
-msgstr "Start"
+msgstr "Comenzar"
 
 msgid "Check Update"
-msgstr "Überprüfen Sie das Update"
+msgstr "Verificar la actualización"
 
 msgid "Update cancelled"
-msgstr "Update storniert"
+msgstr "Actualización cancelada"
 
 msgid "Error: speedyServiceScanUpdates folder not found."
-msgstr "Fehler: speedyServiceScanUpdates-Ordner nicht gefunden."
+msgstr "Error: la carpeta SpeedyServicesCanUpdates no se encuentra."
 
 msgid "Update successfully completed."
-msgstr "Aktualisieren erfolgreich abgeschlossen."
+msgstr "Actualización completada con éxito."
 
 msgid "Update completed. Restart GUI?"
-msgstr "Update abgeschlossen. GUI neu starten?"
+msgstr "Actualización completada. Reiniciar la GUI?"
 
 msgid "Update could not be completed."
-msgstr "Update konnte nicht abgeschlossen werden."
+msgstr "La actualización no se pudo completar."

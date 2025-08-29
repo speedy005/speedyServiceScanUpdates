@@ -7,7 +7,7 @@ msgstr ""
 "PO-Revision-Date: \n"
 "Last-Translator: speedy005\n"
 "Language-Team: speedy005\n"
-"Language: de\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -18,95 +18,99 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 
 msgid "Setup"
-msgstr "Einstellungen"
+msgstr "Installation"
 
 msgid "speedyServiceScanUpdates"
-msgstr "speedyServiceScanUpdates"
+msgstr "speedyServicesCanupdates"
 
 msgid "Updates during service scan"
-msgstr "Aktualisierungen während des Service-Scans"
+msgstr "Mises à jour lors de la numérisation du service"
 
 msgid "v %s"
-msgstr "V %s"
+msgstr "contre"
 
 msgid "Cancel"
-msgstr "Beenden"
+msgstr "Annuler"
 
 msgid "Save"
-msgstr "Speichern"
+msgstr "Sauvegarder"
 
 msgid "Restore Default"
-msgstr "Standart Wiederherstellen"
+msgstr "Restaurer par défaut"
 
 msgid "Update"
-msgstr "Aktualisieren"
+msgstr "Mise à jour"
 
 msgid "Configure the update options."
-msgstr "Konfigurieren Sie die Aktualisierungsoptionen."
+msgstr "Configurez les options de mise à jour."
 
 msgid "Add new TV services"
-msgstr "Fügen Sie neue TV-Dienste hinzu"
+msgstr "Ajouter de nouveaux services de télévision"
 
 msgid "Create 'Service Scan Updates' bouquet for new TV services?"
-msgstr "Erstellen Sie 'Service Scan Updates'-Bouquet für neue TV-Dienste?"
+msgstr ""
+"Créer un bouquet de «mises à jour de service» pour les nouveaux services de "
+"télévision?"
 
 msgid "Add new radio services"
-msgstr "Fügen Sie neue Radiodienste hinzu"
+msgstr "Ajouter de nouveaux services de radio"
 
 msgid "Create 'Service Scan Updates' bouquet for new radio services?"
-msgstr "Erstellen Sie 'Service Scan Updates'-Bouquet für neue Radiodienste?"
+msgstr ""
+"Créer un bouquet de «Updates de services de service» pour les nouveaux "
+"services de radio?"
 
 msgid "Clear bouquet at each search"
-msgstr "Löschen Sie bei jeder Suche Bouquet"
+msgstr "Bouquet effrayant à chaque recherche"
 
 msgid ""
 "Empty the 'Service Scan Updates' bouquet on every scan, otherwise new "
 "services will be appended?"
 msgstr ""
-"Leeren Sie den Bouquet \"Service Scan Updates\" auf jedem Scan, ansonsten "
-"werden neue Dienste angehängt?"
+"Videz le bouquet «Service Scan Updates» sur chaque analyse, sinon les "
+"nouveaux services seront annexés?"
 
 msgid "Default settings restored!"
-msgstr "Standardeinstellungen wiederhergestellt!"
+msgstr "Paramètres par défaut restaurés!"
 
 msgid "Update screen not available."
-msgstr "Aktualisieren Sie den Bildschirm nicht verfügbar."
+msgstr "Mettre à jour l'écran non disponible."
 
 msgid "Changes saved!"
-msgstr "Änderungen gespeichert!"
+msgstr "Modifications enregistrées!"
 
 msgid "ServiceScanUpdates"
-msgstr "Servicescanupdates"
+msgstr "ServicesCanupdates"
 
 msgid "Download and install Service Scan Updates"
-msgstr "Download und installieren Sie Service-Scan-Updates"
+msgstr "Télécharger et installer les mises à jour de numérisation du service"
 
 msgid "Configure Service Scan Updates"
-msgstr "Konfigurieren von Service-Scan-Updates"
+msgstr "Configurer les mises à jour de numérisation du service"
 
 msgid "Ready"
-msgstr "Bereit"
+msgstr "Prêt"
 
 msgid "Exit"
-msgstr "Beenden"
+msgstr "Sortie"
 
 msgid "Start"
-msgstr "Start"
+msgstr "Commencer"
 
 msgid "Check Update"
-msgstr "Überprüfen Sie das Update"
+msgstr "Vérifier la mise à jour"
 
 msgid "Update cancelled"
-msgstr "Update storniert"
+msgstr "Mise à jour annulée"
 
 msgid "Error: speedyServiceScanUpdates folder not found."
-msgstr "Fehler: speedyServiceScanUpdates-Ordner nicht gefunden."
+msgstr "ERREUR: SpeedServicesCanupdates Folder introuvable."
 
 msgid "Update successfully completed."
-msgstr "Aktualisieren erfolgreich abgeschlossen."
+msgstr "Mettre à jour avec succès terminé."
 
 msgid "Update completed. Restart GUI?"
-msgstr "Update abgeschlossen. GUI neu starten?"
+msgstr "Mise à jour terminée. Redémarrer GUI?"
 
 msgid "Update could not be completed."
-msgstr "Update konnte nicht abgeschlossen werden."
+msgstr "La mise à jour n'a pas pu être terminée."

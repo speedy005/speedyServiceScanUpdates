@@ -18,7 +18,7 @@ try:
 except ImportError:
     open_file = open
 
-# --- Plugin-Pfad dynamisch ermitteln ---
+# --- Determine plugin path dynamically ---
 plugin_path = None
 for base in (
     "/usr/lib/enigma2/python/Plugins/Extensions",
@@ -105,7 +105,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self.session = session
         w = getDesktop(0).size().width()
 
-        # --- Skin definieren ---
+        # --- Define skin ---
         if w >= 1920:
             self.skin = """<screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Setup" backgroundColor="black">
                 <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
@@ -147,7 +147,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self["key_blue"] = Button(_("Update"))
         self["help"] = Label(_("Configure the update options."))
 
-        # --- Aktionen (inkl. EPG/Help-Taste) ---
+        # --- Actions (including EPG/Help buttons) ---
         self['actions'] = ActionMap(
             ['ColorActions', 'OkCancelActions', 'HelpActions', 'EPGSelectActions'],
             {
@@ -181,7 +181,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
             getConfigListEntry(
                 _("Clear bouquet at each search"),
                 config.plugins.speedyservicescanupdates.clear_bouquet,
-                _("Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new services will be appended?")
+                _("Empty the 'Service Scan Updates' bouquet on every scan, otherwise new services will be appended?")
             )
         ]
         for entry in self.list:
