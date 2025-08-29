@@ -18,7 +18,7 @@ try:
 except ImportError:
     open_file = open
 
-# --- Dynamically determine plugin path ---
+# --- Plugin-Pfad dynamisch ermitteln ---
 plugin_path = None
 for base in (
     "/usr/lib/enigma2/python/Plugins/Extensions",
@@ -105,9 +105,9 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self.session = session
         w = getDesktop(0).size().width()
 
-        # --- Define skin ---
+        # --- Skin definieren ---
         if w >= 1920:
-            self.skin = """<screen name="SSUSetupScreen" position="center,170" size="1200,820" title="Speedy Service Scan Setup" backgroundColor="black">
+            self.skin = """<screen name="SSUSetupScreen" position="center,170" size="1200,820" title="speedy Service Scan Setup" backgroundColor="black">
                 <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/green.png" position="314,5" size="5,70" scale="stretch" alphatest="on" />
                 <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
@@ -124,7 +124,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
             </screen>"""
         else:
-            self.skin = """<screen name="SSUSetupScreen" position="center,120" size="900,530" title="Speedy Service Scan Setup">
+            self.skin = """<screen name="SSUSetupScreen" position="center,120" size="900,530" title="speedy Service Scan Setup">
                 <ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="5,40" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/green.png" position="200,0" size="5,40" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/yellow.png" position="405,0" size="5,40" scale="stretch" alphatest="on" />
@@ -147,7 +147,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
         self["key_blue"] = Button(_("Update"))
         self["help"] = Label(_("Configure the update options."))
 
-        # --- Actions (including EPG/Help key) ---
+        # --- Aktionen (inkl. EPG/Help-Taste) ---
         self['actions'] = ActionMap(
             ['ColorActions', 'OkCancelActions', 'HelpActions', 'EPGSelectActions'],
             {

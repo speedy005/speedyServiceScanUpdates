@@ -20,7 +20,7 @@ class SSUBouquetHandler:
     def reloadBouquets():
         eDVBDB.getInstance().reloadBouquets()
 
-    def doesSSUBouquetFileExist(self, bouquet_type):
+    def doesSSUBouquetFileExists(self, bouquet_type):
         filepath = os.path.join(self.config_dir, "%s.%s" % (self.SSU_BOUQUET_PREFIX, bouquet_type))
         return fileExists(filepath)
 
@@ -34,7 +34,7 @@ class SSUBouquetHandler:
 
     def addToIndexBouquet(self, bouquet_type):
         filepath = "%s.%s" % (self.index_bouquet_filepath_prefix, bouquet_type)
-        print("[speedyServiceScanUpdates] Adding SSU bouquet to index file [%s]" % filepath)
+        print("[speedyServiceScanUpdates] Add SSU bouquet to index file [%s]" % filepath)
 
         if not fileExists(filepath):
             print("[speedyServiceScanUpdates] Index file not found: %s" % filepath)
@@ -56,7 +56,7 @@ class SSUBouquetHandler:
 
     def createSSUBouquet(self, services, bouquet_type):
         filepath = os.path.join(self.config_dir, "%s.%s" % (self.SSU_BOUQUET_PREFIX, bouquet_type))
-        print("[speedyServiceScanUpdates] Creating SSU bouquet [%s]" % filepath)
+        print("[speedyServiceScanUpdates] Create SSU bouquet [%s]" % filepath)
 
         ssu_bouquet_list = [
             "#NAME Service Scan Updates\n",
@@ -72,7 +72,7 @@ class SSUBouquetHandler:
 
     def appendToSSUBouquet(self, services, bouquet_type, append_at_end=False):
         filepath = os.path.join(self.config_dir, "%s.%s" % (self.SSU_BOUQUET_PREFIX, bouquet_type))
-        print("[speedyServiceScanUpdates] Appending to SSU bouquet [%s]" % filepath)
+        print("[speedyServiceScanUpdates] Append to SSU bouquet [%s]" % filepath)
 
         if not fileExists(filepath):
             print("[speedyServiceScanUpdates] SSU bouquet file not found: %s" % filepath)

@@ -26,7 +26,7 @@ from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from distutils.dir_util import copy_tree
 from . import _
 
-# ===== Plugin paths =====
+# ===== Plugin-Pfade =====
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates"
 UPDATE_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 VERSION_FILE = os.path.join(PLUGIN_PATH, "version.txt")
@@ -37,7 +37,7 @@ config.plugins.speedyservicescanupdates.add_new_tv_services = ConfigYesNo(defaul
 config.plugins.speedyservicescanupdates.add_new_radio_services = ConfigYesNo(default=True)
 config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=False)
 
-# ===== Read version =====
+# ===== Versionslesen =====
 def read_version():
     try:
         with open(VERSION_FILE, "r") as f:
@@ -47,7 +47,7 @@ def read_version():
 
 version = read_version()
 
-# ===== Helper functions =====
+# ===== Hilfsfunktionen =====
 def _safe_msg(session, text, mtype=None, timeout=5):
     try:
         session.open(MessageBox, text, type=mtype or MessageBox.TYPE_INFO, timeout=timeout)
@@ -57,61 +57,61 @@ def _safe_msg(session, text, mtype=None, timeout=5):
 def update_progress(gui_label, progress):
     gui_label.setText("{}%".format(min(progress, 100)))
 
-# ===== Update functions =====
+# ===== Update-Funktionen =====
 def finish_update(session, extract_dir):
     try:
-        # Path to extracted plugin
+        # Pfad zum entpackten Plugin
         extracted_folder = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
         if not os.path.isdir(extracted_folder):
-            _safe_msg(session, "Error: speedyServiceScanUpdates folder not found.")
+            _safe_msg(session, "Fehler: Ordner speedyServiceScanUpdates nicht gefunden.")
             return
 
-        # Remove old plugin folder completely
+        # Alten Plugin-Ordner komplett löschen
         if os.path.exists(PLUGIN_PATH):
             shutil.rmtree(PLUGIN_PATH)
 
-        # Copy new plugin folder
+        # Neuen Plugin-Ordner kopieren
         copy_tree(extracted_folder, PLUGIN_PATH)
-        _safe_msg(session, "Update completed successfully. Restart GUI?")
+        _safe_msg(session, "Update erfolgreich abgeschlossen. GUI neu starten?")
 
     except Exception as e:
-        print("Error during finish update:", str(e))
-        _safe_msg(session, "Update could not be completed.")
+        print("Fehler beim Finish-Update:", str(e))
+        _safe_msg(session, "Update konnte nicht abgeschlossen werden.")
 
 def check_update(gui_label):
     if not requests:
-        gui_label.setText("Requests module missing")
+        gui_label.setText("Requests-Modul fehlt")
         return
-    gui_label.setText("Checking for updates...")
+    gui_label.setText("Prüfe auf Updates...")
     try:
         r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
         if r.status_code == 200:
             remote_version = r.text.strip()
             if remote_version > version:
-                gui_label.setText("Update available")
+                gui_label.setText("Update verfügbar")
             else:
-                gui_label.setText("No update available")
+                gui_label.setText("Kein Update verfügbar")
         else:
-            gui_label.setText("No update available")
+            gui_label.setText("Kein Update verfügbar")
     except Exception as e:
-        print("Error during update check:", str(e))
-        gui_label.setText("Update check failed.")
+        print("Fehler beim Update-Check:", str(e))
+        gui_label.setText("Update-Check fehlgeschlagen.")
 
 def start_update(gui_label, session=None):
     tmp_dir = None
     try:
         if not requests:
-            gui_label.setText("Requests module missing")
+            gui_label.setText("Requests-Modul fehlt")
             return
 
-        gui_label.setText("Downloading update...")
+        gui_label.setText("Update wird heruntergeladen...")
         tmp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(tmp_dir, "plugin_update.zip")
 
         # Download
         r = requests.get(UPDATE_URL, stream=True, timeout=20)
         if r.status_code != 200:
-            gui_label.setText("Download failed")
+            gui_label.setText("Download fehlgeschlagen")
             return
 
         total_size = int(r.headers.get('Content-Length', 0))
@@ -123,14 +123,14 @@ def start_update(gui_label, session=None):
                     downloaded += len(data)
                     update_progress(gui_label, downloaded * 100 // max(total_size, 1))
 
-        # Extract
+        # Entpacken
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # Finish update
+        # Finish Update
         finish_update(session, tmp_dir)
 
-        # Optional: update version.txt
+        # Optional: version.txt aktualisieren
         remote_version_file = os.path.join(tmp_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates", "version.txt")
         if os.path.exists(remote_version_file):
             try:
@@ -139,14 +139,14 @@ def start_update(gui_label, session=None):
                 pass
 
     except Exception as e:
-        print("Error during update:", str(e))
+        print("Fehler beim Update:", str(e))
         traceback.print_exc()
         try:
-            session.open(MessageBox, "Error during update:\n%s" % str(e), MessageBox.TYPE_ERROR)
+            session.open(MessageBox, "Fehler beim Update:\n%s" % str(e), MessageBox.TYPE_ERROR)
         except Exception:
             pass
     finally:
-        # Clean up temporary folder
+        # Temporären Ordner aufräumen
         if tmp_dir and os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -158,7 +158,7 @@ class SSUUpdateScreen(Screen):
         desktop = getDesktop(0)
         width = desktop.size().width()
 
-        # Skin depending on resolution
+        # Skin abhängig von der Auflösung
         if width >= 1920:
             self.skin = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1180,50" />
@@ -194,13 +194,13 @@ class SSUUpdateScreen(Screen):
                 <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
 
-        self['status'] = Label(_("Ready"))
+        self['status'] = Label(_("Bereit"))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
-        self['key_red'] = Button(_("Exit"))
+        self['key_red'] = Button(_("Beenden"))
         self['key_green'] = Button(_("Start"))
-        self['key_yellow'] = Button(_("Cancel"))
-        self['key_blue'] = Button(_("Check Update"))
+        self['key_yellow'] = Button(_("Abbrechen"))
+        self['key_blue'] = Button(_("Update prüfen"))
         self['version'] = Label(version)
 
         self['actions'] = ActionMap(['ColorActions', 'OkCancelActions'], {
@@ -225,7 +225,7 @@ class SSUUpdateScreen(Screen):
         self.close()
 
     def cancel(self):
-        self['status'].setText(_("Update canceled"))
+        self['status'].setText(_("Update abgebrochen"))
         self.close()
 
     def check_update(self):
@@ -234,23 +234,24 @@ class SSUUpdateScreen(Screen):
     def start_update(self):
         start_update(self['status'], self.session)
 
+
     def _finish_update(self):
         try:
             update_folder = os.path.join(EXTRACT_DIR, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
             if not os.path.isdir(update_folder):
-                self['status'].setText(_("Error: speedyServiceScanUpdates folder not found."))
+                self['status'].setText(_("Fehler: Ordner speedyServiceScanUpdates nicht gefunden."))
                 return
             copytree(update_folder, PLUGIN_PATH)
-            self['status'].setText(_("Update completed successfully."))
+            self['status'].setText(_("Update erfolgreich abgeschlossen."))
             self.session.openWithCallback(
                 self.restartGUI,
                 MessageBox,
-                _("Update finished. Restart GUI?"),
+                _("Update abgeschlossen. GUI neu starten?"),
                 MessageBox.TYPE_YESNO
             )
         except Exception as e:
-            print("Error during update finish:", str(e))
-            self['status'].setText(_("Update could not be completed."))
+            print("Fehler beim Abschluss des Updates:", str(e))
+            self['status'].setText(_("Update konnte nicht abgeschlossen werden."))
 
     def restartGUI(self, answer):
         if answer:
