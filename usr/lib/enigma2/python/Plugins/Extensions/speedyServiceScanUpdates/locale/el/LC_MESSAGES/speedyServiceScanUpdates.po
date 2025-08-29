@@ -1,0 +1,116 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: speedyServiceScanUpdates\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-29 14:19\n"
+"PO-Revision-Date: \n"
+"Last-Translator: speedy005\n"
+"Language-Team: speedy005\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.6\n"
+"X-Poedit-Basepath: ../../..\n"
+"X-Poedit-SearchPath-0: speedyServiceScanUpdates.pot\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+msgid "Setup"
+msgstr "Εγκατάσταση"
+
+msgid "speedyServiceScanUpdates"
+msgstr "speedyServicesCanUpdates"
+
+msgid "Updates during service scan"
+msgstr "Ενημερώσεις κατά τη σάρωση υπηρεσιών"
+
+msgid "v %s"
+msgstr "v %s"
+
+msgid "Cancel"
+msgstr "Ακύρωση"
+
+msgid "Save"
+msgstr "Εκτός"
+
+msgid "Restore Default"
+msgstr "Επαναφορά προεπιλογή"
+
+msgid "Update"
+msgstr "Εκσυγχρονίζω"
+
+msgid "Configure the update options."
+msgstr "Διαμορφώστε τις επιλογές ενημέρωσης."
+
+msgid "Add new TV services"
+msgstr "Προσθήκη νέων τηλεοπτικών υπηρεσιών"
+
+msgid "Create 'Service Scan Updates' bouquet for new TV services?"
+msgstr ""
+"Δημιουργία μπουκέτο \"Ενημέρωσης σάρωσης υπηρεσίας\" για νέες τηλεοπτικές "
+"υπηρεσίες;"
+
+msgid "Add new radio services"
+msgstr "Προσθήκη νέων ραδιοφωνικών υπηρεσιών"
+
+msgid "Create 'Service Scan Updates' bouquet for new radio services?"
+msgstr ""
+"Δημιουργία μπουκέτο για τις ενημερώσεις σάρωσης υπηρεσιών για νέες "
+"ραδιοφωνικές υπηρεσίες;"
+
+msgid "Clear bouquet at each search"
+msgstr "Καθαρίστε το μπουκέτο σε κάθε αναζήτηση"
+
+msgid ""
+"Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new "
+"services will be appended?"
+msgstr ""
+"Αδειάστε το μπουκέτο «Surn Scan Updates» σε κάθε σάρωση, διαφορετικά θα "
+"προσληφθούν οι νέες υπηρεσίες;"
+
+msgid "Default settings restored!"
+msgstr "Οι προεπιλεγμένες ρυθμίσεις αποκαταστάθηκαν!"
+
+msgid "Update screen not available."
+msgstr "Η οθόνη ενημέρωσης δεν είναι διαθέσιμη."
+
+msgid "Changes saved!"
+msgstr "Οι αλλαγές αποθηκεύτηκαν!"
+
+msgid "ServiceScanUpdates"
+msgstr "ServicesCanUpdates"
+
+msgid "Download and install Service Scan Updates"
+msgstr "Λήψη και εγκατάσταση ενημερώσεων σάρωσης υπηρεσίας"
+
+msgid "Configure Service Scan Updates"
+msgstr "Διαμορφώστε τις ενημερώσεις σάρωσης υπηρεσίας"
+
+msgid "Ready"
+msgstr "Ετοιμος"
+
+msgid "Exit"
+msgstr "Έξοδος"
+
+msgid "Start"
+msgstr "Αρχή"
+
+msgid "Check Update"
+msgstr "Ελέγξτε την ενημέρωση"
+
+msgid "Update canceled"
+msgstr "Η ενημέρωση ακυρώνεται"
+
+msgid "Error: speedyServiceScanUpdates folder not found."
+msgstr "Σφάλμα: Δεν βρέθηκε ο φάκελος SpeedyServicesCanupDates."
+
+msgid "Update completed successfully."
+msgstr "Ενημέρωση ολοκληρώθηκε με επιτυχία."
+
+msgid "Update finished. Restart GUI?"
+msgstr "Η ενημέρωση ολοκληρώθηκε. Επανεκκινήστε το GUI;"
+
+msgid "Update could not be completed."
+msgstr "Η ενημέρωση δεν ήταν δυνατή η ολοκλήρωση."

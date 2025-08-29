@@ -1,0 +1,116 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: speedyServiceScanUpdates\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-29 14:19\n"
+"PO-Revision-Date: \n"
+"Last-Translator: speedy005\n"
+"Language-Team: speedy005\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.6\n"
+"X-Poedit-Basepath: ../../..\n"
+"X-Poedit-SearchPath-0: speedyServiceScanUpdates.pot\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+msgid "Setup"
+msgstr "Kurmak"
+
+msgid "speedyServiceScanUpdates"
+msgstr "SpeedYServicesCanupdates"
+
+msgid "Updates during service scan"
+msgstr "Hizmet taraması sırasında güncellemeler"
+
+msgid "v %s"
+msgstr "V %s"
+
+msgid "Cancel"
+msgstr "İptal"
+
+msgid "Save"
+msgstr "Kaydetmek"
+
+msgid "Restore Default"
+msgstr "Varsayılan'ı geri yükle"
+
+msgid "Update"
+msgstr "Güncelleme"
+
+msgid "Configure the update options."
+msgstr "Güncelleme seçeneklerini yapılandırın."
+
+msgid "Add new TV services"
+msgstr "Yeni TV hizmetleri ekleyin"
+
+msgid "Create 'Service Scan Updates' bouquet for new TV services?"
+msgstr ""
+"Yeni TV hizmetleri için 'Hizmet Tarama Güncellemeleri' buketini mi "
+"oluşturuyorsunuz?"
+
+msgid "Add new radio services"
+msgstr "Yeni Radyo Hizmetleri Ekle"
+
+msgid "Create 'Service Scan Updates' bouquet for new radio services?"
+msgstr ""
+"Yeni radyo hizmetleri için 'Hizmet Tarama Güncellemeleri' buketini mi "
+"oluşturuyorsunuz?"
+
+msgid "Clear bouquet at each search"
+msgstr "Her aramada buketi temizleyin"
+
+msgid ""
+"Empty the 'Service Scan Updates' bouquet on every scan, otherwise the new "
+"services will be appended?"
+msgstr ""
+"Her taramada 'Hizmet Tarama Güncellemeleri' buketini boşaltın, aksi takdirde"
+" yeni hizmetler eklenir mi?"
+
+msgid "Default settings restored!"
+msgstr "Varsayılan ayarlar geri yüklendi!"
+
+msgid "Update screen not available."
+msgstr "Güncelleme ekranı mevcut değil."
+
+msgid "Changes saved!"
+msgstr "Değişiklikler kaydedildi!"
+
+msgid "ServiceScanUpdates"
+msgstr "ServicesCanupdates"
+
+msgid "Download and install Service Scan Updates"
+msgstr "Servis Tarama Güncellemelerini İndirin ve Yükle"
+
+msgid "Configure Service Scan Updates"
+msgstr "Hizmet Taraması Güncellemelerini Yapılandırın"
+
+msgid "Ready"
+msgstr "Hazır"
+
+msgid "Exit"
+msgstr "Çıkış"
+
+msgid "Start"
+msgstr "Başlangıç"
+
+msgid "Check Update"
+msgstr "Güncellemeyi kontrol edin"
+
+msgid "Update canceled"
+msgstr "Güncelleme iptal edildi"
+
+msgid "Error: speedyServiceScanUpdates folder not found."
+msgstr "Hata: SpeedYServicesCanUpdates klasörü bulunamadı."
+
+msgid "Update completed successfully."
+msgstr "Güncelleme başarıyla tamamlandı."
+
+msgid "Update finished. Restart GUI?"
+msgstr "Güncelleme bitti. GUI'yi yeniden başlatın mı?"
+
+msgid "Update could not be completed."
+msgstr "Güncelleme tamamlanamadı."
