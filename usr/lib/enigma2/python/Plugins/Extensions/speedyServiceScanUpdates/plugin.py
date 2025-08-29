@@ -19,13 +19,13 @@ except Exception:
     import urllib.request as urllib_request
 
 from Plugins.Plugin import PluginDescriptor
-from .SSUChangelogScreen import SSUChangelogScreen
 from distutils.dir_util import copy_tree
 from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
 from Components.ConfigList import ConfigListScreen
+from .SSUChangelogScreen import SSUChangelogScreen
 
 # Compatible import for ServiceScan
 try:
@@ -210,9 +210,7 @@ def get_remote_version():
         log("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version: %s" % e)
         return None
 
-
-
-def download_and_install_update(session, old_version):
+def download_and_install_update(session):
     tmp_dir = None
     try:
         tmp_dir = tempfile.mkdtemp()
@@ -260,26 +258,19 @@ def download_and_install_update(session, old_version):
             except Exception as e:
                 log("[speedyServiceScanUpdates] Konnte version.txt nicht schreiben: %s" % e)
 
-        # --- Changelog nur anzeigen, wenn Version sich geändert hat ---
-        if parse_version(remote_version) > parse_version(old_version):
-            changelog_path = None
-            for root, dirs, files in os.walk(new_plugin_folder):
-                if "changelog.txt" in files:
-                    changelog_path = os.path.join(root, "changelog.txt")
-                    break
-
-            if changelog_path and os.path.exists(changelog_path):
-                try:
-                    with open(changelog_path, "r") as f:
-                        changelog_content = f.read()
-                    from .SSUChangelogScreen import SSUChangelogScreen
-                    session.open(SSUChangelogScreen, changelog_content)
-                except Exception as e:
-                    log("[speedyServiceScanUpdates] Fehler beim Anzeigen der changelog.txt: %s" % e)
-
         log("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
-        # --- GUI Neustart ---
+        # Changelog anzeigen
+        changelog_path = os.path.join(PLUGIN_PATH, "changelog.txt")
+        if os.path.exists(changelog_path):
+            try:
+                with open(changelog_path, "r") as cf:
+                    changelog_text = cf.read()
+                session.open(MessageBox, "Changelog:\n\n%s" % changelog_text, MessageBox.TYPE_INFO)
+            except Exception as e:
+                log("[speedyServiceScanUpdates] Fehler beim Anzeigen des Changelog: %s" % e)
+
+        # GUI Neustart
         def restartGUI(answer):
             try:
                 if answer:
@@ -293,7 +284,7 @@ def download_and_install_update(session, old_version):
         try:
             session.openWithCallback(
                 restartGUI, MessageBox,
-                "Soll die GUI jetzt neu gestartet werden?",
+                "Update erfolgreich installiert!\nSoll die GUI jetzt neu gestartet werden?",
                 MessageBox.TYPE_YESNO
             )
         except Exception as e:
@@ -313,9 +304,6 @@ def download_and_install_update(session, old_version):
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
-
-
-
 
 def check_for_update(session):
     current_version = get_current_version()
@@ -350,7 +338,7 @@ def check_for_update(session):
                     log("[speedyServiceScanUpdates] Konnte Update-MessageBox nicht öffnen: %s" % e)
 
             ask_update()
-            return True  # Update vorhanden
+            return True
         else:
             log("[speedyServiceScanUpdates] Kein Update verfügbar.")
             return False
@@ -358,14 +346,12 @@ def check_for_update(session):
         log("[speedyServiceScanUpdates] Fehler beim Vergleich der Versionen: %s" % e)
         return False
 
-
 # --- Autostart Hook ---
 def autostart(reason, **kwargs):
     if reason == 0 and "session" in kwargs:
         global baseServiceScan_execBegin, baseServiceScan_execEnd
         session = kwargs["session"]
 
-        # ServiceScan Wrapping bleibt aktiv
         if baseServiceScan_execBegin is None:
             baseServiceScan_execBegin = ServiceScan.execBegin
         ServiceScan.execBegin = ServiceScan_execBegin
@@ -376,7 +362,6 @@ def autostart(reason, **kwargs):
 
         log("[speedyServiceScanUpdates] Autostart: ServiceScan Wrapper aktiv, Updateprüfung entfällt beim Start.")
 
-
 # --- Menü & Setup ---
 def SSUMain(session, **kwargs):
     from .SSUSetupScreen import SSUSetupScreen
@@ -386,12 +371,7 @@ def SSUMain(session, **kwargs):
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Öffnen des SetupScreens: %s" % e)
 
-
 def precheck_update_and_open(session, **kwargs):
-    """
-    Updateprüfung vor Öffnen des SetupScreens.
-    MessageBox erscheint sofort über dem vorherigen Screen.
-    """
     from .SSUSetupScreen import SSUSetupScreen
 
     def open_plugin():
@@ -405,14 +385,13 @@ def precheck_update_and_open(session, **kwargs):
         remote_version = get_remote_version()
 
         if remote_version and parse_version(remote_version) > parse_version(current_version):
-            # Update verfügbar → MessageBox anzeigen
             def callback(choice):
                 if choice:
                     log("[speedyServiceScanUpdates] Benutzer bestätigt Update → starte Download")
                     download_and_install_update(session)
                 else:
                     log("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
-                    open_plugin()  # Plugin trotzdem öffnen
+                    open_plugin()
 
             session.openWithCallback(
                 callback, MessageBox,
@@ -420,26 +399,21 @@ def precheck_update_and_open(session, **kwargs):
                 MessageBox.TYPE_YESNO
             )
         else:
-            # Kein Update → Plugin sofort öffnen
             open_plugin()
-
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler bei Updateprüfung: %s" % e)
         open_plugin()
-
 
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
         return [("speedy ServiceScanUpdates " + _("Setup"), precheck_update_and_open, "servicescanupdates", None)]
     return []
 
-
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
         return [(_("speedyServiceScanUpdates") + " " + _("Setup"), precheck_update_and_open,
                  "speedyservicescanupdates_mainmenu", 50)]
     return []
-
 
 # --- Plugin Descriptor ---
 def Plugins(**kwargs):
@@ -459,8 +433,3 @@ def Plugins(**kwargs):
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=menu),
         PluginDescriptor(where=PluginDescriptor.WHERE_MENU, fnc=SSUMenuItem)
     ]
-
-
-
-
-
