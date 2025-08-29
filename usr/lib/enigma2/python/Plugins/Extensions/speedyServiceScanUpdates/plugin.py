@@ -6,7 +6,6 @@ import sys
 import zipfile
 import shutil
 import tempfile
-import importlib
 import re
 import traceback
 
@@ -54,7 +53,6 @@ preScanDB = None
 LOGFILE = "/tmp/speedyServiceScanUpdates.log"
 
 def log(msg):
-    """Schreibt Debug-Logs nach /tmp/speedyServiceScanUpdates.log und auf die Konsole."""
     try:
         with open(LOGFILE, "a") as f:
             f.write(msg + "\n")
@@ -166,9 +164,10 @@ def ServiceScan_execEnd(self, onClose=True):
 
 # --- Update-Funktionen ---
 VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/version.txt"
+LAST_UPDATE_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/last_update_version.txt"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
-GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 GITHUB_CHANGELOG_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/changelog.txt"
+GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/"
 
 def get_current_version():
@@ -200,10 +199,7 @@ def get_remote_version():
     try:
         response = urllib_request.urlopen(GITHUB_VERSION_URL).read()
         if PY3:
-            try:
-                response = response.decode("utf-8")
-            except Exception:
-                pass
+            response = response.decode("utf-8")
         remote_ver = response.strip().split()[0]
         log("[speedyServiceScanUpdates] Remote-Version vom GitHub: %s" % remote_ver)
         return remote_ver
@@ -255,6 +251,9 @@ def download_and_install_update(session):
             try:
                 with open(VERSION_FILE, "w") as vf:
                     vf.write(remote_version + "\n")
+                # Speichere, dass Changelog noch nicht angezeigt wurde
+                with open(LAST_UPDATE_FILE, "w") as lf:
+                    lf.write(remote_version + "\n")
                 log("[speedyServiceScanUpdates] Lokale version.txt aktualisiert auf %s" % remote_version)
             except Exception as e:
                 log("[speedyServiceScanUpdates] Konnte version.txt nicht schreiben: %s" % e)
@@ -296,61 +295,36 @@ def download_and_install_update(session):
             except Exception:
                 pass
 
-# --- Vor Update prüfen & Changelog anzeigen ---
-def precheck_update_and_open(session, **kwargs):
-    from .SSUSetupScreen import SSUSetupScreen
-
-    def open_plugin():
-        try:
-            session.open(SSUSetupScreen)
-        except Exception as e:
-            log("[speedyServiceScanUpdates] Fehler beim Öffnen des SetupScreens: %s" % e)
-
+def show_changelog_if_needed(session):
+    """
+    Prüft, ob Changelog angezeigt werden soll (nach Update)
+    """
+    last_version = None
     try:
-        current_version = get_current_version()
-        remote_version = get_remote_version()
+        if os.path.exists(LAST_UPDATE_FILE):
+            with open(LAST_UPDATE_FILE, "r") as f:
+                last_version = f.read().strip()
+    except Exception:
+        pass
 
-        if remote_version and parse_version(remote_version) > parse_version(current_version):
-            log("[speedyServiceScanUpdates] Update verfügbar: %s" % remote_version)
+    current_version = get_current_version()
 
-            # Changelog abrufen
-            try:
-                changelog_text = urllib_request.urlopen(GITHUB_CHANGELOG_URL).read()
-                if PY3:
-                    changelog_text = changelog_text.decode("utf-8")
-            except Exception as e:
-                log("[speedyServiceScanUpdates] Fehler beim Abrufen des Changelog: %s" % e)
-                changelog_text = "Changelog konnte nicht geladen werden."
+    if last_version and last_version == current_version:
+        try:
+            # Changelog vom GitHub laden
+            changelog_data = urllib_request.urlopen(GITHUB_CHANGELOG_URL).read()
+            if PY3:
+                changelog_data = changelog_data.decode("utf-8")
+            # Zeige MessageBox
+            session.open(MessageBox, "Changelog:\n\n%s" % changelog_data, MessageBox.TYPE_INFO)
+        except Exception as e:
+            log("[speedyServiceScanUpdates] Fehler beim Laden der Changelog: %s" % e)
 
-            def ask_update(choice=None):
-                """Update-Frage nach Changelog-Anzeige"""
-                def callback(update_choice):
-                    if update_choice:
-                        log("[speedyServiceScanUpdates] Benutzer bestätigt Update → starte Download")
-                        download_and_install_update(session)
-                    else:
-                        log("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
-                        open_plugin()
-
-                session.openWithCallback(
-                    callback, MessageBox,
-                    "Eine neue Version %s ist verfügbar.\nMöchten Sie das Update installieren?" % remote_version,
-                    MessageBox.TYPE_YESNO
-                )
-
-            session.openWithCallback(
-                ask_update,
-                MessageBox,
-                "Changelog:\n\n%s" % changelog_text,
-                MessageBox.TYPE_INFO
-            )
-
-        else:
-            open_plugin()
-
-    except Exception as e:
-        log("[speedyServiceScanUpdates] Fehler bei Updateprüfung: %s" % e)
-        open_plugin()
+        # Datei löschen, damit Changelog nur einmal gezeigt wird
+        try:
+            os.remove(LAST_UPDATE_FILE)
+        except Exception:
+            pass
 
 # --- Autostart Hook ---
 def autostart(reason, **kwargs):
@@ -371,10 +345,50 @@ def autostart(reason, **kwargs):
 # --- Menü & Setup ---
 def SSUMain(session, **kwargs):
     from .SSUSetupScreen import SSUSetupScreen
+
     try:
+        # Zeige Changelog, falls nötig
+        show_changelog_if_needed(session)
         session.open(SSUSetupScreen)
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Öffnen des SetupScreens: %s" % e)
+
+def precheck_update_and_open(session, **kwargs):
+    from .SSUSetupScreen import SSUSetupScreen
+
+    def open_plugin():
+        try:
+            show_changelog_if_needed(session)
+            session.open(SSUSetupScreen)
+        except Exception as e:
+            log("[speedyServiceScanUpdates] Fehler beim Öffnen des SetupScreens: %s" % e)
+
+    try:
+        current_version = get_current_version()
+        remote_version = get_remote_version()
+
+        if remote_version and parse_version(remote_version) > parse_version(current_version):
+            # Update verfügbar → MessageBox anzeigen
+            def callback(choice):
+                if choice:
+                    log("[speedyServiceScanUpdates] Benutzer bestätigt Update → starte Download")
+                    download_and_install_update(session)
+                else:
+                    log("[speedyServiceScanUpdates] Benutzer hat Update abgelehnt.")
+                    open_plugin()  # Plugin trotzdem öffnen
+
+            session.openWithCallback(
+                callback, MessageBox,
+                "Eine neue Version %s ist verfügbar.\nMöchten Sie das Update installieren?" % remote_version,
+                MessageBox.TYPE_YESNO
+            )
+        else:
+            # Kein Update → Plugin sofort öffnen (evtl. Changelog)
+            open_plugin()
+
+    except Exception as e:
+        log("[speedyServiceScanUpdates] Fehler bei Updateprüfung: %s" % e)
+        open_plugin()
 
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
