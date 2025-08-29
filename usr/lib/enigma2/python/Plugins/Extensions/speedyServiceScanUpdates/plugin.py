@@ -169,6 +169,7 @@ VERSION_FILE = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpda
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt"
 GITHUB_ZIP_URL = "https://github.com/speedy005/speedyServiceScanUpdates/archive/refs/heads/main.zip"
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/speedyServiceScanUpdates/"
+GITHUB_CHANGELOG_URL = "https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/changelog.txt"
 
 def get_current_version():
     try:
@@ -209,6 +210,8 @@ def get_remote_version():
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Abrufen der Remote-Version: %s" % e)
         return None
+
+
 
 def download_and_install_update(session):
     tmp_dir = None
@@ -260,9 +263,7 @@ def download_and_install_update(session):
 
         log("[speedyServiceScanUpdates] Update erfolgreich installiert!")
 
-        # --- Changelog anzeigen und danach GUI-Neustart abfragen ---
-        changelog_path = os.path.join(PLUGIN_PATH, "changelog.txt")
-
+        # --- Changelog aus GitHub anzeigen und danach GUI-Neustart abfragen ---
         def ask_restart():
             def restartGUI(answer):
                 try:
@@ -283,21 +284,20 @@ def download_and_install_update(session):
             except Exception as e:
                 log("[speedyServiceScanUpdates] Konnte Restart-MessageBox nicht öffnen: %s" % e)
 
-        if os.path.exists(changelog_path):
-            try:
-                with open(changelog_path, "r") as cf:
-                    changelog_text = cf.read()
-                session.openWithCallback(
-                    lambda _: ask_restart(),
-                    MessageBox,
-                    "Changelog:\n\n%s" % changelog_text,
-                    MessageBox.TYPE_INFO
-                )
-            except Exception as e:
-                log("[speedyServiceScanUpdates] Fehler beim Anzeigen des Changelog: %s" % e)
-                ask_restart()  # falls Fehler beim Changelog, trotzdem Neustart fragen
-        else:
-            ask_restart()  # falls Changelog nicht vorhanden
+        try:
+            # Changelog von GitHub abrufen
+            changelog_text = urllib_request.urlopen(GITHUB_CHANGELOG_URL).read()
+            if PY3:
+                changelog_text = changelog_text.decode("utf-8")
+            session.openWithCallback(
+                lambda _: ask_restart(),
+                MessageBox,
+                "Changelog:\n\n%s" % changelog_text,
+                MessageBox.TYPE_INFO
+            )
+        except Exception as e:
+            log("[speedyServiceScanUpdates] Fehler beim Abrufen oder Anzeigen des Changelog: %s" % e)
+            ask_restart()  # falls Fehler, trotzdem Neustart abfragen
 
     except Exception as e:
         log("[speedyServiceScanUpdates] Fehler beim Update: %s" % e)
@@ -308,12 +308,12 @@ def download_and_install_update(session):
             pass
 
     finally:
-        # Temporären Ordner aufräumen
         if tmp_dir:
             try:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:
                 pass
+
 
 
 def check_for_update(session):
