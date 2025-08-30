@@ -40,7 +40,7 @@ config.plugins.speedyservicescanupdates.clear_bouquet = ConfigYesNo(default=Fals
 # ===== Read version =====
 def read_version():
     try:
-        with open(VERSION_FILE, "r") as f:
+        with open(VERSION_FILE, "r", encoding="utf-8") as f:
             return f.read().strip()
     except Exception:
         return "0.0.0"
@@ -60,17 +60,14 @@ def update_progress(gui_label, progress):
 # ===== Update functions =====
 def finish_update(session, extract_dir):
     try:
-        # Path to extracted plugin
         extracted_folder = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
         if not os.path.isdir(extracted_folder):
             _safe_msg(session, "Error: speedyServiceScanUpdates folder not found.")
             return
 
-        # Remove old plugin folder
         if os.path.exists(PLUGIN_PATH):
             shutil.rmtree(PLUGIN_PATH)
 
-        # Copy new plugin folder
         copy_tree(extracted_folder, PLUGIN_PATH)
         _safe_msg(session, "Update successfully completed. Restart GUI?")
 
@@ -108,7 +105,6 @@ def start_update(gui_label, session=None):
         tmp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(tmp_dir, "plugin_update.zip")
 
-        # Download
         r = requests.get(UPDATE_URL, stream=True, timeout=20)
         if r.status_code != 200:
             gui_label.setText("Download failed")
@@ -123,14 +119,11 @@ def start_update(gui_label, session=None):
                     downloaded += len(data)
                     update_progress(gui_label, downloaded * 100 // max(total_size, 1))
 
-        # Extract
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_dir)
 
-        # Finish update
         finish_update(session, tmp_dir)
 
-        # Optional: update version.txt
         remote_version_file = os.path.join(tmp_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates", "version.txt")
         if os.path.exists(remote_version_file):
             try:
@@ -146,7 +139,6 @@ def start_update(gui_label, session=None):
         except Exception:
             pass
     finally:
-        # Cleanup temp folder
         if tmp_dir and os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -158,7 +150,7 @@ class SSUUpdateScreen(Screen):
         desktop = getDesktop(0)
         width = desktop.size().width()
 
-        # Skin based on resolution
+        # Skin based on resolution (ASCII-safe)
         if width >= 1920:
             self.skin = """<screen name="SSUUpdateScreen" position="center,170" size="1200,820" title="speedy Service Scan Updates">
                 <widget name="progress" position="10,100" size="1180,50" />
