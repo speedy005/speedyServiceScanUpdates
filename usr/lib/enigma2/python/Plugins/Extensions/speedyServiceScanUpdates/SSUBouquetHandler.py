@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals  # Für Py2 Unicode-Kompatibilität
+from __future__ import print_function, unicode_literals
 from enigma import eDVBDB
 from Tools.Directories import fileExists, resolveFilename, SCOPE_CONFIG
 import time
@@ -13,7 +13,7 @@ class SSUBouquetHandler:
 
     def __init__(self):
         self.service_scan_timestamp = int(time.time())
-        self.config_dir = str(resolveFilename(SCOPE_CONFIG))  # Py2/3 kompatibel
+        self.config_dir = str(resolveFilename(SCOPE_CONFIG))
         self.ssu_bouquet_filepath_prefix = os.path.join(self.config_dir, self.SSU_BOUQUET_PREFIX)
         self.index_bouquet_filepath_prefix = os.path.join(self.config_dir, "bouquets")
 
@@ -34,10 +34,10 @@ class SSUBouquetHandler:
 
     def addToIndexBouquet(self, bouquet_type):
         filepath = "{}.{}".format(self.index_bouquet_filepath_prefix, bouquet_type)
-        print(_("[speedyServiceScanUpdates] Add SSU bouquet to index file [{}]").format(filepath))
+        print(_("[speedyServiceScanUpdates] Add SSU bouquet to index file [{filepath}]").format(filepath=filepath))
 
         if not fileExists(filepath):
-            print(_("[speedyServiceScanUpdates] Index file not found: {}").format(filepath))
+            print(_("[speedyServiceScanUpdates] Index file not found: {filepath}").format(filepath=filepath))
             return
 
         with codecs.open(filepath, "r", encoding="utf-8", errors="replace") as f:
@@ -55,7 +55,7 @@ class SSUBouquetHandler:
 
     def createSSUBouquet(self, services, bouquet_type):
         filepath = os.path.join(self.config_dir, "{}.{}".format(self.SSU_BOUQUET_PREFIX, bouquet_type))
-        print(_("[speedyServiceScanUpdates] Create SSU bouquet [{}]").format(filepath))
+        print(_("[speedyServiceScanUpdates] Create SSU bouquet [{filepath}]").format(filepath=filepath))
 
         ssu_bouquet_list = [
             _("#NAME Service Scan Updates\n"),
@@ -68,15 +68,14 @@ class SSUBouquetHandler:
         time.sleep(0.2)
         self.addToIndexBouquet(bouquet_type)
         self.reloadBouquets()
-
         print(_("[speedyServiceScanUpdates] SSU bouquet created and added to index."))
 
     def appendToSSUBouquet(self, services, bouquet_type, append_at_end=False):
         filepath = os.path.join(self.config_dir, "{}.{}".format(self.SSU_BOUQUET_PREFIX, bouquet_type))
-        print(_("[speedyServiceScanUpdates] Append to SSU bouquet [{}]").format(filepath))
+        print(_("[speedyServiceScanUpdates] Append to SSU bouquet [{filepath}]").format(filepath=filepath))
 
         if not fileExists(filepath):
-            print(_("[speedyServiceScanUpdates] SSU bouquet file not found: {}").format(filepath))
+            print(_("[speedyServiceScanUpdates] SSU bouquet file not found: {filepath}").format(filepath=filepath))
             return
 
         with codecs.open(filepath, "r", encoding="utf-8", errors="replace") as f:
@@ -85,7 +84,9 @@ class SSUBouquetHandler:
         marker = self.addMarker()
         new_block = [marker] + ["#SERVICE {}\n".format(s) for s in services]
 
-        if marker not in lines:
+        # Marker-Vergleich jetzt Unicode/Strip-bereinigt
+        lines_stripped = [line.strip() for line in lines]
+        if marker.strip() not in lines_stripped:
             if append_at_end:
                 lines.extend(new_block)
             else:
@@ -103,7 +104,6 @@ class SSUBouquetHandler:
             time.sleep(0.2)
             self.addToIndexBouquet(bouquet_type)
             self.reloadBouquets()
-
             print(_("[speedyServiceScanUpdates] SSU bouquet updated with new services."))
         else:
             print(_("[speedyServiceScanUpdates] Marker already exists, no new block added."))

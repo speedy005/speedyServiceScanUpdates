@@ -350,8 +350,8 @@ def precheck_update_and_open(session, **kwargs):
             session.openWithCallback(
                 callback,
                 MessageBox,
-                ("A new version {version} is available.\nDo you want to install the update?").format(version=remote_version),
-                type=MessageBox.TYPE_YESNO  # Hier das Komma eingefügt
+                _("A new version {version} is available.\nDo you want to install the update?").format(version=remote_version),
+                type=MessageBox.TYPE_YESNO
             )
         else:
             open_plugin()  # kein Update → SetupScreen direkt
@@ -359,16 +359,15 @@ def precheck_update_and_open(session, **kwargs):
         log("[speedyServiceScanUpdates] Error during update check: %s" % e)
         open_plugin()
 
-
 # --- Menu ---
 def SSUMenuItem(menuid, **kwargs):
     if menuid == "scan":
-        return [("speedy ServiceScanUpdates " + _("Setup"), precheck_update_and_open, "servicescanupdates", None)]
+        return [(_("speedy ServiceScanUpdates Setup"), precheck_update_and_open, "servicescanupdates", None)]
     return []
 
 def menu(menuid, **kwargs):
     if menuid == "mainmenu":
-        return [(_("speedyServiceScanUpdates") + " " + _("Setup"), precheck_update_and_open,
+        return [(_("speedy ServiceScanUpdates Setup"), precheck_update_and_open,
                  "speedyservicescanupdates_mainmenu", 50)]
     return []
 
@@ -377,12 +376,12 @@ def Plugins(**kwargs):
     return [
         PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART],
                          fnc=autostart),
-        PluginDescriptor(name="speedy ServiceScanUpdates " + _("Setup"),
+        PluginDescriptor(name=_("speedy ServiceScanUpdates Setup"),
                          description=_("Updates during service scan"),
                          where=PluginDescriptor.WHERE_PLUGINMENU,
                          icon="plugin.png",
                          fnc=precheck_update_and_open),
-        PluginDescriptor(name="speedy ServiceScanUpdates " + _("Setup"),
+        PluginDescriptor(name=_("speedy ServiceScanUpdates Setup"),
                          description=_("Updates during service scan"),
                          where=PluginDescriptor.WHERE_EXTENSIONSMENU,
                          icon="plugin.png",

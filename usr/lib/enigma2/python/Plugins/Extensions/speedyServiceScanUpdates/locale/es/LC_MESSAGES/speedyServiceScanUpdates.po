@@ -1,0 +1,230 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: speedyServiceScanUpdates\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-31 19:40\n"
+"PO-Revision-Date: 2025-08-31 19:40\n"
+"Last-Translator: speedy005 <speedy005@example.com>\n"
+"Language-Team: speedy005\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:269
+msgid ""
+"Update installed successfully!\n"
+"Do you want to restart the GUI now?"
+msgstr ""
+"¡Actualización instalada con éxito!\n"
+"¿Quieres reiniciar la GUI ahora?"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:277
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:138
+msgid ""
+"Error during update:\n"
+"%s"
+msgstr ""
+"Error durante la actualización:\n"
+"__Placeholder_0__"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:303
+msgid ""
+"Changelog:\n"
+"\n"
+"%s"
+msgstr ""
+"ChangeLog:\n"
+"\n"
+"__Placeholder_0__"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:353
+msgid ""
+"A new version {version} is available.\n"
+"Do you want to install the update?"
+msgstr ""
+"Una nueva versión __placeholder_0__ está disponible.\n"
+"¿Quieres instalar la actualización?"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:365
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:370
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:379
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:384
+msgid "speedy ServiceScanUpdates Setup"
+msgstr "Configuración rápida de servicios de servicios"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:380
+#: usr/lib/enigma2/python/Plugins/Extensions/plugin.py:385
+msgid "Updates during service scan"
+msgstr "Actualizaciones durante el escaneo de servicio"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:143
+msgid "v %s"
+msgstr "V __placeholder_0__"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:144
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:195
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:145
+msgid "Save"
+msgstr "Ahorrar"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:146
+msgid "Restore Default"
+msgstr "Restaurar predeterminado"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:147
+msgid "Update"
+msgstr "Actualizar"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:148
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:209
+msgid "Configure the update options."
+msgstr "Configurar las opciones de actualización."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:172
+msgid "Add new TV services"
+msgstr "Agregar nuevos servicios de TV"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:174
+msgid "Create 'Service Scan Updates' bouquet for new TV services?"
+msgstr ""
+"¿Crear ramo de 'actualizaciones de escaneo de servicio' para nuevos "
+"servicios de televisión?"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:177
+msgid "Add new radio services"
+msgstr "Agregar nuevos servicios de radio"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:179
+msgid "Create 'Service Scan Updates' bouquet for new radio services?"
+msgstr ""
+"¿Crear ramo de 'actualizaciones de escaneo de servicio' para nuevos "
+"servicios de radio?"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:182
+msgid "Clear bouquet at each search"
+msgstr "Borrar Bouquet en cada búsqueda"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:184
+msgid ""
+"Empty the 'Service Scan Updates' bouquet on every scan, otherwise new "
+"services will be appended?"
+msgstr ""
+"Vaciar el ramo de 'actualizaciones de escaneo de servicio' en cada escaneo, "
+"de lo contrario, se agregarán nuevos servicios?"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:192
+msgid "Default settings restored!"
+msgstr "Configuración predeterminada restaurada!"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:199
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:302
+msgid "Update screen not available."
+msgstr "Actualizar pantalla no disponible."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:205
+msgid "Changes saved!"
+msgstr "Cambios guardados!"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:309
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:326
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:331
+msgid "ServiceScanUpdates"
+msgstr "Servicios de servicios"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:316
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:321
+msgid "SpeedyServiceScanUpdates"
+msgstr "SpeedServicescanupdates"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:317
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:322
+msgid "Download and install Service Scan Updates"
+msgstr "Descargar e instalar actualizaciones de escaneo de servicio"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:327
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUSetupScreen.py:332
+msgid "Configure Service Scan Updates"
+msgstr "Configurar actualizaciones de escaneo de servicio"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:58
+msgid "{}%"
+msgstr ""
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:65
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:234
+msgid "Error: speedyServiceScanUpdates folder not found."
+msgstr "Error: la carpeta SpeedyServicesCanUpdates no se encuentra."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:72
+msgid "Update successfully completed. Restart GUI?"
+msgstr "Actualización completada con éxito. Reiniciar la GUI?"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:76
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:246
+msgid "Update could not be completed."
+msgstr "La actualización no se pudo completar."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:80
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:101
+msgid "Requests module missing"
+msgstr "Falta del módulo de solicitudes"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:82
+msgid "Checking for updates..."
+msgstr "Comprobando las actualizaciones ..."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:88
+msgid "Update available"
+msgstr "Actualización disponible"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:90
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:92
+msgid "No update available"
+msgstr "No hay actualización disponible"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:95
+msgid "Update check failed."
+msgstr "La verificación de actualización falló."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:104
+msgid "Downloading update..."
+msgstr "Descargar actualización ..."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:110
+msgid "Download failed"
+msgstr "Descargar fallido"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:190
+msgid "Ready"
+msgstr "Listo"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:193
+msgid "Exit"
+msgstr "Salida"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:194
+msgid "Start"
+msgstr "Comenzar"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:196
+msgid "Check Update"
+msgstr "Verificar la actualización"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:221
+msgid "Update cancelled"
+msgstr "Actualización cancelada"
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:237
+msgid "Update successfully completed."
+msgstr "Actualización completada con éxito."
+
+#: usr/lib/enigma2/python/Plugins/Extensions/SSUUpdateScreen.py:241
+msgid "Update completed. Restart GUI?"
+msgstr "Actualización completada. Reiniciar la GUI?"

@@ -185,7 +185,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
             )
         ]
         for entry in self.list:
-            entry[1].helpText = entry[2]
+            entry[1].helpText = _(entry[2])
         self["config"].list = self.list
 
     def restore_default(self):
@@ -210,7 +210,7 @@ class SSUSetupScreen(ConfigListScreen, Screen):
 
     def updateHelp(self):
         if self["config"].getCurrent():
-            self["help"].setText(self["config"].getCurrent()[1].helpText)
+            self["help"].setText(_(self["config"].getCurrent()[1].helpText))
 
 # ===== ServiceScan Hooks / Autostart =====
 _base_execBegin = None
@@ -313,22 +313,22 @@ def menuHook(menuid, **kwargs):
 def Plugins(**kwargs):
     items = [
         PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART, PluginDescriptor.WHERE_AUTOSTART], fnc=_autostart),
-        PluginDescriptor(name="SpeedyServiceScanUpdates",
+        PluginDescriptor(name=_("SpeedyServiceScanUpdates"),
                          description=_("Download and install Service Scan Updates"),
                          where=PluginDescriptor.WHERE_PLUGINMENU,
                          icon="plugin.png",
                          fnc=openUpdate),
-        PluginDescriptor(name="SpeedyServiceScanUpdates",
+        PluginDescriptor(name=_("SpeedyServiceScanUpdates"),
                          description=_("Download and install Service Scan Updates"),
                          where=PluginDescriptor.WHERE_EXTENSIONSMENU,
                          icon="plugin.png",
                          fnc=openUpdate),
-        PluginDescriptor(name="ServiceScanUpdates",
+        PluginDescriptor(name=_("ServiceScanUpdates"),
                          description=_("Configure Service Scan Updates"),
                          where=PluginDescriptor.WHERE_PLUGINMENU,
                          icon="plugin.png",
                          fnc=openSetup),
-        PluginDescriptor(name="ServiceScanUpdates",
+        PluginDescriptor(name=_("ServiceScanUpdates"),
                          description=_("Configure Service Scan Updates"),
                          where=PluginDescriptor.WHERE_EXTENSIONSMENU,
                          icon="plugin.png",

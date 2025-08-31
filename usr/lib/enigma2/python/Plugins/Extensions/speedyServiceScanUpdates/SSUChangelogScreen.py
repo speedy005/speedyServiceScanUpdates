@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from __future__ import division, print_function, unicode_literals
 from Screens.Screen import Screen
 from Components.ScrollLabel import ScrollLabel
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.ProgressBar import ProgressBar
+from . import _  # Übersetzungen
 
 class SSUChangelogScreen(Screen):
     skin = """
@@ -20,7 +22,7 @@ class SSUChangelogScreen(Screen):
         self["text"] = ScrollLabel(changelog_text, wrap=True)
         self["progressbar"] = ProgressBar()
         self["progressbar"].setValue(0)
-        self["hint"] = Label("OK / EXIT to close")
+        self["hint"] = Label(_("OK / EXIT to close"))
 
         self["actions"] = ActionMap(
             ["OkCancelActions", "DirectionActions"],
@@ -49,7 +51,7 @@ class SSUChangelogScreen(Screen):
         total_lines = self["text"].getTextHeight()
         current_line = self["text"].getCurrentLine()
         if total_lines > 0:
-            percent = int((current_line / total_lines) * 100)
+            percent = int((current_line / float(total_lines)) * 100)
         else:
             percent = 100
         self["progressbar"].setValue(percent)

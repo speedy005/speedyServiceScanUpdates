@@ -55,59 +55,59 @@ def _safe_msg(session, text, mtype=None, timeout=5):
         pass
 
 def update_progress(gui_label, progress):
-    gui_label.setText("{}%".format(min(progress, 100)))
+    gui_label.setText(_("{}%").format(min(progress, 100)))
 
 # ===== Update functions =====
 def finish_update(session, extract_dir):
     try:
         extracted_folder = os.path.join(extract_dir, "speedyServiceScanUpdates-main", "speedyServiceScanUpdates")
         if not os.path.isdir(extracted_folder):
-            _safe_msg(session, "Error: speedyServiceScanUpdates folder not found.")
+            _safe_msg(session, _("Error: speedyServiceScanUpdates folder not found."))
             return
 
         if os.path.exists(PLUGIN_PATH):
             shutil.rmtree(PLUGIN_PATH)
 
         copy_tree(extracted_folder, PLUGIN_PATH)
-        _safe_msg(session, "Update successfully completed. Restart GUI?")
+        _safe_msg(session, _("Update successfully completed. Restart GUI?"))
 
     except Exception as e:
         print("Error finishing update:", str(e))
-        _safe_msg(session, "Update could not be completed.")
+        _safe_msg(session, _("Update could not be completed."))
 
 def check_update(gui_label):
     if not requests:
-        gui_label.setText("Requests module missing")
+        gui_label.setText(_("Requests module missing"))
         return
-    gui_label.setText("Checking for updates...")
+    gui_label.setText(_("Checking for updates..."))
     try:
         r = requests.get("https://raw.githubusercontent.com/speedy005/speedyServiceScanUpdates/main/version.txt", timeout=10)
         if r.status_code == 200:
             remote_version = r.text.strip()
             if remote_version > version:
-                gui_label.setText("Update available")
+                gui_label.setText(_("Update available"))
             else:
-                gui_label.setText("No update available")
+                gui_label.setText(_("No update available"))
         else:
-            gui_label.setText("No update available")
+            gui_label.setText(_("No update available"))
     except Exception as e:
         print("Error checking update:", str(e))
-        gui_label.setText("Update check failed.")
+        gui_label.setText(_("Update check failed."))
 
 def start_update(gui_label, session=None):
     tmp_dir = None
     try:
         if not requests:
-            gui_label.setText("Requests module missing")
+            gui_label.setText(_("Requests module missing"))
             return
 
-        gui_label.setText("Downloading update...")
+        gui_label.setText(_("Downloading update..."))
         tmp_dir = tempfile.mkdtemp()
         zip_path = os.path.join(tmp_dir, "plugin_update.zip")
 
         r = requests.get(UPDATE_URL, stream=True, timeout=20)
         if r.status_code != 200:
-            gui_label.setText("Download failed")
+            gui_label.setText(_("Download failed"))
             return
 
         total_size = int(r.headers.get('Content-Length', 0))
@@ -135,7 +135,7 @@ def start_update(gui_label, session=None):
         print("Error during update:", str(e))
         traceback.print_exc()
         try:
-            session.open(MessageBox, "Error during update:\n%s" % str(e), MessageBox.TYPE_ERROR)
+            session.open(MessageBox, _("Error during update:\n%s") % str(e), MessageBox.TYPE_ERROR)
         except Exception:
             pass
     finally:
@@ -186,6 +186,7 @@ class SSUUpdateScreen(Screen):
                 <ePixmap pixmap="skin_default/buttons/red.png" position="5,5" size="5,70" scale="stretch" alphatest="on" />
             </screen>"""
 
+        # ===== Widgets =====
         self['status'] = Label(_("Ready"))
         self['progress'] = ProgressBar()
         self['progresstext'] = Label("")
