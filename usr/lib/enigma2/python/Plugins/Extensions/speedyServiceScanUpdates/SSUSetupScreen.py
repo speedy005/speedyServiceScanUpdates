@@ -111,16 +111,16 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <ePixmap pixmap="skin_default/buttons/red.png" position="10,5" size="5,70" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/green.png" position="314,5" size="5,70" scale="stretch" alphatest="on" />
                 <eLabel text="HELP" position="1110,753" size="80,35" backgroundColor="#777777" valign="center" halign="center" font="Regular;24" zPosition="5" />
-                <widget name="key_red" position="19,8" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-                <widget name="key_green" position="324,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="green" backgroundColor="#1f771f" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-                <widget name="config" position="10,90" itemHeight="35" size="1180,500" enableWrapAround="1" scrollbarMode="showOnDemand" />
+                <widget name="key_red" position="19,8" zPosition="1" size="295,70" font="Regular;30" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
+                <widget name="key_green" position="324,5" zPosition="1" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="green" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
+                <widget name="config" position="10,90" itemHeight="45" size="1180,500" enableWrapAround="1" scrollbarMode="showOnDemand" foregroundColorSelected="green" backgroundColorSelected="grey" foregroundColor="red" />
                 <ePixmap pixmap="skin_default/div-h.png" position="10,650" zPosition="2" size="1180,2" />
                 <ePixmap pixmap="skin_default/buttons/yellow.png" position="630,7" size="5,70" scale="stretch" alphatest="on" />
-                <widget name="key_yellow" position="638,6" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="yellow" />
-                <widget name="version" position="444,593" size="150,50" font="Regular;30" valign="center" halign="left" />
+                <widget name="key_yellow" position="638,6" size="300,70" font="Regular;30" halign="center" valign="center" foregroundColor="yellow" backgroundColor="black" />
+                <widget name="version" position="444,593" size="150,50" font="Regular;30" valign="center" halign="left" backgroundColor="black" />
                 <ePixmap pixmap="skin_default/buttons/blue.png" position="945,7" size="5,70" scale="stretch" alphatest="on" />
-                <widget name="key_blue" position="954,8" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="blue" />
-                <widget name="help" position="10,655" size="1180,140" font="Regular;32" />
+                <widget name="key_blue" position="954,8" size="250,70" font="Regular;30" halign="center" valign="center" foregroundColor="blue" backgroundColor="black" />
+                <widget name="help" position="10,655" size="1180,140" font="Regular;32" backgroundColor="black" />
                 <ePixmap pixmap="skin_default/buttons/vkey_exit.png" position="1041,761" size="35,25" scale="stretch" alphatest="on" zPosition="6" />
             </screen>"""
         else:
@@ -129,14 +129,14 @@ class SSUSetupScreen(ConfigListScreen, Screen):
                 <ePixmap pixmap="skin_default/buttons/green.png" position="200,0" size="5,40" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/yellow.png" position="405,0" size="5,40" scale="stretch" alphatest="on" />
                 <ePixmap pixmap="skin_default/buttons/blue.png" position="610,0" size="5,40" scale="stretch" alphatest="on" />
-                <widget name="key_red" position="7,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-                <widget name="key_green" position="206,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="green" backgroundColor="#1f771f" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
-                <widget name="key_yellow" position="414,1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="yellow" />
-                <widget name="key_blue" position="618,1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="blue" />
-                <widget name="config" position="5,50" itemHeight="30" size="900,390" enableWrapAround="1" scrollbarMode="showOnDemand" />
+                <widget name="key_red" position="7,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
+                <widget name="key_green" position="206,0" zPosition="1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="green" backgroundColor="black" transparent="1" shadowColor="black" shadowOffset="-2,-2" />
+                <widget name="key_yellow" position="414,1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="yellow" backgroundColor="black" />
+                <widget name="key_blue" position="618,1" size="200,40" font="Regular;22" halign="center" valign="center" foregroundColor="blue" backgroundColor="black" />
+                <widget name="config" position="5,50" itemHeight="30" size="900,390" enableWrapAround="1" scrollbarMode="showOnDemand" foregroundColorSelected="green" backgroundColorSelected="grey" foregroundColor="red" />
                 <ePixmap pixmap="skin_default/div-h.png" position="0,445" zPosition="2" size="900,2" />
-                <widget name="version" position="5,450" size="200,30" font="Regular;22" valign="center" halign="left" />
-                <widget name="help" position="210,450" size="685,65" font="Regular;22" />
+                <widget name="version" position="5,450" size="200,30" font="Regular;22" valign="center" halign="left" backgroundColor="black" />
+                <widget name="help" position="210,450" size="685,65" font="Regular;22" backgroundColor="black" />
             </screen>"""
 
         # --- Widgets ---
